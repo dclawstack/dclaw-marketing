@@ -24,7 +24,7 @@ git clone https://github.com/dclawstack/dclaw-scaffold.git dclaw-YOURAPP
 cd dclaw-YOURAPP
 
 # 2. Find/replace placeholders
-# {APP_NAME}    -> Your app name (e.g., CRM)
+# Marketing    -> Your app name (e.g., CRM)
 # {BACKEND_PORT}-> Next free port (see port registry below)
 # {FRONTEND_PORT}-> Next free port
 # {DB_NAME}     -> dclaw_yourapp
