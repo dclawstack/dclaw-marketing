@@ -18,7 +18,7 @@ class LeadStatus(str, enum.Enum):
 class Lead(Base):
     __tablename__ = "leads"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4, init=False)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -32,5 +32,5 @@ class Lead(Base):
     )
 
     campaign: Mapped["Campaign | None"] = relationship(
-        "Campaign", back_populates="leads", lazy="selectin", init=False
+        "Campaign", back_populates="leads", lazy="selectin"
     )

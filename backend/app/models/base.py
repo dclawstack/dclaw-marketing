@@ -1,7 +1,7 @@
-from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
+from sqlalchemy.orm import DeclarativeBase
 
 
-class Base(DeclarativeBase, MappedAsDataclass, kw_only=True):
+class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models.
 
     ALL models MUST inherit from this class.

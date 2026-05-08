@@ -18,7 +18,7 @@ class EventType(str, enum.Enum):
 class AnalyticsEvent(Base):
     __tablename__ = "analytics_events"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4, init=False)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     campaign_id: Mapped[UUID] = mapped_column(
         ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False
     )
@@ -29,5 +29,5 @@ class AnalyticsEvent(Base):
     )
 
     campaign: Mapped["Campaign"] = relationship(
-        "Campaign", back_populates="analytics_events", lazy="selectin", init=False
+        "Campaign", back_populates="analytics_events", lazy="selectin"
     )

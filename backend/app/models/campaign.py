@@ -26,7 +26,7 @@ class CampaignStatus(str, enum.Enum):
 class Campaign(Base):
     __tablename__ = "campaigns"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4, init=False)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[CampaignType] = mapped_column(SQLEnum(CampaignType), nullable=False)
     status: Mapped[CampaignStatus] = mapped_column(
@@ -38,8 +38,8 @@ class Campaign(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     leads: Mapped[list["Lead"]] = relationship(
-        "Lead", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan", init=False
+        "Lead", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan"
     )
     analytics_events: Mapped[list["AnalyticsEvent"]] = relationship(
-        "AnalyticsEvent", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan", init=False
+        "AnalyticsEvent", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan"
     )
