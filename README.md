@@ -1,40 +1,82 @@
-# DClaw Scaffold
+# DClaw Marketing
 
-> **The single source of truth for new DClaw app development.**
-> Clone this repo, rename it, fill in your `PRODUCT-SPEC.md`, and hand it to your coding agents.
+> **A vertical SaaS app for marketing teams** — built on the DClaw Stack.
+> Manage campaigns, track leads, and analyze performance in one place.
 
-## What This Is
+## Scope
 
-This scaffold contains the **complete boilerplate** for any DClaw vertical SaaS app:
-- ✅ FastAPI backend with correct SQLAlchemy 2.0 setup
-- ✅ Next.js 14 frontend with Tailwind + pre-built UI components
-- ✅ Docker + docker-compose with working healthchecks
-- ✅ Helm chart for Kubernetes deployment
-- ✅ Alembic migrations setup
-- ✅ pytest test harness with pinned pytest-asyncio==0.24.0
-- ✅ GitHub Actions CI
-- ✅ `AGENTS.md` + `PLAN-v1.2.md` templates
-- ✅ Pre-built UI components (no shadcn CLI needed)
+DClaw Marketing is a full-stack marketing platform for **marketing teams and growth hackers**. It covers:
 
-## How to Use
+- **Campaign Management** — Create, schedule, and track email, social, PPC, and content campaigns
+- **Lead Management** — Capture and manage leads with full lifecycle tracking (new → contacted → qualified → converted)
+- **Analytics** — Track impressions, clicks, conversions, and bounces per campaign
+- **Dashboard** — Real-time summary of active campaigns, total leads, conversion rates, and total spend
 
-```bash
-# 1. Clone the scaffold
-git clone https://github.com/dclawstack/dclaw-scaffold.git dclaw-YOURAPP
-cd dclaw-YOURAPP
+**Tech Stack:** FastAPI (Python 3.11) · Next.js 14 · PostgreSQL · Docker · Kubernetes (Helm)  
+**Ports:** Backend `8102` · Frontend `3015` · Database `dclaw_marketing`
 
-# 2. Find/replace placeholders
-# Marketing    -> Your app name (e.g., CRM)
-# {BACKEND_PORT}-> Next free port (see port registry below)
-# {FRONTEND_PORT}-> Next free port
-# {DB_NAME}     -> dclaw_yourapp
+---
 
-# 3. Write your PRODUCT-SPEC.md
-# See PRODUCT-SPEC.md.template for the format
+## v1.0 Features (Current)
 
-# 4. Hand to your coding agents
-# See SCALING-PLAYBOOK.md for the parallel agent workflow
-```
+- [x] Campaign CRUD — create, read, update, delete campaigns with type (`email`, `social`, `ppc`, `content`) and status filters
+- [x] Lead CRUD — manage leads with source tracking and optional campaign association
+- [x] Analytics event recording — log impressions, clicks, conversions, and bounces
+- [x] Dashboard — summary cards (active campaigns, total leads, conversion rate, spend)
+- [x] Campaign detail page — lead list and analytics summary per campaign
+- [x] Docker + docker-compose deployment with healthchecks
+- [x] Helm chart for Kubernetes deployment
+- [x] Alembic database migrations
+- [x] Backend test suite (pytest-asyncio)
+
+---
+
+## v1.2 Features
+
+### P0 — Must Have
+
+#### 1. AI Lead Scoring
+**Description:** Score each lead from 1–100 based on attributes (company, source, engagement history) to prioritize outreach.
+- **Backend:** Scoring service in `app/services/lead_scoring.py`, exposed via `GET /api/v1/leads/{id}/score`
+- **Frontend:** Score badge on lead cards and lead detail page
+
+#### 2. Real Analytics Dashboard
+**Description:** Replace mock chart data with live aggregated analytics from the `AnalyticsEvent` table.
+- **Backend:** Aggregation query in `GET /api/v1/dashboard` returning real counts and time-series trends
+- **Frontend:** Live performance chart on Dashboard and Campaign Detail pages
+
+### P1 — Should Have
+
+#### 3. Campaign Send-Time Optimization
+**Description:** Suggest the best time to send/activate a campaign based on historical engagement patterns.
+- **Backend:** Optimization service in `app/services/campaign_optimizer.py` returning a suggested `start_date`/time
+- **Frontend:** "Optimize Schedule" button on the campaign create/edit form
+
+#### 4. Bulk Lead Status Management
+**Description:** Select multiple leads and update their status in a single action.
+- **Backend:** `PATCH /api/v1/leads/bulk` accepting a list of lead IDs and a target status
+- **Frontend:** Checkbox selection + bulk action toolbar on the Leads table
+
+### P2 — Could Have
+
+#### 5. Email Campaign Integration
+**Description:** Connect campaigns to an email provider (SendGrid / Mailgun) to send actual emails to associated leads.
+- **Backend:** Email service abstraction in `app/services/email.py` with provider config in `app/core/config.py`
+- **Frontend:** "Send Campaign" action button on Campaign Detail page
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | FastAPI, SQLAlchemy 2.0 (async), Pydantic v2, Alembic |
+| Frontend | Next.js 14, Tailwind CSS, pre-built UI components |
+| Database | PostgreSQL (`dclaw_marketing`) |
+| Deployment | Docker, docker-compose, Kubernetes (Helm) |
+| Testing | pytest, pytest-asyncio==0.24.0 |
+
+---
 
 ## Critical Rules for Agents
 
@@ -50,6 +92,8 @@ This file is required for GitHub Actions to run tests on every push.
 ### DO NOT upgrade pytest-asyncio
 Keep `pytest-asyncio==0.24.0` pinned in `requirements.txt`. v1.3.0 breaks fixture scoping.
 
+---
+
 ## Port Registry
 
 | App | Backend Port | Frontend Port | Database |
@@ -62,37 +106,25 @@ Keep `pytest-asyncio==0.24.0` pinned in `requirements.txt`. v1.3.0 breaks fixtur
 | dclaw-crm | 8095 | 3006 | dclaw_crm |
 | dclaw-finance | 8096 | 3007 | dclaw_finance |
 | dclaw-hr | 8097 | 3008 | dclaw_hr |
-| **TBD #9** | **8098** | **3009** | **dclaw_xxx** |
+| **dclaw-marketing** | **8102** | **3015** | **dclaw_marketing** |
 | **TBD #10** | **8100** | **3010** | **dclaw_xxx** |
 
 > **Rule:** New apps take the next available port. Update this table when assigning.
 
-## Files You Must Customize
+---
 
-| File | What to Change |
-|------|---------------|
-| `backend/app/core/config.py` | `app_name`, default database name |
-| `backend/app/api/main.py` | Wire v1 routers |
-| `frontend/package.json` | Package name |
-| `frontend/src/app/layout.tsx` | Title, description |
-| `frontend/src/app/page.tsx` | Dashboard content |
-| `docker-compose.yml` | Port mappings |
-| `helm/Chart.yaml` | Chart name |
-| `helm/values.yaml` | Image repository names |
-| `AGENTS.md` | App identity, port numbers |
-| `PLAN-v1.2.md` | Feature backlog |
-| `PRODUCT-SPEC.md` | (Create this) Domain models, business logic |
+## Key Files
 
-## What You Should NOT Change
+| File | Purpose |
+|------|---------|
+| `PRODUCT-SPEC.md` | Domain models, business logic, API endpoints |
+| `PLAN-v1.2.md` | v1.2 feature roadmap for coding agents |
+| `AGENTS.md` | Architecture rules and development guide |
+| `SCALING-PLAYBOOK.md` | Parallel agent workflow |
+| `backend/app/core/config.py` | App name, database name |
+| `frontend/src/lib/api.ts` | Typed API client |
 
-- `app/models/base.py` — `DeclarativeBase` pattern
-- `app/core/database.py` — Engine/session factory
-- `docker-compose.yml` healthcheck commands
-- `frontend/Dockerfile` `ARG NEXT_PUBLIC_API_URL` pattern
-- `tests/conftest.py` — Test DB override pattern (keep `localhost:5432`)
-- `frontend/src/components/ui/*.tsx` — Pre-built components (use as-is)
-- `requirements.txt` — Keep `pytest-asyncio==0.24.0` pinned
-- `.github/workflows/ci.yml` — Do not delete
+---
 
 ## Contributors
 
