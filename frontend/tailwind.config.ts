@@ -1,6 +1,12 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Light-mode only. Brand tokens live in src/styles/brand.css and are
+ * exposed as `--dk-*` CSS variables; shadcn-style HSL tokens in
+ * src/app/globals.css are remapped to those brand colors.
+ */
 const config: Config = {
+  // Light-mode only. We keep `class` strategy but never add `.dark` anywhere.
   darkMode: ["class"],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -43,11 +49,46 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Direct brand-token aliases (use these for new code instead of
+        // the shadcn-shaped tokens above when convenient).
+        brand: {
+          DEFAULT: "var(--dk-purple-700)",
+          50: "var(--dk-purple-50)",
+          100: "var(--dk-purple-100)",
+          200: "var(--dk-purple-200)",
+          300: "var(--dk-purple-300)",
+          400: "var(--dk-purple-400)",
+          500: "var(--dk-purple-500)",
+          600: "var(--dk-purple-600)",
+          700: "var(--dk-purple-700)",
+          800: "var(--dk-purple-800)",
+          900: "var(--dk-purple-900)",
+        },
+        ink: "var(--dk-ink)",
+        success: "var(--dk-success)",
+        warning: "var(--dk-warning)",
+        danger: "var(--dk-danger)",
+        info: "var(--dk-info)",
+      },
+      fontFamily: {
+        sans: ["var(--dk-font-sans)"],
+        display: ["var(--dk-font-display)"],
+        mono: ["var(--dk-font-mono)"],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "var(--dk-radius-xl)",
+        "2xl": "var(--dk-radius-2xl)",
+        pill: "var(--dk-radius-pill)",
+      },
+      boxShadow: {
+        xs: "var(--dk-shadow-xs)",
+        sm: "var(--dk-shadow-sm)",
+        md: "var(--dk-shadow-md)",
+        lg: "var(--dk-shadow-lg)",
+        brand: "var(--dk-shadow-brand)",
       },
       keyframes: {
         "accordion-down": {

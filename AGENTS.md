@@ -32,6 +32,7 @@ These are non-negotiable. If an agent suggests changing them, reject it.
 - **API client** in `src/lib/api.ts` — typed fetch wrapper
 - **Environment variables** — `NEXT_PUBLIC_API_URL` baked at build time. Dockerfile MUST declare `ARG NEXT_PUBLIC_API_URL`.
 - **DO NOT install shadcn CLI** — use the pre-built components in `src/components/ui/`
+- **Brand system — `frontend/src/styles/brand.css` is the single source of truth.** All colors, type, spacing, radii, shadows, and motion MUST come from `--dk-*` tokens (or the shadcn HSL tokens that are remapped to them in `globals.css`). Never hardcode hex colors. Light mode only — do NOT add a `.dark { }` block, do NOT use `dark:` Tailwind variants. Brand font is **Poppins** (loaded via `next/font/google` in `app/layout.tsx`).
 
 ### Docker
 - **Backend:** `python:3.11-slim`, non-root `appuser`, healthcheck with `python urllib.request.urlopen()`
