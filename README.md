@@ -93,3 +93,7 @@ Keep `pytest-asyncio==0.24.0` pinned in `requirements.txt`. v1.3.0 breaks fixtur
 - `frontend/src/components/ui/*.tsx` — Pre-built components (use as-is)
 - `requirements.txt` — Keep `pytest-asyncio==0.24.0` pinned
 - `.github/workflows/ci.yml` — Do not delete
+
+## Contributors
+
+- [Deepro Mallick (@deepro713)](https://github.com/deepro713)
