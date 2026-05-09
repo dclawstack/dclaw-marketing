@@ -8,3 +8,7 @@
 # Environment
 .env
 .env.local
+
+# Obsidian
+.obsidian/workspace*.json
+.obsidian/cache
