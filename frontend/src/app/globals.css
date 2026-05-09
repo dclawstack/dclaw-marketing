@@ -1,36 +1,62 @@
+@import "../styles/brand.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* ------------------------------------------------------------------
+     Light-mode-only theme. shadcn-style HSL tokens are remapped to the
+     DKube brand palette (see styles/brand.css). Do NOT add a `.dark`
+     block — this project is light-mode only per brand guidelines.
+     ------------------------------------------------------------------ */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 100%;             /* dk-white */
+    --foreground: 240 10% 6%;            /* dk-ink #0F0F12 */
+
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 6%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --popover-foreground: 240 10% 6%;
+
+    --primary: 258 27% 52%;              /* dk-purple-700 #7660A8 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 258 42% 95%;            /* dk-purple-100 #F1EEF8 */
+    --secondary-foreground: 261 36% 35%; /* dk-purple-900 */
+
+    --muted: 240 17% 98%;                /* dk-gray-50 #F8F8FA */
+    --muted-foreground: 240 4% 50%;      /* dk-gray-500 #7A7A85 */
+
+    --accent: 258 42% 95%;               /* dk-purple-100 */
+    --accent-foreground: 261 36% 35%;
+
+    --destructive: 3 71% 41%;            /* dk-danger #B3261E */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 92%;               /* dk-gray-200 #E8E8EC */
+    --input: 240 10% 92%;
+    --ring: 258 27% 52%;                 /* dk-purple-700 */
+
+    --radius: 0.75rem;                   /* 12px = dk-radius-md */
   }
 
   * {
     @apply border-border;
   }
 
+  html,
   body {
-    @apply bg-background text-foreground;
+    background: var(--dk-bg);
+    color: var(--dk-fg-1);
+    font-family: var(--dk-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--dk-font-display);
+    color: var(--dk-fg);
+    letter-spacing: var(--dk-tracking-snug);
   }
 }
