@@ -343,3 +343,414 @@ Recommended sequencing for the next ~3 sprints:
 ## What "Done" Looks Like for v1.2
 
 - An operator can sign up, connect 5+ MCP integrations, write a one-paragraph campaign brief, hit "generate," review 12 multimedia variants in their brand voice/visuals, schedule a 4-week multi-channel rollout from one calendar, get a daily dashboard of reach + engagement + leads + revenue, and let an agent draft the next week's content while they sleep — all in light mode, all on Poppins, all in DKube purple.
+
+---
+
+# v2.0 Vision: The Agent-Driven Agency Platform
+
+> **Status — forward-looking addendum.** The v1.2 sections above remain the next-up engineering commitment. This section captures the platform we're building toward: an **agent crew where humans supervise stations** rather than operate tools, capable of running a full marketing operation at agency scale. Locked in planning sessions through 2026-05-12.
+
+## Pivot in one paragraph
+
+The noun shifts from *tool* (humans operate it) to *crew* (agents do the work; humans supervise). Each role gets a paired AI **Agent** that operates a **Station** autonomously. A **Conductor** agent decomposes briefs and dispatches to role-Agents. Humans give minimal directives via their Station and approve gated actions in an Inbox. The MCP integration hub (Theme D) becomes the tool layer all agents speak through. The Knowledge Graph (new in Theme Q) becomes the shared memory all agents read and write.
+
+## 1. Hierarchy — Organization → Project → Campaign → Asset
+
+GitHub-shaped. Replaces v1.2's "Workspace" tier.
+
+| Tier | Owns |
+|---|---|
+| **Organization** | Members + Brand Kits + Social/Ad accounts (multiple per platform allowed) + MCP integrations + default trust modes + autonomy posture + billing |
+| **Project** | Goals, KPIs, brief, team assignments, channel *selection* (a subset of the Org's connected accounts), trust-mode overrides |
+| **Campaign** | A time-boxed initiative within a Project |
+| **Asset** | Output of an agent — post, image, video, blog draft, ad creative, … |
+
+External clients become additional Orgs with `is_external=true` — no migration needed.
+
+## 2. Identity & access
+
+### 2.1 The reframe: roles describe supervision, not work
+
+**Agents have roles.** Each agent is a specialist (Creatives, SMM, SEO, Paid Media, …). **Humans have supervision scopes** — which agents you oversee on which projects, what you can approve / override / change. The 10 "roles" below are scoping labels for human oversight, not job descriptions.
+
+### 2.2 The 10 system roles (as supervision scopes)
+
+| # | Role | Scope |
+|---|---|---|
+| 1 | **Admin** | Everything in the Org. Only Admin can create users, assign roles, reset passwords, revoke access, manage Org settings + billing, install integrations |
+| 2 | **Manager** | Supervises the Conductor; sees all Projects in the Org; final approver for big actions; no user mgmt |
+| 3 | **Creatives** | Supervises Creatives Agent (text + image + video + voice + brand assets). Wraps the former Designer/Brand Manager scope |
+| 4 | **Social Media Manager** | Supervises SMM Agent. Owns Calendar; approves social posts and DM responses |
+| 5 | **SEO Specialist** | Supervises SEO Agent. Approves blog drafts, internal-link plans, keyword targeting |
+| 6 | **Paid Media Specialist** | Supervises Paid Media Agent. Approves ad creative and budget moves |
+| 7 | **Reviewer** | Approval-only. Read + comment + approve / request changes inside assigned Projects |
+| 8 | **Analyst** | Read-only across analytics; can build dashboards and request reports |
+| 9 | **Viewer** | Read-only on assigned Projects |
+| 10 | **Client** *(external, future)* | Lights up when `is_external=true` on an Org. Portal-restricted |
+
+Each role is a bundle of permissions. Admin can clone any role, tweak, save as custom. Per-user overrides handle exceptions.
+
+### 2.3 Permission model — hybrid
+
+Module-level defaults (25 modules; one checkbox per module per role) with **resource × action** drill-down available per module for fine cases. Standard verbs: `read`, `create`, `update`, `delete`, `approve`, `publish`, `export`.
+
+The 25 modules: Users & Roles · Organizations · Projects · Campaigns · Briefs · Brand Kits · Content Generation · Asset Library (DAM) · Calendar & Scheduling · Social Publishing · Email & Newsletter · Ads · SEO · Sites & Landing Pages · Leads & CRM · Segments & Audiences · Sequences · Analytics & Reports · Attribution · Agents · Integrations · Approvals & Inbox · Settings · Time Tracking · Client Portal *(future)*.
+
+### 2.4 Project-based access
+
+Two layers, GitHub-shaped:
+
+- **Org membership** — base role on the Org. **Admin** and **Manager** see all Projects automatically. All other roles require explicit Project assignment.
+- **Project assignment** — a user gets a role *on this specific project*. Same person can be `Creatives` on Project A, `Viewer` on Project B, no access to Project C.
+
+Per-user overrides are layered on top (e.g., grant `social_post:publish` to a specific Reviewer for a specific Project).
+
+### 2.5 Progressive tiering — don't burden small teams
+
+| Tier | Team size | Role setup |
+|---|---|---|
+| **T0 — Solo** | 1 | Just Admin. No role-setup screen surfaced |
+| **T1 — Small team** | 2-5 | Admin + Manager + Reviewer + Viewer |
+| **T2 — Growing** | 5-20 | Add specialist supervisors as people are hired |
+| **T3 — Agency scale** | 20+ or once external clients flip on | Full role grid + custom roles + per-resource overrides + Client portal |
+
+Platform ships with T3 capability under the hood; UI progressively discloses as Org member count grows.
+
+### 2.6 Account lifecycle — admin-only user creation
+
+Per the agency requirement that admins (not self-signup) create users:
+
+- Admin issues `(user_id, autogenerated_temp_password)` from the Users console.
+- User's first login → mandatory password reset before any other access.
+- Admin can reset password / revoke access / lock account at any time, with full audit log.
+- All auth events (login, lockout, password reset, role change) recorded in the audit log.
+- External SSO (Google, Microsoft, Okta, magic-link) can be added later as opt-in alongside the default flow.
+
+## 3. Theme Q — Brand & Context Ingestion *(P0 — ships before the agents)*
+
+The foundational theme. Until Q is set up, agents have no context to work with.
+
+| Sub | Feature | What it does |
+|---|---|---|
+| **Q1** | **Brand Setup Studio** | A `claude.ai/design`-style flow: upload logo → auto-extract palette → adjust → pick fonts → tune voice sliders (formal↔casual, technical↔witty, …) → define do-say / don't-say → build personas → live preview of generated content samples. Materialized as a versioned **BrandKit** (also B1; this is the *setup UX*) |
+| **Q2** | **Input Channel Hub** | Ingest from **URLs** (web crawler + sitemap walk + blog scrape), **files** (PDF / DOCX / PPTX / Markdown / images / SVG / CSV), **git repos** (clone + read README + docs + code), **zip archives** (extract + ingest). All run as Celery jobs surfaced via the `Job` model |
+| **Q3** | **Knowledge Graph** | The result of Q2: a queryable graph of extracted entities (products, features, value props, customer quotes, past content, ICPs, competitor mentions) + embeddings for semantic search. **Every agent reads from and writes to this** — it is the shared memory |
+| **Q4** | **Freshness & Re-ingestion** | Schedulers re-crawl URLs / re-import drives on cadence; diffs flagged in the KG; subscribed agents notified when their inputs change |
+| **Q5** | **Goal & Constraint Setup** | Business objectives (leads / revenue / awareness), ICPs, channels-of-interest, brand-safety lines, monthly budgets, autonomy posture per action class. Feeds the Conductor's planning |
+| **Q6** | **Project Setup Wizard** | Per-project onboarding: name + goals, inherit brand from Org (or override), choose which Org **SocialAccounts** this project uses, team assignments with project-level roles, trust mode per action type |
+
+## 4. The agent fleet
+
+### 4.1 The Conductor
+
+A Manager-level agent. Given a brief + Knowledge-Graph context + budgets:
+
+1. Decomposes into role-specific tasks
+2. Dispatches to role-Agents
+3. Watches dependencies and timelines
+4. Escalates to a human when stuck (over budget, low confidence, conflicting signals, brand-safety question, integration failure)
+5. Reports rollup status to the Manager Station
+
+### 4.2 Role agents and Stations
+
+Each role has a paired Agent + Station UI:
+
+| Role | Station (human UI) | Agent does |
+|---|---|---|
+| **Manager** | Conductor Station — briefs in flight, retainer/budget burn-down, escalations | Conductor: decomposes, dispatches, escalates |
+| **Creatives** | Studio Station — drafts wall, brand-fit reviews, "more like this" controls | Generates text + image + video + voice + brand assets; auto-revises to brand voice; A/B variants |
+| **SMM** | Calendar Station — scheduled posts, channel health, DM queue | Drafts + queues + (pending approval) publishes; replies to DMs in brand voice; suggests best times |
+| **SEO** | Search Station — keyword pipeline, blog calendar, ranking deltas | Researches keywords, builds outlines, drafts + publishes posts, suggests internal links |
+| **Paid Media** | Spend Station — live ad sets, creative carousel, budget shifts | Generates ad creative, runs A/Bs, bandit-shifts budget, kills losers |
+| **Reviewer** | Approval Inbox | Pre-filters obvious wins/losses; surfaces borderline cases for human decision |
+| **Analyst** | Insights Station — live dashboards, anomaly alerts, custom report builder | Computes rollups, detects anomalies, drafts weekly narrative reports |
+| **Admin** | System Console | Health watchdog, rate-limit guard, integration auto-reconnect, key rotation reminders |
+
+### 4.3 Agent runtime — Claude Agent SDK + MCP
+
+**Plain-language explainer for non-engineers reading this:**
+
+- **Claude Agent SDK** is Anthropic's framework for building AI agents. For each agent we define three things: (a) a **system prompt** that gives the agent its role, personality and rules; (b) a list of **tools** it can call (e.g. `generate_image`, `post_to_x`, `search_knowledge_graph`); (c) **memory** it remembers across sessions. Agents can call other agents as sub-tasks — that's how the Conductor talks to role-Agents.
+- **MCP (Model Context Protocol)** is the standard way agents talk to external systems. Every social platform, ad platform, CRM, file store, design tool, etc. is implemented as an **MCP server** that exposes tools (`post_to_linkedin(account, content)`, `search_drive(query)`, `update_hubspot_contact(id, fields)`, …). Agents call those tools through one consistent interface.
+- **Why this stack vs. alternatives** (CrewAI, LangGraph, custom orchestration): native MCP support matches our Theme D plans; best-in-class tool use and memory; sub-agent patterns are first-class (Conductor → role-Agents → tools); built by Anthropic so it stays in lockstep with Claude model upgrades; less framework code to maintain.
+
+### 4.4 Shared Knowledge Graph
+
+Q3 is the data layer all agents read from and contribute to. Brand kits, persona profiles, past wins, past failures, performance history, content embeddings. **Org-scoped — nothing leaks between Orgs.** Agents write back insights ("LinkedIn carousels outperform single-image posts by 22% for this persona") so future runs are smarter.
+
+### 4.5 Audit + reasoning trace
+
+Every agent action records: timestamp, agent identity, action type, inputs used, alternatives considered, confidence score, output, who approved (or auto-approved), MCP tool calls made, total cost. Humans can replay any decision. Drives governance (compliance, post-mortems) and continuous improvement (RLHF on approval/reject signals).
+
+## 5. Autonomy posture
+
+### 5.1 Three trust modes (per action type)
+
+| Mode | Default for | Mechanic |
+|---|---|---|
+| **Autopilot** | Internal-only (drafts, research, briefs, outlines, anomaly detection, KG updates, repurposing into drafts) | Agent acts immediately; logged in audit trail |
+| **Soft gate** | Customer-facing low-risk (drafting an email body, generating an ad creative variant, suggesting a calendar slot) | Agent proposes; auto-approves after configurable timeout unless a reviewer objects |
+| **Hard gate** | **All outbound posting**; sending email to >1k recipients; spending >$X on ads; brand-kit changes; granting access; integration changes | Agent prepares; human must explicitly approve before action fires |
+
+### 5.2 The hard rule: outbound posting is always Hard-gate by default
+
+Generation, drafting, queueing, scheduling are autopilot. **Going live on a connected account always passes through the Approval Inbox first.** Configurable per-channel per-Org (e.g., "auto-approve scheduled X posts after 4-eye review Mon-Fri 9-6"), but the default everywhere is hard-gate. *Posting is the one place where humans always remain in the loop.*
+
+### 5.3 Resolution chain
+
+Trust modes resolve in this order:
+
+```
+Org default → Project override → Channel override → Action-level override
+```
+
+The UI shows the resolved mode for any action before it fires.
+
+## 6. Multi-account multi-channel publishing
+
+### 6.1 Multi-account per platform per Org
+
+An Org can have **N accounts on each platform**. Examples: 3 X handles, 2 LinkedIn company pages, 4 Instagram accounts, 2 YouTube channels. Each is a separate OAuth grant.
+
+**Data model:**
+
+```python
+class SocialAccount(Base):
+    id: UUID
+    organization_id: UUID                # FK, indexed
+    platform: SocialPlatform             # enum
+    handle: str                          # e.g. "@acme_official"
+    display_name: str                    # e.g. "Acme Inc — Official"
+    oauth_connection_id: UUID            # FK to Connection
+    is_default_for_platform: bool        # per (org, platform), at most one
+    status: AccountStatus                # active | reauth_required | revoked
+    scopes: list[str]
+    last_health_at: datetime
+    created_by: UUID                     # FK User
+```
+
+- One Org → many `SocialAccount`s; uniqueness indexed by `(organization_id, platform, handle)`
+- Each Project selects a subset of the Org's `SocialAccount`s to use (via `ProjectSocialAccount` join)
+- Publisher adapters always take `social_account_id`, never just `platform`
+- Per-account rate-limit and quota tracking
+- Per-account health monitoring + auto-reconnect prompt when tokens expire
+
+### 6.2 Full channel coverage — v1.2 commitment
+
+**Direct publish + schedule + analytics ingest** ship for v1.2 across every channel below.
+
+**Short-form + professional + visual + video + community:**
+X · LinkedIn (personal + company) · Instagram (Feed + Reels + Stories) · Facebook Page · YouTube (Shorts + long) · TikTok · Threads · Reddit · Pinterest · Bluesky · Mastodon · Snapchat · Telegram channels · WhatsApp Business · Discord (server announcements) · Quora
+
+**Long-form + CMS:**
+Medium · Substack · Beehiiv · Ghost · WordPress · Webflow CMS
+
+**Audio:**
+**Spotify for Podcasters**
+
+**Backlog (P2+, added on demand):** Tumblr · Vimeo · Apple Podcasts (RSS-driven) · Lemon8 · Xiaohongshu / RED · WeChat
+
+Each channel = a publisher adapter in `app/services/publishing/{channel}.py` + an MCP server exposing publish/schedule/analytics tools. Channel-specific content-shape rules (character limits, image specs, hashtag rules, link previews) live with the adapter.
+
+## 7. New agency-grade themes (J–P)
+
+The existing v1.2 themes A-I stay scoped as written above. These new themes ship on the v2.0 timeline.
+
+| Theme | What it adds |
+|---|---|
+| **J. Client Operations** | Client / Org CRUD; onboarding wizard (collect brand assets, social accounts, persona, goals); per-Org retainers + budgets; per-Org approval workflows |
+| **K. Project Management** | Project templates (Product Launch, SEO Refresh, Brand Revamp, Newsletter Reboot, …); Kanban + Gantt boards; task dependencies; **capacity planning** (per-user / per-agent utilization); milestones |
+| **L. Time Tracking & Billing** | Time logs per task / campaign / Org; auto-rollup to retainer burn-down; invoice generation (Stripe + QuickBooks export); billable vs. non-billable |
+| **M. Client Reporting** | Auto-generated weekly + monthly PDFs; scheduled email delivery; **white-label option** (per-Org logo + colors); embeddable read-only dashboard URLs |
+| **N. Knowledge Base & SOPs** | Reusable prompts, briefs, processes, playbooks; AI-searchable across the Org; agents propose new SOPs derived from successful patterns |
+| **O. Client Portal** *(future)* | Activates on `is_external=true`. External read + approve + comment access; activity timeline; signed file handoff; calendar sharing |
+| **P. Workflow Builder** | Visual no-code chain of LLM steps + tool calls + approval gates ("on new lead from HubSpot → enrich → score → if score>80 → draft personalized intro → notify SDR"). Magic Loops / Wordware-shaped |
+
+## 8. Y Combinator patterns folded in
+
+Citations for our design choices. *Already covered by existing v1.2 themes are marked ★; net-new pulls are +.*
+
+| Company | Pattern adopted | Where it lands |
+|---|---|---|
+| **Copy.ai / Jasper** | Template library (50+ prompt-engineered templates per channel) | + B sub-feature **B8 Templates** |
+| **Letterdrop** (S21) | Sales-call → social-post pipeline (record → atomize) | + B4 (Repurposing) extension |
+| **Persana AI** (W23) | AI ICP detection + personalization at scale | + E (Lead 2.0) extension |
+| **Junia AI** | SEO-optimized blog with auto internal-linking | ★ H2 base case |
+| **Mutiny** | Visitor-segmented landing pages (per-segment hero/CTA) | ★ H1 extension |
+| **Sutro** (W24) | "Describe your page in a sentence → AI generates landing page" | + H1 extension: prompt-to-page mode |
+| **Outset** (S23) | AI customer-research interviews → theme synthesis | ★ F4 extension |
+| **Magic Loops / Wordware** | Visual LLM-chain workflow builder | + **P** (Workflow Builder) — new theme |
+| **Cluely** (S24) | Real-time on-screen AI assist during creation | + B sub-feature ("agent watches you write") |
+| **Lindy / Embra** | Workspace AI agent with cross-tool access | ★ G1 base case |
+| **Decagon / Sierra** | Customer-facing AI agents | + G extension ("FAQ bot on client landing pages") |
+| **Default** | RevOps automation (lead routing, scoring) | ★ E extension |
+| **Crayon / Klue** | Competitive intelligence dashboards | ★ F3 base case |
+| **Lovable / Bolt / v0** | NL → working landing page | + H1 extension (same as Sutro) |
+| **Mintlify** | AI-generated docs / wiki | + N extension |
+| **Cresta** | Real-time AI coaching for humans | + G extension ("coach reviewer's tone") |
+
+## 9. Sequencing — from v1.2 baseline to v2.0
+
+Six phases. Each phase = its own feature branch and one or more PRs. Per the continuous-commit rule, mid-phase commits land regularly on the feature branch.
+
+| Phase | Scope | Outcome |
+|---|---|---|
+| **0. Baseline** | A0 alembic baseline migration; A1 Org/User/Auth (admin-only flow, temp password, first-login reset); A2 Celery + Redis worker; A3 S3 storage abstraction; A4 audit + approval queue | Identity, infra, governance ready |
+| **1. Theme Q — Foundation** | Q1 Brand Setup Studio; Q2 Input Channel Hub; Q3 Knowledge Graph; Q4 Freshness; Q5 Goals/Constraints; Q6 Project Setup Wizard | Agents have context to work from |
+| **2. Agent runtime** | Claude Agent SDK integration; Conductor shell; one role-Agent end-to-end (Creatives Agent as MVP); Approval Inbox UI; trust-mode resolver | Single agent works fully autonomously with hard-gate on outbound posting |
+| **3. Full role fleet** | All remaining role-Agents (SMM, SEO, Paid Media, Analyst) + their Stations | Full crew operating |
+| **4. Multi-channel publishing** | `SocialAccount` model with multi-account; all v1.2 channels live; per-channel adapters; per-account rate limits | An Org can run a multi-channel multi-account campaign at scale |
+| **5. Themes J–P** | Client Operations, Project Management, Time/Billing, Reporting, Knowledge Base, Workflow Builder (Client Portal stays deferred) | Agency-grade operations |
+| **6. Polish + external clients** | Theme O Client Portal, white-label, Tier-3 role UI, custom roles, custom workflows | Multi-agency / external-client tenants supported |
+
+## 10. What "Done" Looks Like for v2.0
+
+- A new Org admin completes Theme Q in under 30 minutes: brand kit ingested, social accounts (multiple per platform) connected, input channels (website, drive, git, file uploads) feeding the Knowledge Graph, goals + budgets set, first Project created via the wizard.
+- The Conductor agent reads the Project brief, decomposes into work for Creatives + SMM + SEO + Paid Media agents, and dispatches.
+- Over the next week, the role-Agents draft content, queue posts, build ad sets, draft blog posts, and surface ~30 items for human review. The supervisor at each Station spends ~15 minutes/day approving in their Inbox.
+- The Analyst Agent produces a Monday-morning narrative report ("CTR on LinkedIn carousels +18% WoW driven by hook style X — recommend doubling down").
+- The Manager Station shows a live dashboard of agent activity, retainer burn-down, escalations to handle, and the next week's projected schedule.
+- Zero hardcoded hex anywhere; everything in DKube purple; all `--dk-*` tokens; light mode only.
+
+---
+
+# Appendix A: Technology Choices & Deployment Model
+
+> **Status — locked in planning sessions through 2026-05-12.** These are the foundations every implementation PR builds on. Listed here so the doc, not chat history, is the source of truth.
+
+## A.1 Deployment model
+
+**The platform ships as a Helm chart + container images. Customers install onto their own existing Kubernetes cluster.** DClaw does not host the platform; the customer brings the cluster and the connecting credentials.
+
+- Install path: `helm install dclaw-marketing dclaw/dclaw-marketing -f values.yaml`
+- Container images published to **GHCR** (`ghcr.io/dclawstack/dclaw-marketing-{backend,frontend,worker}`)
+- **Minimum Kubernetes version: 1.28+**
+- Customers reach out to required external services from their cluster: `api.anthropic.com`, Resend, the social platform APIs, etc. Egress must be allowed.
+- For local development, `docker-compose` continues as the dev setup (existing).
+- One Helm install = **multi-Org per install** (a single chart deployment supports N Organizations). External-client SaaS (future) = additional installs per customer agency.
+
+## A.2 Helm chart shape
+
+### A.2.1 Bundled-default dependencies (overridable to external)
+
+| Dependency | Bundled default | External override |
+|---|---|---|
+| **Postgres** (with `pgvector` extension) | Bitnami Postgres subchart, in-cluster StatefulSet | Set `postgres.bundled: false` + `postgres.externalUri: "postgresql+asyncpg://..."` |
+| **Redis** | Bitnami Redis subchart | `redis.bundled: false` + `redis.externalUri: "redis://..."` |
+| **Object storage** (S3-compatible) | MinIO subchart, in-cluster | `objectStorage.bundled: false` + `objectStorage.endpoint`, `accessKey`, `secretKey`, `bucket` |
+
+Easiest install = zero external setup, everything in-cluster. Production customers swap to managed Postgres (AWS RDS, GCP Cloud SQL, DO Managed DB), managed Redis, and S3/R2/Spaces via values flags. Customers retain responsibility for backups + HA when they go external.
+
+### A.2.2 TLS — dual mode
+
+Customer picks per install:
+
+- `tls.certManager.enabled: true` — chart creates a `Certificate` resource expecting cert-manager to be pre-installed in the cluster (most production clusters have it; auto-issues + renews via Let's Encrypt or any configured Issuer).
+- `tls.existingSecret: "<secret-name>"` — chart uses a pre-created TLS Secret. Customer brings their own cert.
+- Either is supported; not both at once for a given install.
+
+### A.2.3 URL routing — path-based, single domain
+
+One Helm install = one domain (e.g., `marketing.acme.com`). Organizations are URL-pathed: `/orgs/<slug>/projects/<id>/...`. Org selection happens after login. One TLS cert, simplest DNS setup. Subdomain-per-Org and one-install-per-Org are explicitly deferred (they fit external-client SaaS, not internal-team installs).
+
+### A.2.4 Multi-tenant isolation
+
+All Org data is row-level isolated via:
+
+- `organization_id` FK column on every tenant-scoped table (indexed)
+- API-layer access checks via `Depends(current_organization)` dependency
+- Encrypted-at-rest tenant secrets keyed per-Org (see A.6)
+
+No schema-per-tenant; no database-per-tenant. Single Postgres serves all Orgs in the install.
+
+## A.3 Backend stack
+
+| Concern | Choice |
+|---|---|
+| Web framework | **FastAPI** (existing) — `lifespan` handler, async everything |
+| ORM | **SQLAlchemy 2.0 async** (existing) — `Mapped[]` + `mapped_column()` only; `DeclarativeBase` from `app.models.base` |
+| Schemas | **Pydantic v2** (existing) — `ConfigDict(from_attributes=True)` |
+| Database | **Postgres 16+ with `pgvector` extension** for the Knowledge Graph embeddings |
+| Cache + broker | **Redis** |
+| Background jobs | **Celery** (Redis broker) + **Celery Beat** for scheduled tasks |
+| Auth | **FastAPI-Users** — JWT + refresh tokens, **admin-only user creation**, mandatory first-login password reset, Argon2 password hashing, audit-logged auth events |
+| Object storage | S3-compatible (MinIO default in-cluster; S3 / R2 / Spaces in prod) via `aiobotocore` |
+| Email | **Resend** API (transactional + marketing) |
+| Migrations | **Alembic** — every model change ships with a revision; baseline migration captured in **A0** before further work |
+| Tests | `pytest` + `pytest-asyncio==0.24.0` (pinned; do not upgrade) — already in place |
+
+## A.4 Frontend stack
+
+| Concern | Choice |
+|---|---|
+| Framework | **Next.js 14 App Router** |
+| Styling | **Tailwind CSS** + `frontend/src/styles/brand.css` (DKube tokens; light-mode only; **no `dark:` variants**) |
+| Type | **Poppins** loaded via `next/font/google` |
+| API client | Typed fetch wrapper in `src/lib/api.ts` |
+| UI primitives | Pre-built shadcn-style components in `src/components/ui/` — **DO NOT install shadcn CLI** (breaks Tailwind v3) |
+| Forms | **React Hook Form** + **Zod** resolvers — add in Phase 1 when first forms land |
+| State mgmt | Local React state for v2.0; add **Zustand** if/when component-tree drilling becomes painful |
+| Live updates | Server-Sent Events (SSE) for agent activity streams; WebSocket only if bidirectional is needed |
+
+## A.5 Agent runtime
+
+| Concern | Choice |
+|---|---|
+| Agent framework | **Claude Agent SDK** (Anthropic-built) |
+| Tool layer | **MCP (Model Context Protocol)** — every external system implements an MCP server exposing typed tools |
+| LLM model routing *(default; per-action overridable)* | **Opus** for the Conductor; **Sonnet** for role-Agents; **Haiku** for fast-path routine tasks (classification, simple drafting, anomaly detection) |
+| Embedding model | Decision deferred to Phase 1 (Theme Q) — candidates: OpenAI `text-embedding-3-large`, Voyage AI, Cohere |
+| Memory | Per-agent state + the shared **Knowledge Graph** (Postgres + pgvector). Org-scoped — nothing leaks between Orgs |
+| Audit | Every agent action + tool call recorded in `AuditEvent` with reasoning trace (timestamp, agent, action, inputs, alternatives considered, confidence, output, approver, cost) |
+| Cost guardrails | Per-Org daily/monthly LLM budget caps (Theme I3); per-action confidence threshold; soft + hard caps |
+
+## A.6 Secrets management
+
+| Scope | Approach |
+|---|---|
+| Dev | `.env.local` files in `backend/` and `frontend/` — gitignored, never committed |
+| CI | **GitHub Actions Secrets** for test DB URL, mock API keys |
+| Prod platform secrets (Anthropic key, Resend key, DB URL, Redis URL, master KMS key) | **Kubernetes Secrets**, populated from a `.env.production` file kept outside git, applied via Helm values |
+| Tenant OAuth tokens (each Org's X / LinkedIn / Instagram / etc. tokens) | **Encrypted at rest in Postgres** using `cryptography.fernet` with a per-Org data key. The per-Org key is itself encrypted with a master KMS key (env var for v2.0; stored in cluster Secret) |
+| Rotation | Manual via `helm upgrade` for v2.0. Add **External Secrets Operator** backed by AWS Secrets Manager / Vault / 1Password Connect later if rotation discipline becomes a real need |
+
+## A.7 Container images
+
+| Image | Path | Runs |
+|---|---|---|
+| **Backend** (API + worker + beat) | `ghcr.io/dclawstack/dclaw-marketing-backend:<version>` | One image, three containers (uvicorn / Celery worker / Celery beat) selected by command args in their respective Deployments |
+| **Frontend** | `ghcr.io/dclawstack/dclaw-marketing-frontend:<version>` | Standalone Next.js build |
+| **Migrations** | Same backend image | Runs `alembic upgrade head` in a Helm `pre-install` + `pre-upgrade` Hook Job |
+
+Image tags follow semver (`v2.0.0`, `v2.0.1`, …) with a `latest` mutable tag for development.
+
+## A.8 Observability
+
+| Concern | Choice |
+|---|---|
+| Backend logs | Structured JSON via `structlog` |
+| Frontend logs | Browser console + Sentry SDK |
+| Errors | **Sentry** — both backend and frontend; DSN configurable in values |
+| Metrics | **OpenTelemetry** → Prometheus exporter; chart exposes `/metrics` endpoint |
+| Tracing | OpenTelemetry → OTLP endpoint configurable (customer points it at Jaeger, Tempo, Datadog, Honeycomb, etc.) |
+| Health endpoints | Backend `/health` (liveness) + `/ready` (readiness); frontend simple up-check |
+
+## A.9 Versioning & release
+
+- **Single semver line** for the platform; chart, backend image, frontend image all version-bump together.
+- `main` branch always green; tags `v<major>.<minor>.<patch>` cut on every release.
+- GitHub Actions workflow builds + pushes images on tag; chart published to a Helm repository (GHCR or chart-museum, TBD in Phase 0 polish).
+- Customer upgrade path: `helm upgrade dclaw-marketing dclaw/dclaw-marketing --version <new>` — migrations run via the pre-upgrade Hook.
+
+## A.10 What is explicitly deferred
+
+These are common in mature platforms but explicitly OUT of v2.0 scope to keep the surface manageable:
+
+- SSO / SAML / OIDC for end-user login (admin-only user creation + temp password + first-login reset is the only flow for v2.0; SSO is post-v2.0)
+- Self-service signup / billing portals (this is an install-it-yourself platform; we're not collecting payments)
+- Per-tenant database isolation (row-level only in v2.0)
+- External Secrets Operator integration (v2.1+)
+- Multi-region active-active deployment (single-cluster install for v2.0)
+- Dark mode (forbidden by the brand system; explicitly out)
+- Mobile native apps (web responsive only)
+- Real-time collaborative editing of the same campaign (basic optimistic-lock for v2.0)
