@@ -9,6 +9,7 @@ from app.models.campaign import Campaign, CampaignType, CampaignStatus
 from app.models.lead import Lead, LeadStatus
 from app.models.analytics_event import AnalyticsEvent, EventType
 from app.models.job import Job, JobStatus
+from app.models.asset import Asset, AssetKind, AssetStatus
 
 __all__ = [
     "User",
@@ -27,4 +28,7 @@ __all__ = [
     "EventType",
     "Job",
     "JobStatus",
+    "Asset",
+    "AssetKind",
+    "AssetStatus",
 ]
