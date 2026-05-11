@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, ingest, jobs, kg, me, orgs, projects
+from app.api.v1 import admin, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, goals, ingest, jobs, kg, me, orgs, projects
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -70,6 +70,9 @@ app.include_router(ingest.router, prefix="/api/v1")
 
 # Knowledge Graph — semantic search across DocumentChunks (Theme Q3)
 app.include_router(kg.router, prefix="/api/v1")
+
+# Org goals + constraints + autonomy posture (Theme Q5)
+app.include_router(goals.router, prefix="/api/v1")
 
 # Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
