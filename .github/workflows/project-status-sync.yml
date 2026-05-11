@@ -1,0 +1,217 @@
+# Keep the Project board's Status field in sync with issue/PR state.
+#
+# Triggers:
+# - issue closed → Status = Done (and reopened → Status = In Progress)
+# - issue assigned → Status = In Progress
+# - PR opened → linked issue Status = In Progress
+# - PR merged → linked issue Status = Done (belt + braces with the
+#   GitHub Closing-keyword auto-close behavior)
+#
+# Required secret: PROJECT_TOKEN
+#   Same fine-grained PAT as project-automation.yml.
+#   Project: Read and write scope.
+name: Project status sync
+
+on:
+  issues:
+    types: [closed, reopened, assigned]
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  sync-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PROJECT_TOKEN is configured
+        id: token_check
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$PROJECT_TOKEN" ]; then
+            echo "::warning::PROJECT_TOKEN not set; project status sync skipped."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sync status (issue events)
+        if: |
+          steps.token_check.outputs.configured == 'true' &&
+          github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_NUMBER: 1
+          PROJECT_OWNER: dclawstack
+          ISSUE_NODE_ID: ${{ github.event.issue.node_id }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          # Resolve project + field IDs (cached values from setup).
+          PROJECT_ID="PVT_kwDOEMZt7c4BXaPa"
+          STATUS_FIELD_ID="PVTSSF_lADOEMZt7c4BXaPazhSnQ4o"
+          TODO_OPT="f75ad846"
+          IN_PROGRESS_OPT="47fc9ee4"
+          DONE_OPT="98236657"
+
+          # Decide target status from the event action
+          case "$ACTION" in
+            closed)    NEW_OPT="$DONE_OPT" ;;
+            reopened)  NEW_OPT="$IN_PROGRESS_OPT" ;;
+            assigned)  NEW_OPT="$IN_PROGRESS_OPT" ;;
+            *) exit 0 ;;
+          esac
+
+          # Find the project item for this issue. Single GraphQL query.
+          ITEM_ID=$(gh api graphql -f query="
+            query(\$content: ID!, \$project: ID!) {
+              node(id: \$content) {
+                ... on Issue {
+                  projectItems(first: 20) {
+                    nodes { id project { id } }
+                  }
+                }
+              }
+            }" \
+            -f content="$ISSUE_NODE_ID" \
+            -f project="$PROJECT_ID" \
+            --jq ".data.node.projectItems.nodes[] | select(.project.id == \"$PROJECT_ID\") | .id" \
+          )
+
+          if [ -z "$ITEM_ID" ]; then
+            echo "Issue not on Project #$PROJECT_NUMBER; nothing to update."
+            exit 0
+          fi
+
+          gh api graphql -f query='
+            mutation($project: ID!, $item: ID!, $field: ID!, $opt: String!) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $project,
+                itemId: $item,
+                fieldId: $field,
+                value: {singleSelectOptionId: $opt}
+              }) { projectV2Item { id } }
+            }' \
+            -f project="$PROJECT_ID" \
+            -f item="$ITEM_ID" \
+            -f field="$STATUS_FIELD_ID" \
+            -f opt="$NEW_OPT"
+
+          echo "Status updated to action=$ACTION for issue."
+
+      - name: Sync status (PR events)
+        if: |
+          steps.token_check.outputs.configured == 'true' &&
+          github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PR_NODE_ID: ${{ github.event.pull_request.node_id }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          PR_ACTION: ${{ github.event.action }}
+          REPO: ${{ github.repository }}
+        run: |
+          PROJECT_ID="PVT_kwDOEMZt7c4BXaPa"
+          STATUS_FIELD_ID="PVTSSF_lADOEMZt7c4BXaPazhSnQ4o"
+          IN_PROGRESS_OPT="47fc9ee4"
+          DONE_OPT="98236657"
+
+          # Decide target status
+          if [ "$PR_ACTION" = "closed" ] && [ "$PR_MERGED" = "true" ]; then
+            NEW_OPT="$DONE_OPT"
+          elif [ "$PR_ACTION" = "opened" ] || [ "$PR_ACTION" = "reopened" ] || [ "$PR_ACTION" = "ready_for_review" ]; then
+            NEW_OPT="$IN_PROGRESS_OPT"
+          else
+            exit 0
+          fi
+
+          # Extract linked issue numbers from the PR body using closing
+          # keywords. Matches "closes #N", "fixes #N", "resolves #N",
+          # case-insensitive, comma- or "and"-separated lists.
+          ISSUES=$(printf '%s' "$PR_BODY" | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | sort -u)
+
+          if [ -z "$ISSUES" ]; then
+            # No linked issues — try to update the PR item itself.
+            ITEM_ID=$(gh api graphql -f query="
+              query(\$content: ID!) {
+                node(id: \$content) {
+                  ... on PullRequest {
+                    projectItems(first: 20) {
+                      nodes { id project { id } }
+                    }
+                  }
+                }
+              }" \
+              -f content="$PR_NODE_ID" \
+              --jq ".data.node.projectItems.nodes[] | select(.project.id == \"$PROJECT_ID\") | .id" \
+            )
+            if [ -z "$ITEM_ID" ]; then
+              echo "No linked issues and PR not on project; nothing to update."
+              exit 0
+            fi
+            gh api graphql -f query='
+              mutation($project: ID!, $item: ID!, $field: ID!, $opt: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $project, itemId: $item, fieldId: $field,
+                  value: {singleSelectOptionId: $opt}
+                }) { projectV2Item { id } }
+              }' -f project="$PROJECT_ID" -f item="$ITEM_ID" \
+                 -f field="$STATUS_FIELD_ID" -f opt="$NEW_OPT"
+            exit 0
+          fi
+
+          for ISSUE_NUM in $ISSUES; do
+            ISSUE_NODE=$(gh api "repos/${REPO}/issues/${ISSUE_NUM}" --jq '.node_id')
+            ITEM_ID=$(gh api graphql -f query="
+              query(\$content: ID!) {
+                node(id: \$content) {
+                  ... on Issue {
+                    projectItems(first: 20) {
+                      nodes { id project { id } }
+                    }
+                  }
+                }
+              }" \
+              -f content="$ISSUE_NODE" \
+              --jq ".data.node.projectItems.nodes[] | select(.project.id == \"$PROJECT_ID\") | .id" \
+            )
+            if [ -z "$ITEM_ID" ]; then
+              echo "Issue #$ISSUE_NUM not on Project; skipping."
+              continue
+            fi
+            gh api graphql -f query='
+              mutation($project: ID!, $item: ID!, $field: ID!, $opt: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $project, itemId: $item, fieldId: $field,
+                  value: {singleSelectOptionId: $opt}
+                }) { projectV2Item { id } }
+              }' -f project="$PROJECT_ID" -f item="$ITEM_ID" \
+                 -f field="$STATUS_FIELD_ID" -f opt="$NEW_OPT"
+            echo "Issue #$ISSUE_NUM status updated."
+          done
+
+      # Also auto-close linked issues if PR was merged but GitHub's
+      # built-in closing-keyword parser didn't fire (combined "and"
+      # syntax, edge cases, etc.). Belt + braces.
+      - name: Force-close linked issues on PR merge
+        if: |
+          steps.token_check.outputs.configured == 'true' &&
+          github.event_name == 'pull_request' &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.merged == true
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          ISSUES=$(printf '%s' "$PR_BODY" | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | sort -u)
+          for ISSUE_NUM in $ISSUES; do
+            STATE=$(gh api "repos/${REPO}/issues/${ISSUE_NUM}" --jq '.state')
+            if [ "$STATE" = "open" ]; then
+              gh issue close "$ISSUE_NUM" --repo "$REPO" --reason completed \
+                --comment "Auto-closed by project-status-sync workflow on PR #${PR_NUM} merge."
+              echo "Closed issue #$ISSUE_NUM."
+            fi
+          done
