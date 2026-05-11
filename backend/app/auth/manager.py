@@ -9,6 +9,12 @@ Notable hooks we override:
 The manager is async; depends on the SQLAlchemy user database adapter.
 """
 
+# Defer annotation evaluation — needed because validate_password's
+# signature uses `User | "UserCreate"` and SQLAlchemy's
+# DeclarativeAttributeIntercept metaclass on User doesn't support the
+# runtime `|` operator with a forward string reference.
+from __future__ import annotations
+
 import secrets
 import string
 from typing import Optional
