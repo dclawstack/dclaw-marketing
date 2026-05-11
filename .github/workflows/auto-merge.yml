@@ -27,8 +27,14 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'auto-merge')
     runs-on: ubuntu-latest
     steps:
+      # gh CLI needs a git working tree to resolve the repository context
+      # for `gh pr merge` — without checkout, it errors with
+      # "fatal: not a git repository".
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Enable auto-merge (squash)
-        run: gh pr merge "$PR_NUMBER" --auto --squash
+        run: gh pr merge "$PR_NUMBER" --auto --squash --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
