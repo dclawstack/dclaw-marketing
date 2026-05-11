@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, auth, campaigns_router, leads_router, analytics_router, me, orgs, projects
+from app.api.v1 import admin, auth, campaigns_router, leads_router, analytics_router, jobs, me, orgs, projects
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -52,6 +52,9 @@ app.include_router(orgs.router, prefix="/api/v1")
 
 # Projects (under /orgs/{org_id}/projects) + their memberships
 app.include_router(projects.router, prefix="/api/v1")
+
+# Background jobs — list, get, cancel, SSE stream
+app.include_router(jobs.router, prefix="/api/v1")
 
 # Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
