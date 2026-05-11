@@ -12,6 +12,7 @@ import enum
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     DateTime,
     Enum as SQLEnum,
@@ -24,6 +25,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+
+# Embedding dimensionality. text-embedding-3-small is 1536-dim;
+# text-embedding-3-large is 3072 — we pick small for cost + latency
+# and configurable later via a feature flag.
+EMBEDDING_DIM = 1536
 
 
 class IngestionSourceType(str, enum.Enum):
@@ -133,11 +140,19 @@ class DocumentChunk(Base):
 
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Tokens (rough character / 4 estimate; will use tiktoken in Q3).
+    # Tokens (rough character / 4 estimate; will use tiktoken later).
     estimated_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # Free-form structured: {"page": 3, "section": "Introduction", ...}
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    # Q3: pgvector embedding. NULL until the embedder has run.
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(EMBEDDING_DIM), nullable=True
+    )
+    # Identifier of the embedding model used (e.g.,
+    # "openai/text-embedding-3-small"). NULL while embedding is NULL.
+    embedding_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

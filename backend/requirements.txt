@@ -38,6 +38,10 @@ boto3>=1.34.0
 # Ingestion / parsers (Q2)
 pypdf>=4.0.0
 
+# LLM providers (Q3 embeddings + Phase 2 generation)
+openai>=1.30.0
+anthropic>=0.30.0
+
 # Crypto (encrypted tenant secrets)
 cryptography>=42.0.0
 
