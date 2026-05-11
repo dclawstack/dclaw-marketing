@@ -611,3 +611,146 @@ Six phases. Each phase = its own feature branch and one or more PRs. Per the con
 - The Analyst Agent produces a Monday-morning narrative report ("CTR on LinkedIn carousels +18% WoW driven by hook style X — recommend doubling down").
 - The Manager Station shows a live dashboard of agent activity, retainer burn-down, escalations to handle, and the next week's projected schedule.
 - Zero hardcoded hex anywhere; everything in DKube purple; all `--dk-*` tokens; light mode only.
+
+---
+
+# Appendix A: Technology Choices & Deployment Model
+
+> **Status — locked in planning sessions through 2026-05-12.** These are the foundations every implementation PR builds on. Listed here so the doc, not chat history, is the source of truth.
+
+## A.1 Deployment model
+
+**The platform ships as a Helm chart + container images. Customers install onto their own existing Kubernetes cluster.** DClaw does not host the platform; the customer brings the cluster and the connecting credentials.
+
+- Install path: `helm install dclaw-marketing dclaw/dclaw-marketing -f values.yaml`
+- Container images published to **GHCR** (`ghcr.io/dclawstack/dclaw-marketing-{backend,frontend,worker}`)
+- **Minimum Kubernetes version: 1.28+**
+- Customers reach out to required external services from their cluster: `api.anthropic.com`, Resend, the social platform APIs, etc. Egress must be allowed.
+- For local development, `docker-compose` continues as the dev setup (existing).
+- One Helm install = **multi-Org per install** (a single chart deployment supports N Organizations). External-client SaaS (future) = additional installs per customer agency.
+
+## A.2 Helm chart shape
+
+### A.2.1 Bundled-default dependencies (overridable to external)
+
+| Dependency | Bundled default | External override |
+|---|---|---|
+| **Postgres** (with `pgvector` extension) | Bitnami Postgres subchart, in-cluster StatefulSet | Set `postgres.bundled: false` + `postgres.externalUri: "postgresql+asyncpg://..."` |
+| **Redis** | Bitnami Redis subchart | `redis.bundled: false` + `redis.externalUri: "redis://..."` |
+| **Object storage** (S3-compatible) | MinIO subchart, in-cluster | `objectStorage.bundled: false` + `objectStorage.endpoint`, `accessKey`, `secretKey`, `bucket` |
+
+Easiest install = zero external setup, everything in-cluster. Production customers swap to managed Postgres (AWS RDS, GCP Cloud SQL, DO Managed DB), managed Redis, and S3/R2/Spaces via values flags. Customers retain responsibility for backups + HA when they go external.
+
+### A.2.2 TLS — dual mode
+
+Customer picks per install:
+
+- `tls.certManager.enabled: true` — chart creates a `Certificate` resource expecting cert-manager to be pre-installed in the cluster (most production clusters have it; auto-issues + renews via Let's Encrypt or any configured Issuer).
+- `tls.existingSecret: "<secret-name>"` — chart uses a pre-created TLS Secret. Customer brings their own cert.
+- Either is supported; not both at once for a given install.
+
+### A.2.3 URL routing — path-based, single domain
+
+One Helm install = one domain (e.g., `marketing.acme.com`). Organizations are URL-pathed: `/orgs/<slug>/projects/<id>/...`. Org selection happens after login. One TLS cert, simplest DNS setup. Subdomain-per-Org and one-install-per-Org are explicitly deferred (they fit external-client SaaS, not internal-team installs).
+
+### A.2.4 Multi-tenant isolation
+
+All Org data is row-level isolated via:
+
+- `organization_id` FK column on every tenant-scoped table (indexed)
+- API-layer access checks via `Depends(current_organization)` dependency
+- Encrypted-at-rest tenant secrets keyed per-Org (see A.6)
+
+No schema-per-tenant; no database-per-tenant. Single Postgres serves all Orgs in the install.
+
+## A.3 Backend stack
+
+| Concern | Choice |
+|---|---|
+| Web framework | **FastAPI** (existing) — `lifespan` handler, async everything |
+| ORM | **SQLAlchemy 2.0 async** (existing) — `Mapped[]` + `mapped_column()` only; `DeclarativeBase` from `app.models.base` |
+| Schemas | **Pydantic v2** (existing) — `ConfigDict(from_attributes=True)` |
+| Database | **Postgres 16+ with `pgvector` extension** for the Knowledge Graph embeddings |
+| Cache + broker | **Redis** |
+| Background jobs | **Celery** (Redis broker) + **Celery Beat** for scheduled tasks |
+| Auth | **FastAPI-Users** — JWT + refresh tokens, **admin-only user creation**, mandatory first-login password reset, Argon2 password hashing, audit-logged auth events |
+| Object storage | S3-compatible (MinIO default in-cluster; S3 / R2 / Spaces in prod) via `aiobotocore` |
+| Email | **Resend** API (transactional + marketing) |
+| Migrations | **Alembic** — every model change ships with a revision; baseline migration captured in **A0** before further work |
+| Tests | `pytest` + `pytest-asyncio==0.24.0` (pinned; do not upgrade) — already in place |
+
+## A.4 Frontend stack
+
+| Concern | Choice |
+|---|---|
+| Framework | **Next.js 14 App Router** |
+| Styling | **Tailwind CSS** + `frontend/src/styles/brand.css` (DKube tokens; light-mode only; **no `dark:` variants**) |
+| Type | **Poppins** loaded via `next/font/google` |
+| API client | Typed fetch wrapper in `src/lib/api.ts` |
+| UI primitives | Pre-built shadcn-style components in `src/components/ui/` — **DO NOT install shadcn CLI** (breaks Tailwind v3) |
+| Forms | **React Hook Form** + **Zod** resolvers — add in Phase 1 when first forms land |
+| State mgmt | Local React state for v2.0; add **Zustand** if/when component-tree drilling becomes painful |
+| Live updates | Server-Sent Events (SSE) for agent activity streams; WebSocket only if bidirectional is needed |
+
+## A.5 Agent runtime
+
+| Concern | Choice |
+|---|---|
+| Agent framework | **Claude Agent SDK** (Anthropic-built) |
+| Tool layer | **MCP (Model Context Protocol)** — every external system implements an MCP server exposing typed tools |
+| LLM model routing *(default; per-action overridable)* | **Opus** for the Conductor; **Sonnet** for role-Agents; **Haiku** for fast-path routine tasks (classification, simple drafting, anomaly detection) |
+| Embedding model | Decision deferred to Phase 1 (Theme Q) — candidates: OpenAI `text-embedding-3-large`, Voyage AI, Cohere |
+| Memory | Per-agent state + the shared **Knowledge Graph** (Postgres + pgvector). Org-scoped — nothing leaks between Orgs |
+| Audit | Every agent action + tool call recorded in `AuditEvent` with reasoning trace (timestamp, agent, action, inputs, alternatives considered, confidence, output, approver, cost) |
+| Cost guardrails | Per-Org daily/monthly LLM budget caps (Theme I3); per-action confidence threshold; soft + hard caps |
+
+## A.6 Secrets management
+
+| Scope | Approach |
+|---|---|
+| Dev | `.env.local` files in `backend/` and `frontend/` — gitignored, never committed |
+| CI | **GitHub Actions Secrets** for test DB URL, mock API keys |
+| Prod platform secrets (Anthropic key, Resend key, DB URL, Redis URL, master KMS key) | **Kubernetes Secrets**, populated from a `.env.production` file kept outside git, applied via Helm values |
+| Tenant OAuth tokens (each Org's X / LinkedIn / Instagram / etc. tokens) | **Encrypted at rest in Postgres** using `cryptography.fernet` with a per-Org data key. The per-Org key is itself encrypted with a master KMS key (env var for v2.0; stored in cluster Secret) |
+| Rotation | Manual via `helm upgrade` for v2.0. Add **External Secrets Operator** backed by AWS Secrets Manager / Vault / 1Password Connect later if rotation discipline becomes a real need |
+
+## A.7 Container images
+
+| Image | Path | Runs |
+|---|---|---|
+| **Backend** (API + worker + beat) | `ghcr.io/dclawstack/dclaw-marketing-backend:<version>` | One image, three containers (uvicorn / Celery worker / Celery beat) selected by command args in their respective Deployments |
+| **Frontend** | `ghcr.io/dclawstack/dclaw-marketing-frontend:<version>` | Standalone Next.js build |
+| **Migrations** | Same backend image | Runs `alembic upgrade head` in a Helm `pre-install` + `pre-upgrade` Hook Job |
+
+Image tags follow semver (`v2.0.0`, `v2.0.1`, …) with a `latest` mutable tag for development.
+
+## A.8 Observability
+
+| Concern | Choice |
+|---|---|
+| Backend logs | Structured JSON via `structlog` |
+| Frontend logs | Browser console + Sentry SDK |
+| Errors | **Sentry** — both backend and frontend; DSN configurable in values |
+| Metrics | **OpenTelemetry** → Prometheus exporter; chart exposes `/metrics` endpoint |
+| Tracing | OpenTelemetry → OTLP endpoint configurable (customer points it at Jaeger, Tempo, Datadog, Honeycomb, etc.) |
+| Health endpoints | Backend `/health` (liveness) + `/ready` (readiness); frontend simple up-check |
+
+## A.9 Versioning & release
+
+- **Single semver line** for the platform; chart, backend image, frontend image all version-bump together.
+- `main` branch always green; tags `v<major>.<minor>.<patch>` cut on every release.
+- GitHub Actions workflow builds + pushes images on tag; chart published to a Helm repository (GHCR or chart-museum, TBD in Phase 0 polish).
+- Customer upgrade path: `helm upgrade dclaw-marketing dclaw/dclaw-marketing --version <new>` — migrations run via the pre-upgrade Hook.
+
+## A.10 What is explicitly deferred
+
+These are common in mature platforms but explicitly OUT of v2.0 scope to keep the surface manageable:
+
+- SSO / SAML / OIDC for end-user login (admin-only user creation + temp password + first-login reset is the only flow for v2.0; SSO is post-v2.0)
+- Self-service signup / billing portals (this is an install-it-yourself platform; we're not collecting payments)
+- Per-tenant database isolation (row-level only in v2.0)
+- External Secrets Operator integration (v2.1+)
+- Multi-region active-active deployment (single-cluster install for v2.0)
+- Dark mode (forbidden by the brand system; explicitly out)
+- Mobile native apps (web responsive only)
+- Real-time collaborative editing of the same campaign (basic optimistic-lock for v2.0)
