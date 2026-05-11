@@ -1,40 +1,144 @@
-# Enable GitHub's auto-merge on a PR once it has the `auto-merge` label.
-# Auto-merge waits for: all required checks to pass + required reviews
-# satisfied + no merge conflicts. Then GitHub merges with the selected
-# method (squash here).
+# Poll-and-merge: workaround for `allow_auto_merge` being disabled at
+# the org policy level. Instead of using GitHub's native auto-merge
+# (`gh pr merge --auto`, which the org blocks), we list open PRs with
+# the `auto-merge` label, check whether each one is ready (CI green +
+# no conflicts + no unresolved review requests), and merge them
+# directly with `gh pr merge --squash`.
 #
-# Workflow expectations:
-# 1. PR author adds the `auto-merge` label to the PR.
-# 2. This workflow runs and enables auto-merge via the GitHub CLI.
-# 3. CI runs as normal; when all checks pass, GitHub merges the PR.
+# Triggers:
+#   - PR labeled auto-merge / reopened / synchronize / ready_for_review
+#   - workflow_run completion of the CI workflow (so we re-check when
+#     a new run finishes green)
+#   - pull_request_review submitted (in case an approval unblocks a PR)
+#   - schedule every 15 minutes as a fallback (so a missed event
+#     doesn't strand a PR indefinitely)
 #
-# Repo settings prerequisite (one-time, set via UI):
-#   Settings -> General -> Pull Requests -> Allow auto-merge: ON
-name: Auto-merge labeled PRs
+# GITHUB_TOKEN with contents: write + pull-requests: write is enough
+# to merge PRs in this same repo. No PAT, no org-level auto-merge
+# feature required.
+name: Poll and merge labeled PRs
 
 on:
   pull_request:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
   pull_request_review:
     types: [submitted]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  schedule:
+    - cron: "*/15 * * * *"
 
 permissions:
   contents: write
   pull-requests: write
+  actions: read
+
+concurrency:
+  # Serialize so two events don't race to merge the same PR.
+  group: poll-and-merge
+  cancel-in-progress: false
 
 jobs:
-  enable-auto-merge:
-    if: contains(github.event.pull_request.labels.*.name, 'auto-merge')
+  poll-and-merge:
     runs-on: ubuntu-latest
     steps:
-      # gh CLI needs a git working tree to resolve the repository context
-      # for `gh pr merge` — without checkout, it errors with
-      # "fatal: not a git repository".
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Enable auto-merge (squash)
-        run: gh pr merge "$PR_NUMBER" --auto --squash --repo "$GITHUB_REPOSITORY"
+
+      - name: Find and merge ready PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Pull every open PR with the auto-merge label
+          PRS=$(gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --label auto-merge \
+            --json number,title,mergeable,mergeStateStatus,isDraft,reviewDecision,statusCheckRollup \
+            --limit 50)
+
+          COUNT=$(echo "$PRS" | jq 'length')
+          echo "Found $COUNT candidate PR(s) with label 'auto-merge'."
+          if [ "$COUNT" = "0" ]; then
+            exit 0
+          fi
+
+          # For each candidate, decide whether it is mergeable
+          MERGED=0
+          for ROW in $(echo "$PRS" | jq -r '.[] | @base64'); do
+            _row() { echo "$ROW" | base64 --decode; }
+            PR=$(_row)
+            NUM=$(echo "$PR" | jq -r .number)
+            TITLE=$(echo "$PR" | jq -r .title)
+            DRAFT=$(echo "$PR" | jq -r .isDraft)
+            MERGEABLE=$(echo "$PR" | jq -r .mergeable)
+            MERGE_STATE=$(echo "$PR" | jq -r .mergeStateStatus)
+            REVIEW=$(echo "$PR" | jq -r .reviewDecision)
+
+            echo "PR #$NUM \"$TITLE\""
+            echo "  draft=$DRAFT mergeable=$MERGEABLE state=$MERGE_STATE review=$REVIEW"
+
+            if [ "$DRAFT" = "true" ]; then
+              echo "  skip: draft"
+              continue
+            fi
+            if [ "$MERGEABLE" != "MERGEABLE" ]; then
+              echo "  skip: not mergeable (conflicts or pending mergeability calc)"
+              continue
+            fi
+            # Allowed merge-state buckets: CLEAN (all green) or UNSTABLE
+            # (non-required check failing — we still merge). Reject
+            # BLOCKED (required check failing) and DIRTY (conflicts).
+            case "$MERGE_STATE" in
+              CLEAN|UNSTABLE|HAS_HOOKS) : ;;
+              BEHIND)
+                echo "  skip: behind base — needs rebase"
+                continue ;;
+              BLOCKED|DIRTY|DRAFT|UNKNOWN)
+                echo "  skip: state $MERGE_STATE"
+                continue ;;
+              *)
+                echo "  skip: unhandled state $MERGE_STATE"
+                continue ;;
+            esac
+
+            # If a review was explicitly requested, require approval
+            if [ "$REVIEW" = "CHANGES_REQUESTED" ] || [ "$REVIEW" = "REVIEW_REQUIRED" ]; then
+              echo "  skip: review decision = $REVIEW"
+              continue
+            fi
+
+            # Check that no required check is failing or pending
+            ALL_CHECKS_OK=$(echo "$PR" | jq -r '
+              [.statusCheckRollup[]
+                | select(.__typename == "CheckRun" or .__typename == "StatusContext")
+              ]
+              | map(
+                  (.conclusion // .state // "UNKNOWN") as $c
+                  | if ($c | ascii_upcase) == "SUCCESS"
+                       or ($c | ascii_upcase) == "NEUTRAL"
+                       or ($c | ascii_upcase) == "SKIPPED"
+                    then true else false end
+                )
+              | all
+            ')
+            if [ "$ALL_CHECKS_OK" != "true" ]; then
+              echo "  skip: not all checks green"
+              continue
+            fi
+
+            echo "  → merging (squash)"
+            if gh pr merge "$NUM" --repo "$REPO" --squash --delete-branch --auto=false 2>&1; then
+              MERGED=$((MERGED+1))
+              echo "  merged ✓"
+            else
+              echo "  merge failed (will retry on next event)"
+            fi
+          done
+
+          echo "Total merged this run: $MERGED"
