@@ -12,7 +12,7 @@ import enum
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, ForeignKey, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -50,6 +50,18 @@ class Organization(Base):
     is_external: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
+
+    # Q5 — Goals & Constraints. Each is a free-form JSON blob that
+    # the Conductor (and agents) pull from when planning a brief.
+    # Shape suggestions live in OpenAPI docs; not strictly typed at
+    # the DB level so the schema can evolve without migrations.
+    goals_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    constraints_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Per-action-class autonomy posture overrides. Shape:
+    # {"social_post": "hard_gate", "draft_email": "soft_gate", ...}
+    # Action types not listed fall back to platform defaults
+    # (see PLAN-v1.2 §v2.0 §5).
+    autonomy_posture_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
