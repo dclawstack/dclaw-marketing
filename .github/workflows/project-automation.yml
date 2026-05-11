@@ -1,0 +1,45 @@
+# Auto-add every new issue and PR in this repo to the
+# "DClaw Marketing Project" board (org project #1).
+#
+# Required secret: PROJECT_TOKEN
+#   A fine-grained PAT (or classic PAT) with the "project" scope.
+#   The default GITHUB_TOKEN cannot write to org-level Projects.
+#   Generate at https://github.com/settings/tokens?type=beta
+#   Scope: Organization permissions -> Projects: Read and write
+#   Add as a repo secret named PROJECT_TOKEN.
+name: Project automation
+
+on:
+  issues:
+    types: [opened, reopened, transferred]
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  add-to-project:
+    name: Add to DClaw Marketing Project
+    runs-on: ubuntu-latest
+    steps:
+      # Guard so the workflow does not fail the PR check before the
+      # PROJECT_TOKEN secret has been provisioned. Posts a warning
+      # annotation instead, and short-circuits the rest of the job.
+      - name: Verify PROJECT_TOKEN is configured
+        id: token_check
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$PROJECT_TOKEN" ]; then
+            echo "::warning::PROJECT_TOKEN secret is not set; auto-add to Project skipped. Configure a fine-grained PAT with org Projects: Read and write, then add as repo secret PROJECT_TOKEN."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Add to project
+        if: steps.token_check.outputs.configured == 'true'
+        uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: https://github.com/orgs/dclawstack/projects/1
+          github-token: ${{ secrets.PROJECT_TOKEN }}

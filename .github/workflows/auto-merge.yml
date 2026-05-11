@@ -1,0 +1,40 @@
+# Enable GitHub's auto-merge on a PR once it has the `auto-merge` label.
+# Auto-merge waits for: all required checks to pass + required reviews
+# satisfied + no merge conflicts. Then GitHub merges with the selected
+# method (squash here).
+#
+# Workflow expectations:
+# 1. PR author adds the `auto-merge` label to the PR.
+# 2. This workflow runs and enables auto-merge via the GitHub CLI.
+# 3. CI runs as normal; when all checks pass, GitHub merges the PR.
+#
+# Repo settings prerequisite (one-time, set via UI):
+#   Settings -> General -> Pull Requests -> Allow auto-merge: ON
+name: Auto-merge labeled PRs
+
+on:
+  pull_request:
+    types: [labeled, opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    if: contains(github.event.pull_request.labels.*.name, 'auto-merge')
+    runs-on: ubuntu-latest
+    steps:
+      # gh CLI needs a git working tree to resolve the repository context
+      # for `gh pr merge` — without checkout, it errors with
+      # "fatal: not a git repository".
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Enable auto-merge (squash)
+        run: gh pr merge "$PR_NUMBER" --auto --squash --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
