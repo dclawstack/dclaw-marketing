@@ -15,5 +15,6 @@ As the platform grows, each subsystem adds its own submodule:
 # Re-export the example task so it's registered without needing
 # explicit submodule imports.
 from app.worker.tasks.example import sleep_and_progress  # noqa: F401
+from app.worker.tasks.ingestion import ingest_asset  # noqa: F401
 
-__all__ = ["sleep_and_progress"]
+__all__ = ["sleep_and_progress", "ingest_asset"]

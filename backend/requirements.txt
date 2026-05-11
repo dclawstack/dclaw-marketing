@@ -5,6 +5,9 @@ uvicorn[standard]>=0.27.0
 # Database / ORM
 sqlalchemy[asyncio]>=2.0.0
 asyncpg>=0.29.0
+# psycopg2 = sync driver needed by Celery tasks (which are sync-native
+# and re-write `+asyncpg` -> default sync driver in helpers.py)
+psycopg2-binary>=2.9.9
 alembic>=1.13.0
 pgvector>=0.2.5
 
@@ -31,6 +34,9 @@ resend>=0.7.0
 # Object storage (A3)
 aiobotocore>=2.11.0
 boto3>=1.34.0
+
+# Ingestion / parsers (Q2)
+pypdf>=4.0.0
 
 # Crypto (encrypted tenant secrets)
 cryptography>=42.0.0
