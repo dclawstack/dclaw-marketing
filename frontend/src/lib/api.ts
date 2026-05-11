@@ -1,17 +1,33 @@
+import { getToken, clearToken } from "@/lib/auth";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    ...options,
-  });
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options?.headers as Record<string, string> | undefined),
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401) {
+    clearToken();
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      window.location.href = "/login";
+    }
+    throw new Error("Session expired. Please log in.");
+  }
+
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`API error ${response.status}: ${error}`);
+  }
+  // 204 No Content
+  if (response.status === 204) {
+    return undefined as T;
   }
   return response.json();
 }
@@ -148,4 +164,135 @@ export async function getAnalyticsSummary(campaignId: string): Promise<Record<st
   return fetchJson<Record<string, { count: number; total_value: number }>>(
     `/api/v1/analytics/campaign/${campaignId}/summary`
   );
+}
+
+/* ============================================================
+   Organizations & Projects (A1)
+   ============================================================ */
+
+export type OrgRole =
+  | "admin"
+  | "manager"
+  | "creatives"
+  | "social_media_manager"
+  | "seo_specialist"
+  | "paid_media_specialist"
+  | "reviewer"
+  | "analyst"
+  | "viewer"
+  | "client";
+
+export type ProjectStatus = "active" | "paused" | "archived";
+
+export interface Organization {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  is_external: boolean;
+}
+
+export interface Project {
+  id: string;
+  organization_id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  goals_json: Record<string, unknown> | null;
+  status: ProjectStatus;
+}
+
+export interface OrgMembership {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  role: OrgRole;
+}
+
+export interface ProjectMembership {
+  id: string;
+  user_id: string;
+  project_id: string;
+  role: OrgRole;
+}
+
+export async function listOrgs(): Promise<Organization[]> {
+  return fetchJson<Organization[]>("/api/v1/orgs");
+}
+
+export async function createOrg(data: {
+  slug: string;
+  name: string;
+  description?: string;
+  is_external?: boolean;
+}): Promise<Organization> {
+  return fetchJson<Organization>("/api/v1/orgs", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getOrg(orgId: string): Promise<Organization> {
+  return fetchJson<Organization>(`/api/v1/orgs/${orgId}`);
+}
+
+export async function listProjects(orgId: string): Promise<Project[]> {
+  return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
+}
+
+export async function createProject(
+  orgId: string,
+  data: { slug: string; name: string; description?: string; goals_json?: Record<string, unknown> },
+): Promise<Project> {
+  return fetchJson<Project>(`/api/v1/orgs/${orgId}/projects`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/* ============================================================
+   Admin user management
+   ============================================================ */
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  is_active: boolean;
+  is_superuser: boolean;
+  is_verified: boolean;
+  password_reset_required: boolean;
+}
+
+export interface AdminUserCreateResponse {
+  user: AdminUser;
+  temp_password: string;
+}
+
+export async function adminListUsers(): Promise<AdminUser[]> {
+  return fetchJson<AdminUser[]>("/api/v1/admin/users");
+}
+
+export async function adminCreateUser(data: {
+  email: string;
+  full_name?: string;
+  is_superuser?: boolean;
+}): Promise<AdminUserCreateResponse> {
+  return fetchJson<AdminUserCreateResponse>("/api/v1/admin/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function adminResetUserPassword(
+  userId: string,
+): Promise<{ user_id: string; temp_password: string }> {
+  return fetchJson<{ user_id: string; temp_password: string }>(
+    `/api/v1/admin/users/${userId}/reset-password`,
+    { method: "POST" },
+  );
+}
+
+export async function adminRevokeUser(userId: string): Promise<void> {
+  return fetchJson<void>(`/api/v1/admin/users/${userId}`, { method: "DELETE" });
 }
