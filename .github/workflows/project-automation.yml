@@ -1,0 +1,29 @@
+# Auto-add every new issue and PR in this repo to the
+# "DClaw Marketing Project" board (org project #1).
+#
+# Required secret: PROJECT_TOKEN
+#   A fine-grained PAT (or classic PAT) with the "project" scope.
+#   The default GITHUB_TOKEN cannot write to org-level Projects.
+#   Generate at https://github.com/settings/tokens?type=beta
+#   Scope: Organization permissions -> Projects: Read and write
+#   Add as a repo secret named PROJECT_TOKEN.
+name: Project automation
+
+on:
+  issues:
+    types: [opened, reopened, transferred]
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  add-to-project:
+    name: Add to DClaw Marketing Project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: https://github.com/orgs/dclawstack/projects/1
+          github-token: ${{ secrets.PROJECT_TOKEN }}
