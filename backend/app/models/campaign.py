@@ -2,7 +2,7 @@ import enum
 from datetime import date
 from uuid import UUID, uuid4
 
-from sqlalchemy import String, Date, Float, Text, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Date, Enum as SQLEnum, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -27,6 +27,19 @@ class Campaign(Base):
     __tablename__ = "campaigns"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+
+    # Tenancy (A1) — every campaign belongs to an Org and a Project
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    project_id: Mapped[UUID] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[CampaignType] = mapped_column(SQLEnum(CampaignType), nullable=False)
     status: Mapped[CampaignStatus] = mapped_column(
@@ -41,5 +54,8 @@ class Campaign(Base):
         "Lead", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan"
     )
     analytics_events: Mapped[list["AnalyticsEvent"]] = relationship(
-        "AnalyticsEvent", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan"
+        "AnalyticsEvent",
+        back_populates="campaign",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )

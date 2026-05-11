@@ -1,22 +1,61 @@
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # App identity
     app_name: str = "DClaw Marketing"
     app_env: str = "dev"
     debug: bool = True
 
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_marketing"
-    
+    # Database
+    database_url: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_marketing"
+    )
+
+    # Redis (A2 worker, caching)
+    redis_url: str = "redis://localhost:6379/0"
+
+    # Auth — JWT lifetime + signing secret used by FastAPI-Users
+    jwt_secret: str = "change-me-jwt-secret-set-in-env"
+    jwt_lifetime_seconds: int = 3600  # 1h access token
+    refresh_token_lifetime_seconds: int = 60 * 60 * 24 * 14  # 14d refresh token
+
+    # Legacy single secret (kept for any non-FastAPI-Users primitives).
+    secret_key: str = "change-me-in-production"
+    access_token_expire_minutes: int = 60
+
+    # Tenant secrets encryption — master key for Fernet-encrypted per-Org
+    # OAuth tokens. Set via env in prod; default here is dev only.
+    tenant_encryption_master_key: str = "change-me-fernet-master-key-base64=="
+
+    # Object storage (S3 / MinIO / R2)
+    s3_endpoint: str = "http://localhost:9000"
+    s3_region: str = "us-east-1"
+    s3_access_key: str = "minioadmin"
+    s3_secret_key: str = "minioadmin"
+    s3_bucket: str = "dclaw-marketing"
+    s3_use_ssl: bool = False
+
+    # Email — Resend
+    resend_api_key: str = ""
+    resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
+
+    # LLM providers
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""  # for embeddings
+
+    # Admin bootstrap — created on first run if no admin user exists
+    bootstrap_admin_email: str = "admin@dclaw.local"
+    bootstrap_admin_temp_password: str = "ChangeMeOnFirstLogin!"
+
+    # Legacy AI fields (kept for backwards-compat; removed in Phase 2)
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1"
     openrouter_api_key: str = ""
     openrouter_model: str = "meta-llama/llama-3.1-8b-instruct"
-    
-    secret_key: str = "change-me-in-production"
-    access_token_expire_minutes: int = 60
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = False
