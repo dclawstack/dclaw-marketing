@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, jobs, me, orgs, projects
+from app.api.v1 import admin, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, ingest, jobs, me, orgs, projects
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -64,6 +64,9 @@ app.include_router(approvals.router, prefix="/api/v1")
 
 # Brand Kits — per-Org versioned brand identity (Theme Q1)
 app.include_router(brand_kits.router, prefix="/api/v1")
+
+# Ingestion — file/url/git/zip → text chunks (Theme Q2)
+app.include_router(ingest.router, prefix="/api/v1")
 
 # Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
