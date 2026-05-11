@@ -1,16 +1,17 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.config import settings
-from app.core.database import init_db, get_db
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.routes import health
-from app.api.v1 import campaigns_router, leads_router, analytics_router
+from app.api.v1 import admin, auth, campaigns_router, leads_router, analytics_router, me, orgs, projects
+from app.core.config import settings
+from app.core.database import get_db, init_db
+from app.models.analytics_event import AnalyticsEvent, EventType
 from app.models.campaign import Campaign, CampaignStatus
 from app.models.lead import Lead, LeadStatus
-from app.models.analytics_event import AnalyticsEvent, EventType
 
 
 @asynccontextmanager
@@ -21,8 +22,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.0.0",
+    version="0.1.0",
     lifespan=lifespan,
+    description="DClaw Marketing — agent-driven marketing operating system",
 )
 
 app.add_middleware(
@@ -33,16 +35,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health
 app.include_router(health.router, prefix="/health", tags=["health"])
+
+# Auth (FastAPI-Users) — login / logout / reset / verify
+app.include_router(auth.router, prefix="/api/v1/auth")
+
+# Current-user — /me, /me/password (first-login mandatory reset)
+app.include_router(me.router, prefix="/api/v1")
+
+# Admin user management — admin-only (only Admin can create users)
+app.include_router(admin.router, prefix="/api/v1")
+
+# Organizations + their memberships
+app.include_router(orgs.router, prefix="/api/v1")
+
+# Projects (under /orgs/{org_id}/projects) + their memberships
+app.include_router(projects.router, prefix="/api/v1")
+
+# Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
 app.include_router(leads_router, prefix="/api/v1/leads", tags=["leads"])
 app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["analytics"])
 
 
-@app.get("/api/v1/dashboard")
+@app.get("/api/v1/dashboard", tags=["dashboard"])
 async def get_dashboard(db: AsyncSession = Depends(get_db)):
+    """TEMPORARY: returns global aggregates. Will be Org-scoped in a
+    follow-up commit once existing v1 routers are migrated to require
+    organization_id + project_id.
+    """
     active_result = await db.execute(
-        select(func.count()).select_from(Campaign).where(Campaign.status == CampaignStatus.active)
+        select(func.count())
+        .select_from(Campaign)
+        .where(Campaign.status == CampaignStatus.active)
     )
     active_campaigns = active_result.scalar() or 0
 
@@ -54,10 +80,14 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     )
     converted_leads = converted_result.scalar() or 0
 
-    conversion_rate = (converted_leads / total_leads * 100) if total_leads > 0 else 0.0
+    conversion_rate = (
+        (converted_leads / total_leads * 100) if total_leads > 0 else 0.0
+    )
 
     total_spend_result = await db.execute(
-        select(func.sum(AnalyticsEvent.value)).where(AnalyticsEvent.event_type == EventType.conversion)
+        select(func.sum(AnalyticsEvent.value)).where(
+            AnalyticsEvent.event_type == EventType.conversion
+        )
     )
     total_spend = total_spend_result.scalar() or 0.0
 
