@@ -2,7 +2,7 @@ import enum
 from datetime import date
 from uuid import UUID, uuid4
 
-from sqlalchemy import String, Date, Float, Text, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Date, Enum as SQLEnum, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -27,6 +27,22 @@ class Campaign(Base):
     __tablename__ = "campaigns"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+
+    # Tenancy (A1). Nullable in v0.1.0 because the legacy v1 routes
+    # (POST /api/v1/campaigns/) don't yet require Org/Project context.
+    # Will tighten to NOT NULL in v0.2 once all routes are scoped under
+    # /orgs/{org_id}/projects/{project_id}/.
+    organization_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    project_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[CampaignType] = mapped_column(SQLEnum(CampaignType), nullable=False)
     status: Mapped[CampaignStatus] = mapped_column(
@@ -41,5 +57,8 @@ class Campaign(Base):
         "Lead", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan"
     )
     analytics_events: Mapped[list["AnalyticsEvent"]] = relationship(
-        "AnalyticsEvent", back_populates="campaign", lazy="selectin", cascade="all, delete-orphan"
+        "AnalyticsEvent",
+        back_populates="campaign",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )
