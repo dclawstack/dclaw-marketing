@@ -9,6 +9,10 @@ from alembic import context
 
 from app.core.config import settings
 from app.models.base import Base
+# Importing the app.models package triggers app/models/__init__.py
+# which imports every model class so they register with Base.metadata.
+# Without this, alembic --autogenerate cannot see the model tables.
+import app.models  # noqa: F401
 
 # this is the Alembic Config object
 config = context.config

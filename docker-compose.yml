@@ -2,19 +2,32 @@ version: "3.9"
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dclaw_crm
+      POSTGRES_DB: dclaw_marketing
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dclaw_crm"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dclaw_marketing"]
       interval: 10s
       timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
       retries: 5
 
   backend:
@@ -22,15 +35,18 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_crm
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_marketing
+      REDIS_URL: redis://redis:6379/0
       APP_ENV: production
     ports:
-      - "8095:8095"
+      - "8102:8102"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8095/health/')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8102/health/')"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -40,18 +56,19 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8095
+        NEXT_PUBLIC_API_URL: http://localhost:8102
     environment:
-      PORT: 3006
+      PORT: 3015
     ports:
-      - "3006:3006"
+      - "3015:3015"
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3006/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3015/"]
       interval: 30s
       timeout: 5s
       retries: 3
 
 volumes:
   postgres_data:
+  redis_data:
