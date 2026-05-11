@@ -10,6 +10,8 @@ from app.models.lead import Lead, LeadStatus
 from app.models.analytics_event import AnalyticsEvent, EventType
 from app.models.job import Job, JobStatus
 from app.models.asset import Asset, AssetKind, AssetStatus
+from app.models.audit_event import AuditActorKind, AuditEvent, AuditResult
+from app.models.approval_request import ApprovalRequest, ApprovalStatus
 
 __all__ = [
     "User",
@@ -31,4 +33,9 @@ __all__ = [
     "Asset",
     "AssetKind",
     "AssetStatus",
+    "AuditActorKind",
+    "AuditEvent",
+    "AuditResult",
+    "ApprovalRequest",
+    "ApprovalStatus",
 ]
