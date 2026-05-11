@@ -20,11 +20,12 @@ class AnalyticsEvent(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
 
-    # Tenancy (A1) — denormalized from campaign for fast per-Org filters.
-    # project_id is reachable via campaign but kept for the same reason.
-    organization_id: Mapped[UUID] = mapped_column(
+    # Tenancy (A1). Nullable in v0.1.0 — see Campaign for rationale.
+    # Denormalized from campaign for fast per-Org filters; project_id is
+    # reachable via campaign but skipped here (matches the v1.0 shape).
+    organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
 

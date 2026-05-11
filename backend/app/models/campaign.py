@@ -28,15 +28,18 @@ class Campaign(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
 
-    # Tenancy (A1) — every campaign belongs to an Org and a Project
-    organization_id: Mapped[UUID] = mapped_column(
+    # Tenancy (A1). Nullable in v0.1.0 because the legacy v1 routes
+    # (POST /api/v1/campaigns/) don't yet require Org/Project context.
+    # Will tighten to NOT NULL in v0.2 once all routes are scoped under
+    # /orgs/{org_id}/projects/{project_id}/.
+    organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
-    project_id: Mapped[UUID] = mapped_column(
+    project_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
 

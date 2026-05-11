@@ -237,14 +237,15 @@ def upgrade() -> None:
     )
 
     # --- add tenancy FKs to existing tables ------------------------------
-    # campaigns
+    # campaigns. NULLABLE in v0.1.0 — see model rationale. v0.2.0 will
+    # tighten to NOT NULL once all routes are scoped under /orgs/{id}/...
     op.add_column(
         "campaigns",
         sa.Column(
             "organization_id",
             sa.UUID(),
             sa.ForeignKey("organizations.id", ondelete="CASCADE"),
-            nullable=False,
+            nullable=True,
         ),
     )
     op.add_column(
@@ -253,13 +254,14 @@ def upgrade() -> None:
             "project_id",
             sa.UUID(),
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
-            nullable=False,
+            nullable=True,
         ),
     )
     op.create_index("ix_campaigns_organization_id", "campaigns", ["organization_id"])
     op.create_index("ix_campaigns_project_id", "campaigns", ["project_id"])
 
-    # leads — replace global UNIQUE(email) with composite UNIQUE(org_id, email)
+    # leads — replace global UNIQUE(email) with composite UNIQUE(org_id, email).
+    # NULLABLE org/project — see Campaign rationale above.
     op.drop_constraint("uq_leads_email", "leads", type_="unique")
     op.add_column(
         "leads",
@@ -267,7 +269,7 @@ def upgrade() -> None:
             "organization_id",
             sa.UUID(),
             sa.ForeignKey("organizations.id", ondelete="CASCADE"),
-            nullable=False,
+            nullable=True,
         ),
     )
     op.add_column(
@@ -276,7 +278,7 @@ def upgrade() -> None:
             "project_id",
             sa.UUID(),
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
-            nullable=False,
+            nullable=True,
         ),
     )
     op.create_unique_constraint(
@@ -286,14 +288,14 @@ def upgrade() -> None:
     op.create_index("ix_leads_organization_id", "leads", ["organization_id"])
     op.create_index("ix_leads_project_id", "leads", ["project_id"])
 
-    # analytics_events
+    # analytics_events — NULLABLE in v0.1.0
     op.add_column(
         "analytics_events",
         sa.Column(
             "organization_id",
             sa.UUID(),
             sa.ForeignKey("organizations.id", ondelete="CASCADE"),
-            nullable=False,
+            nullable=True,
         ),
     )
     op.create_index(
