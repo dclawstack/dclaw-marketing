@@ -1,5 +1,6 @@
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.pool import NullPool
 
@@ -26,6 +27,10 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with test_engine.begin() as conn:
+        # pgvector extension — required by DocumentChunk.embedding column
+        # (Q3 / Theme Q3 knowledge graph). pgvector/pgvector:pg16 image
+        # ships the extension; we just need to enable it for this DB.
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield

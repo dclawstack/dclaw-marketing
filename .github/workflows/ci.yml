@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        # pgvector/pgvector:pg16 = official Postgres 16 image with the
+        # pgvector extension preinstalled. Required by the Knowledge
+        # Graph (Theme Q3) for vector(1536) embedding columns. Same
+        # image used in docker-compose for dev.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

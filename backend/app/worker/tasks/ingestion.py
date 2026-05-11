@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.asset import Asset
 from app.models.ingestion import DocumentChunk, IngestionSource, IngestionStatus
 from app.models.job import JobStatus
+from app.services.embeddings import embed_texts_sync
 from app.services.ingestion import chunk_text, estimate_tokens, extract_text
 from app.services.storage import sync_s3_client
 from app.worker.celery_app import celery_app
@@ -68,8 +69,16 @@ def _do_ingest(session: Session, job_id: UUID, source_id: UUID) -> dict:
     # ------ chunk ------
     source.status = IngestionStatus.chunking
     session.commit()
-    update_job(job_id, progress=0.7, progress_label="chunking")
+    update_job(job_id, progress=0.6, progress_label="chunking")
     chunks = chunk_text(text)
+
+    # ------ embed (Q3) ------
+    source.status = IngestionStatus.embedding
+    session.commit()
+    update_job(job_id, progress=0.8, progress_label=f"embedding {len(chunks)} chunks")
+    vectors, model_name = ([], "")
+    if chunks:
+        vectors, model_name = embed_texts_sync(chunks)
 
     for i, chunk in enumerate(chunks):
         session.add(
@@ -79,6 +88,8 @@ def _do_ingest(session: Session, job_id: UUID, source_id: UUID) -> dict:
                 position=i,
                 text=chunk,
                 estimated_tokens=estimate_tokens(chunk),
+                embedding=vectors[i] if i < len(vectors) else None,
+                embedding_model=model_name if vectors else None,
             )
         )
     source.document_chunks_created = len(chunks)
@@ -87,6 +98,7 @@ def _do_ingest(session: Session, job_id: UUID, source_id: UUID) -> dict:
         "text_byte_size": len(text),
         "chunk_count": len(chunks),
         "mime_type": asset.mime_type,
+        "embedding_model": model_name,
     }
     source.status = IngestionStatus.ready
     source.updated_at = datetime.now(timezone.utc)
