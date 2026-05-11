@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,6 +116,7 @@ export default function AdminUsersPage() {
             Users reset on first login.
           </p>
         </div>
+        <Button onClick={() => setCreateOpen(true)}>Create user</Button>
         <Dialog
           open={createOpen}
           onOpenChange={(o) => {
@@ -124,9 +124,6 @@ export default function AdminUsersPage() {
             if (!o) setTempPassword(null);
           }}
         >
-          <DialogTrigger asChild>
-            <Button>Create user</Button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create user</DialogTitle>
