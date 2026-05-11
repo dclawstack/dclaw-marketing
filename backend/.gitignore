@@ -39,6 +39,6 @@ venv/
 .coverage
 htmlcov/
 
-# Alembic
-alembic/versions/*.py
-!alembic/versions/.gitkeep
+# Alembic: migration files MUST be checked in. Earlier scaffold rule
+# excluded versions/*.py — removed because every revision is a piece
+# of production-relevant history.

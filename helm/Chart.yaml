@@ -1,6 +1,6 @@
 apiVersion: v2
-name: dclaw-crm
-description: A Helm chart for DClaw vertical SaaS app
+name: dclaw-marketing
+description: DClaw Marketing — agent-driven marketing operating system
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
+version: 0.1.0
+appVersion: "0.1.0"

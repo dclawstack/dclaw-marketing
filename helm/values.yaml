@@ -2,21 +2,21 @@ replicaCount: 1
 
 image:
   backend:
-    repository: ghcr.io/dclawstack/dclaw-crm-backend
+    repository: ghcr.io/dclawstack/dclaw-marketing-backend
     tag: latest
     pullPolicy: IfNotPresent
   frontend:
-    repository: ghcr.io/dclawstack/dclaw-crm-frontend
+    repository: ghcr.io/dclawstack/dclaw-marketing-frontend
     tag: latest
     pullPolicy: IfNotPresent
 
 service:
   backend:
     type: ClusterIP
-    port: 8000
+    port: 8102
   frontend:
     type: ClusterIP
-    port: 3000
+    port: 3015
 
 ingress:
   enabled: false
