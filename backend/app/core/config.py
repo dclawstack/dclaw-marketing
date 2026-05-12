@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
+    # CRM sync (Phase 8.6+) — HubSpot first.
+    hubspot_access_token: str = ""
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
