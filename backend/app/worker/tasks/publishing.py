@@ -59,6 +59,11 @@ from app.services.publishers.reddit import (
     RedditPublishError,
     publish_to_reddit,
 )
+from app.services.publishers.substack import (
+    SubstackAuthError,
+    SubstackPublishError,
+    publish_to_substack,
+)
 from app.services.publishers.x import (
     XAuthError,
     XPublishError,
@@ -207,6 +212,22 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             webhook_url=webhook_url,
             text=post.copy or "",
             username=account.display_name if account else None,
+        )
+
+    if post.channel == ScheduledPostChannel.substack:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.substack
+        )
+        api_key = account._interim_access_token if account else None
+        publication = (
+            (account.auth_metadata_json or {}).get("publication")
+            if account
+            else None
+        )
+        return publish_to_substack(
+            api_key=api_key,
+            publication=publication,
+            text=post.copy or "",
         )
 
     if post.channel == ScheduledPostChannel.pinterest:
@@ -358,6 +379,11 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (PinterestAuthError, PinterestPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"pinterest: {exc}"
+            session.commit()
+            raise
+        except (SubstackAuthError, SubstackPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"substack: {exc}"
             session.commit()
             raise
         except (XAuthError, XPublishError) as exc:

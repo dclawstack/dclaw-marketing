@@ -44,6 +44,7 @@ class ScheduledPostChannel(str, enum.Enum):
     reddit = "reddit"
     pinterest = "pinterest"
     discord = "discord"
+    substack = "substack"
     newsletter = "newsletter"
     blog = "blog"
 
