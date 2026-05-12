@@ -2,18 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DkBadge,
+  DkButton,
+  DkCard,
+  DkCardContent,
+  DkCardDescription,
+  DkCardHeader,
+  DkCardTitle,
+  DkEmptyState,
+  DkInput,
+  DkLabel,
+  DkPageHeader,
+  DkSelect,
+  DkTextarea,
+} from "@/components/dk";
 import {
   GenerateResultItem,
   Organization,
@@ -42,10 +47,9 @@ export default function CreativesStationPage() {
         setOrgs(list);
         if (list.length > 0 && !orgId) setOrgId(list[0].id);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load Orgs.");
+        setError(err instanceof Error ? err.message : "Failed to load orgs.");
       }
     })();
-
   }, []);
 
   async function onGenerate() {
@@ -69,41 +73,37 @@ export default function CreativesStationPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-ink">Creatives Station</h1>
-        <p className="text-sm text-muted-foreground">
-          Hand the Creatives Agent a brief. It pulls your brand kit and
-          retrieves relevant context from your knowledge graph, then drafts{" "}
-          {nVariants} variants. Each lands in the Approval Inbox — the agent
-          never publishes on its own.
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      <DkPageHeader
+        eyebrow="Agent · Creatives"
+        title="Creatives Station"
+        description={`Hand the Creatives Agent a brief — it pulls your active brand kit, retrieves relevant context from your knowledge graph, and drafts variants. Outputs land in the Approval Inbox; the agent never publishes on its own.`}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Run the Creatives Agent</CardTitle>
-          <CardDescription>
-            Outputs are pending until a reviewer approves in{" "}
-            <Link href="/inbox" className="font-medium underline">
+      <DkCard>
+        <DkCardHeader>
+          <DkCardTitle>Run the Creatives Agent</DkCardTitle>
+          <DkCardDescription>
+            Outputs are pending until a reviewer approves in the{" "}
+            <Link href="/inbox" className="font-medium text-brand hover:underline">
               Inbox
             </Link>
             .
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </DkCardDescription>
+        </DkCardHeader>
+        <DkCardContent className="flex flex-col gap-4">
           {orgs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No Organizations available. Ask an admin to create one (or sign in
-              as a superuser to create one yourself).
-            </p>
+            <DkEmptyState
+              icon={<Sparkles className="h-6 w-6" />}
+              title="No organizations yet"
+              description="Ask an admin to create one — or sign in as a superuser to create one yourself."
+            />
           ) : (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="org">Organization</Label>
-                <select
+              <div className="flex flex-col gap-1.5">
+                <DkLabel htmlFor="org">Organization</DkLabel>
+                <DkSelect
                   id="org"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                   value={orgId}
                   onChange={(e) => setOrgId(e.target.value)}
                 >
@@ -112,14 +112,14 @@ export default function CreativesStationPage() {
                       {o.name} ({o.slug})
                     </option>
                   ))}
-                </select>
+                </DkSelect>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="channel">Channel</Label>
-                  <select
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <DkLabel htmlFor="channel">Channel</DkLabel>
+                  <DkSelect
                     id="channel"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                     value={channel}
                     onChange={(e) => setChannel(e.target.value)}
                   >
@@ -128,75 +128,92 @@ export default function CreativesStationPage() {
                     <option value="instagram">Instagram</option>
                     <option value="threads">Threads</option>
                     <option value="bluesky">Bluesky</option>
-                  </select>
+                  </DkSelect>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="n">Number of variants</Label>
-                  <Input
+                <div className="flex flex-col gap-1.5">
+                  <DkLabel htmlFor="n">Number of variants</DkLabel>
+                  <DkInput
                     id="n"
                     type="number"
                     min={1}
                     max={10}
                     value={nVariants}
-                    onChange={(e) => setNVariants(Number(e.target.value) || 3)}
+                    onChange={(e) =>
+                      setNVariants(Number(e.target.value) || 3)
+                    }
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="brief">Brief</Label>
-                <textarea
+
+              <div className="flex flex-col gap-1.5">
+                <DkLabel
+                  htmlFor="brief"
+                  description="One paragraph. The clearer the intent, the better the variants."
+                >
+                  Brief
+                </DkLabel>
+                <DkTextarea
                   id="brief"
-                  className="min-h-[120px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  placeholder="What do you want the agent to write about?"
+                  rows={5}
+                  placeholder="Announce the Q2 release — lead with the customer outcome, friendly but professional…"
                   value={brief}
                   onChange={(e) => setBrief(e.target.value)}
                 />
               </div>
+
               {error && (
-                <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <div
+                  role="alert"
+                  className="rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+                >
                   {error}
                 </div>
               )}
-              <Button
+
+              <DkButton
                 onClick={() => void onGenerate()}
                 disabled={!orgId || brief.length < 4 || generating}
+                loading={generating}
+                withArrow={!generating}
               >
-                {generating ? "Generating…" : "Generate variants"}
-              </Button>
+                {generating ? "Generating" : "Generate Variants"}
+              </DkButton>
             </>
           )}
-        </CardContent>
-      </Card>
+        </DkCardContent>
+      </DkCard>
 
       {results.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated variants</CardTitle>
-            <CardDescription>
+        <DkCard>
+          <DkCardHeader>
+            <DkCardTitle>Generated Variants</DkCardTitle>
+            <DkCardDescription>
               All {results.length} are queued in the{" "}
-              <Link href="/inbox" className="font-medium underline">
+              <Link href="/inbox" className="font-medium text-brand hover:underline">
                 Approval Inbox
               </Link>
               .
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </DkCardDescription>
+          </DkCardHeader>
+          <DkCardContent className="flex flex-col gap-3">
             {results.map((r, i) => (
               <div
                 key={r.approval_request_id}
-                className="rounded-md border border-border bg-muted/30 p-3"
+                className="rounded-md border border-[var(--dk-border)] bg-[var(--dk-bg-tint)] p-4"
               >
                 <div className="mb-2 flex items-center gap-2">
-                  <Badge>Variant {i + 1}</Badge>
-                  <span className="text-xs text-muted-foreground">
+                  <DkBadge tone="brand">Variant {i + 1}</DkBadge>
+                  <span className="text-xs text-[var(--dk-fg-2)] font-mono">
                     approval #{r.approval_request_id.slice(0, 8)}
                   </span>
                 </div>
-                <p className="whitespace-pre-wrap text-sm">{r.variant}</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--dk-fg-1)]">
+                  {r.variant}
+                </p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </DkCardContent>
+        </DkCard>
       )}
     </div>
   );
