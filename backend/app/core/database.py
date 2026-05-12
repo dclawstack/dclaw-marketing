@@ -1,6 +1,6 @@
 """Async SQLAlchemy engine + session + lifespan init."""
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.config import settings
@@ -35,8 +35,13 @@ async def init_db() -> None:
        BOOTSTRAP_ADMIN_TEMP_PASSWORD so the operator can log in.
        password_reset_required=True so they must change it.
     """
-    # Schema (dev/tests only — prod uses alembic)
+    # Schema (dev/tests only — prod uses alembic).
+    # pgvector extension must be enabled BEFORE create_all so the
+    # `embedding vector(1536)` column on DocumentChunk can be created.
+    # The pgvector/pgvector:pg16 image ships the extension; we just
+    # turn it on for the current DB.
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
 
     # Bootstrap admin — only if no User rows exist yet
