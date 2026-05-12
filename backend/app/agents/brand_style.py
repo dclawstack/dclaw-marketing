@@ -73,10 +73,12 @@ async def get_active_brand_kit(
 
 
 def compose_visual_prompt(prompt: str, brand_kit: BrandKit | None) -> str:
-    """Returns the user prompt with brand-style direction prepended.
+    """Returns the user prompt with brand-style direction prepended for
+    **image** generation.
 
-    If no Brand Kit is configured, returns the raw prompt unchanged so
-    the agent still produces *something*.
+    Includes palette + typography + mood. If no Brand Kit is
+    configured, returns the raw prompt unchanged so the agent still
+    produces *something*.
     """
     prompt = prompt.strip()
     if brand_kit is None:
@@ -107,4 +109,122 @@ def compose_visual_prompt(prompt: str, brand_kit: BrandKit | None) -> str:
     return f"{prefix}\n\n{prompt}"
 
 
-__all__ = ["compose_visual_prompt", "get_active_brand_kit"]
+def compose_video_prompt(prompt: str, brand_kit: BrandKit | None) -> str:
+    """Returns the user prompt with brand-style direction prepended for
+    **video** generation.
+
+    Video models typically respond better to compact prompts than
+    SDXL, so we keep the prefix lean: palette and mood only — no
+    typography (most video models can't render text reliably anyway).
+    """
+    prompt = prompt.strip()
+    if brand_kit is None:
+        return prompt
+
+    fragments: list[str] = []
+
+    palette = _palette_tokens(brand_kit.palette_json)
+    if palette:
+        # Compact form for video — palette first, no full sentence.
+        fragments.append("palette: " + ", ".join(palette))
+
+    mood = _mood_tokens(brand_kit.voice_json)
+    if mood:
+        fragments.append("mood: " + ", ".join(mood))
+
+    if not fragments:
+        return prompt
+
+    prefix = " | ".join(fragments)
+    return f"({prefix}) {prompt}"
+
+
+def compose_voice_text(text: str, brand_kit: BrandKit | None) -> str:
+    """For voice / TTS the brand kit's voice sliders matter more than
+    palette. We do NOT mutate the text content — TTS reads what you
+    give it verbatim. Instead, callers should use the returned
+    ``voice_id`` hint (see :func:`pick_voice_id`).
+
+    This function is the no-op text passthrough kept for symmetry with
+    the other composers.
+    """
+    return text.strip()
+
+
+def pick_voice_id(brand_kit: BrandKit | None, default: str) -> str:
+    """Selects an ElevenLabs voice id based on the BrandKit's voice
+    sliders. Returns ``default`` when no kit, or no slider is set.
+
+    Heuristic:
+      formal_casual < 0.4 → formal, choose "Antoni" (deep, calm)
+      formal_casual > 0.7 → casual, choose "Rachel" (warm, energetic)
+      otherwise           → default
+
+    The brand kit can override entirely via
+    ``voice_json["elevenlabs_voice_id"]``.
+    """
+    if brand_kit is None or not isinstance(brand_kit.voice_json, dict):
+        return default
+    voice_json = brand_kit.voice_json
+    override = voice_json.get("elevenlabs_voice_id")
+    if isinstance(override, str) and override:
+        return override
+    sliders = voice_json.get("sliders") or {}
+    fc = sliders.get("formal_casual")
+    if isinstance(fc, (int, float)):
+        if fc < 0.4:
+            return "ErXwobaYiN019PkySvjV"  # "Antoni" — formal/calm
+        if fc > 0.7:
+            return "21m00Tcm4TlvDq8ikWAM"  # "Rachel" — casual/warm
+    return default
+
+
+def compose_music_prompt(prompt: str, brand_kit: BrandKit | None) -> str:
+    """Returns the user prompt with brand mood prepended for **music**
+    generation.
+
+    Music models (MusicGen, Suno) respond to genre + mood + tempo
+    descriptors. We map brand voice sliders to those:
+
+      formal     → "ambient, soft strings, slow tempo"
+      casual     → "upbeat acoustic, warm guitar, mid tempo"
+      playful    → "energetic, bright synth, fast tempo"
+      serious    → "contemplative, piano, slow tempo"
+
+    Palette and fonts don't apply to music — ignored.
+    """
+    prompt = prompt.strip()
+    if brand_kit is None:
+        return prompt
+
+    descriptors: list[str] = []
+    sliders = (brand_kit.voice_json or {}).get("sliders") or {}
+
+    fc = sliders.get("formal_casual")
+    if isinstance(fc, (int, float)):
+        if fc < 0.4:
+            descriptors.append("ambient, soft strings, slow tempo")
+        elif fc > 0.7:
+            descriptors.append("upbeat acoustic, warm guitar, mid tempo")
+
+    pe = sliders.get("playful_serious") or sliders.get("serious_playful")
+    if isinstance(pe, (int, float)):
+        if pe > 0.7:
+            descriptors.append("energetic, bright synth, fast tempo")
+        elif pe < 0.4:
+            descriptors.append("contemplative, piano, slow tempo")
+
+    if not descriptors:
+        return prompt
+
+    return f"{', '.join(descriptors)}. {prompt}"
+
+
+__all__ = [
+    "compose_visual_prompt",
+    "compose_video_prompt",
+    "compose_voice_text",
+    "compose_music_prompt",
+    "pick_voice_id",
+    "get_active_brand_kit",
+]

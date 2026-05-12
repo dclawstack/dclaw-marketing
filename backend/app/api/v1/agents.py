@@ -11,8 +11,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.brand_style import compose_visual_prompt, get_active_brand_kit
+from app.agents.brand_style import (
+    compose_music_prompt,
+    compose_video_prompt,
+    compose_visual_prompt,
+    get_active_brand_kit,
+    pick_voice_id,
+)
 from app.agents.creatives import generate_social_posts
+from app.core.config import settings as _app_settings
 from app.auth import current_active_user
 from app.core.database import get_db
 from app.models.approval_request import ApprovalRequest, ApprovalStatus
@@ -303,8 +310,10 @@ async def creatives_generate_videos(
     await _user_in_org(
         session, user, body.organization_id, allowed_roles=_CREATIVES_ROLES
     )
+    brand_kit = await get_active_brand_kit(session, body.organization_id)
+    composed_prompt = compose_video_prompt(body.prompt, brand_kit)
     assets = await generate_video(
-        body.prompt, n=body.n, duration_s=body.duration_s
+        composed_prompt, n=body.n, duration_s=body.duration_s
     )
     if assets:
         await record_cost(
@@ -381,7 +390,14 @@ async def creatives_generate_voice(
     await _user_in_org(
         session, user, body.organization_id, allowed_roles=_CREATIVES_ROLES
     )
-    assets = await generate_voice(body.text, voice_id=body.voice_id, n=body.n)
+    # Brand-aware voice-id selection: if caller didn't pin a voice_id,
+    # pick one matching the BrandKit voice sliders (or fall back to
+    # the config default).
+    voice_id = body.voice_id
+    if voice_id is None:
+        brand_kit = await get_active_brand_kit(session, body.organization_id)
+        voice_id = pick_voice_id(brand_kit, _app_settings.elevenlabs_default_voice)
+    assets = await generate_voice(body.text, voice_id=voice_id, n=body.n)
     if assets:
         await record_cost(
             session,
@@ -458,8 +474,10 @@ async def creatives_generate_music(
     await _user_in_org(
         session, user, body.organization_id, allowed_roles=_CREATIVES_ROLES
     )
+    brand_kit = await get_active_brand_kit(session, body.organization_id)
+    composed_prompt = compose_music_prompt(body.prompt, brand_kit)
     assets = await generate_music(
-        body.prompt, n=body.n, duration_s=body.duration_s
+        composed_prompt, n=body.n, duration_s=body.duration_s
     )
     if assets:
         await record_cost(
