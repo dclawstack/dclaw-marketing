@@ -132,6 +132,12 @@ celery_app.conf.update(
             "task": "app.worker.tasks.automation.process_pending_events",
             "schedule": 30.0,
         },
+        # Phase 11 / I3 — hourly cost-cap evaluation. Warns at 80%,
+        # writes a "cost_cap.blocked" audit row at 100%.
+        "evaluate-cost-caps-hourly": {
+            "task": "app.worker.tasks.cost_caps.evaluate_all_orgs",
+            "schedule": crontab(minute=15),
+        },
         # Phase 10 / M — weekly client report. Mondays 07:30 UTC.
         "emit-weekly-client-reports": {
             "task": "app.worker.tasks.client_reports.emit_weekly_client_reports",
