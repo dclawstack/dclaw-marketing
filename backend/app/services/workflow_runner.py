@@ -210,12 +210,12 @@ async def _run_approval(
         return "filed", {"approval_request_id": "session-less"}
 
     # Fresh approval — file a new ApprovalRequest row.
-    subject = _render(
+    summary_text = _render(
         node.get("subject_template")
         or f"Approval needed for workflow node {node.get('id')!r}",
         context,
     )
-    kind = node.get("kind") or "workflow.node"
+    action_type = node.get("kind") or "workflow.node"
     payload = {
         "workflow_id": str(workflow.id),
         "node_id": node.get("id"),
@@ -223,9 +223,9 @@ async def _run_approval(
     }
     req = ApprovalRequest(
         organization_id=workflow.organization_id,
-        kind=kind,
-        subject=subject[:255],
-        request_json=payload,
+        action_type=action_type,
+        summary=summary_text[:255],
+        payload_json=payload,
         status=ApprovalStatus.pending,
     )
     session.add(req)
