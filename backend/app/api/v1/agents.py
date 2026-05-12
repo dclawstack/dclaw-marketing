@@ -111,6 +111,95 @@ async def creatives_generate(
     )
 
 
+# ---------- Phase 3.1 — image generation ------------------------------
+
+
+class ImagesGenerateRequest(BaseModel):
+    organization_id: UUID
+    project_id: UUID | None = None
+    prompt: str = Field(min_length=4, max_length=4000)
+    n: int = Field(default=3, ge=1, le=8)
+    aspect_ratio: str = Field(default="1:1", pattern=r"^(1:1|16:9|9:16|4:5)$")
+
+
+class ImagesGenerateResultItem(BaseModel):
+    url: str
+    provider: str
+    approval_request_id: str
+
+
+class ImagesGenerateResponse(BaseModel):
+    organization_id: UUID
+    project_id: UUID | None
+    prompt: str
+    n: int
+    aspect_ratio: str
+    results: list[ImagesGenerateResultItem]
+
+
+@router.post("/creatives/images", response_model=ImagesGenerateResponse)
+async def creatives_generate_images(
+    body: ImagesGenerateRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> ImagesGenerateResponse:
+    """Generates image variants and files each as a pending
+    ApprovalRequest (Hard-gate; the agent itself never publishes).
+
+    Uses Replicate when ``REPLICATE_API_TOKEN`` is set, otherwise the
+    deterministic SVG stub — both feed the same approval flow.
+    """
+    await _user_in_org(
+        session, user, body.organization_id, allowed_roles=_CREATIVES_ROLES
+    )
+
+    images = await generate_image(
+        body.prompt, n=body.n, aspect_ratio=body.aspect_ratio
+    )
+
+    results: list[ImagesGenerateResultItem] = []
+    for img in images:
+        ar = ApprovalRequest(
+            organization_id=body.organization_id,
+            project_id=body.project_id,
+            requested_by_user_id=user.id,
+            requested_by_agent="creatives_agent_v1",
+            action_type="publish_image_asset",
+            target_type="image_draft",
+            payload_json={
+                "prompt": body.prompt,
+                "url": img.url,
+                "provider": img.provider.value,
+                "aspect_ratio": body.aspect_ratio,
+                "seed": img.seed,
+            },
+            summary=(
+                f"Image draft ({img.provider.value}, {body.aspect_ratio}): "
+                f"{body.prompt[:80]}{'…' if len(body.prompt) > 80 else ''}"
+            ),
+            status=ApprovalStatus.pending,
+        )
+        session.add(ar)
+        await session.flush()
+        results.append(
+            ImagesGenerateResultItem(
+                url=img.url,
+                provider=img.provider.value,
+                approval_request_id=str(ar.id),
+            )
+        )
+
+    await session.commit()
+    return ImagesGenerateResponse(
+        organization_id=body.organization_id,
+        project_id=body.project_id,
+        prompt=body.prompt,
+        n=body.n,
+        aspect_ratio=body.aspect_ratio,
+        results=results,
+    )
+
+
 # ---------- Phase 3.3 — video / voice / music ------------------------
 
 

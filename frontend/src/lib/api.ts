@@ -761,6 +761,45 @@ export async function generateCreatives(req: GenerateRequest): Promise<GenerateR
   });
 }
 
+/* ---------- Phase 3.1 — image generation ---------- */
+
+export type AspectRatio = "1:1" | "16:9" | "9:16" | "4:5";
+
+export interface GenerateImagesRequest {
+  organization_id: string;
+  project_id?: string;
+  prompt: string;
+  n?: number;
+  aspect_ratio?: AspectRatio;
+}
+
+export interface GenerateImagesResultItem {
+  url: string;
+  provider: string;
+  approval_request_id: string;
+}
+
+export interface GenerateImagesResponse {
+  organization_id: string;
+  project_id: string | null;
+  prompt: string;
+  n: number;
+  aspect_ratio: AspectRatio;
+  results: GenerateImagesResultItem[];
+}
+
+export async function generateCreativeImages(
+  req: GenerateImagesRequest,
+): Promise<GenerateImagesResponse> {
+  return fetchJson<GenerateImagesResponse>(
+    "/api/v1/agents/creatives/images",
+    {
+      method: "POST",
+      body: JSON.stringify(req),
+    },
+  );
+}
+
 /* ============================================================
    Approvals (A4)
    ============================================================ */
