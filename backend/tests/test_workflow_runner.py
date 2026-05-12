@@ -120,8 +120,9 @@ async def test_run_workflow_defers_on_approval_node():
     assert result.completed is False
     assert result.deferred_reason is not None
     assert "approval" in result.deferred_reason
-    # Only the first node ran; c never executed
-    assert [n.node_id for n in result.nodes] == ["a"]
+    # Node 'a' ran; 'b' is the approval (now recorded as a deferred
+    # node-result with the filed approval id); 'c' never executed.
+    assert [n.node_id for n in result.nodes] == ["a", "b"]
 
 
 @pytest.mark.asyncio
