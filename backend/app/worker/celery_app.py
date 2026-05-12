@@ -54,5 +54,13 @@ celery_app.conf.update(
             "task": "app.worker.tasks.analytics.compute_daily_rollups",
             "schedule": crontab(hour=6, minute=0),
         },
+        # Phase 8.3 — attribution computation. Runs at 06:30 UTC,
+        # after the rollups so the dashboard reads consistent data.
+        # Builds AttributionResult rows for yesterday's conversions
+        # under first-touch / last-touch / linear models.
+        "compute-attribution": {
+            "task": "app.worker.tasks.attribution.compute_attribution",
+            "schedule": crontab(hour=6, minute=30),
+        },
     },
 )
