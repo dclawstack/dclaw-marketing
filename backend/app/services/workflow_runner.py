@@ -1,0 +1,274 @@
+"""Workflow runner (Phase 10.3).
+
+Synchronous DAG executor for the ``Workflow.dsl_json`` shape. Walks
+nodes in topological order, runs each node's effect, threads an
+accumulating ``context`` dict between them.
+
+DSL shape::
+
+    {
+      "nodes": [
+        {"id": "n1", "type": "llm",
+         "system": "You are X.",
+         "user_template": "Brief: {{brief}}",
+         "output_var": "draft_text"  # optional; defaults to node id
+        },
+        {"id": "n2", "type": "tool_call",
+         "connection_id": "<uuid>",
+         "tool_name": "search_contacts",
+         "arguments_template": {"q": "{{brief}}"}
+        },
+        {"id": "n3", "type": "noop", "note": "placeholder"}
+      ],
+      "edges": [
+        {"from": "n1", "to": "n2"},
+        {"from": "n2", "to": "n3"}
+      ]
+    }
+
+Templates use ``{{var}}`` substitution against the running context.
+Unknown vars stay literal (``{{missing}}``) — runners that need
+strict rendering can post-filter.
+
+Node types in v1:
+- ``llm``       → calls ``app.agents.anthropic_client.complete``
+- ``tool_call`` → calls ``app.services.mcp_client.invoke_tool``
+- ``noop``      → records the node's ``note`` in the output
+
+``approval`` and ``branch`` nodes are recognised but currently raise
+``WorkflowDeferredError`` — they need a WorkflowRun model to track
+paused state. That's a follow-up.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.agents.anthropic_client import complete
+from app.models.connection import Connection
+from app.models.ops import Workflow
+from app.services.mcp_client import invoke_tool
+
+
+_VAR_RE = re.compile(r"\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}")
+
+
+class WorkflowError(RuntimeError):
+    pass
+
+
+class WorkflowDeferredError(WorkflowError):
+    """Raised when execution hits a node type that requires a paused
+    WorkflowRun model — not yet implemented.
+    """
+
+
+@dataclass
+class NodeResult:
+    node_id: str
+    type: str
+    output: Any
+    error: str | None = None
+
+
+@dataclass
+class WorkflowRunResult:
+    workflow_id: UUID
+    completed: bool
+    nodes: list[NodeResult] = field(default_factory=list)
+    final_context: dict = field(default_factory=dict)
+    deferred_reason: str | None = None
+
+
+# ---------- DSL helpers -----------------------------------------------
+
+
+def _topological_order(dsl: dict) -> list[dict]:
+    """Returns nodes in execution order using Kahn's algorithm."""
+    nodes = dsl.get("nodes", [])
+    edges = dsl.get("edges", [])
+    by_id = {n["id"]: n for n in nodes if "id" in n}
+
+    indegree: dict[str, int] = {nid: 0 for nid in by_id}
+    successors: dict[str, list[str]] = {nid: [] for nid in by_id}
+    for e in edges:
+        src, dst = e.get("from"), e.get("to")
+        if src in by_id and dst in by_id:
+            indegree[dst] += 1
+            successors[src].append(dst)
+
+    ready = [nid for nid, d in indegree.items() if d == 0]
+    ordered: list[dict] = []
+    while ready:
+        nid = ready.pop(0)
+        ordered.append(by_id[nid])
+        for dst in successors[nid]:
+            indegree[dst] -= 1
+            if indegree[dst] == 0:
+                ready.append(dst)
+
+    if len(ordered) != len(by_id):
+        raise WorkflowError(
+            f"Workflow has a cycle: {len(ordered)}/{len(by_id)} nodes "
+            "reachable. Refusing to run."
+        )
+    return ordered
+
+
+def _render(template: str, context: dict) -> str:
+    def _replace(m: re.Match) -> str:
+        path = m.group(1).split(".")
+        cur: Any = context
+        for part in path:
+            if isinstance(cur, dict) and part in cur:
+                cur = cur[part]
+            else:
+                return m.group(0)  # leave the {{...}} placeholder
+        return str(cur)
+
+    return _VAR_RE.sub(_replace, template)
+
+
+def _render_value(value: Any, context: dict) -> Any:
+    if isinstance(value, str):
+        return _render(value, context)
+    if isinstance(value, dict):
+        return {k: _render_value(v, context) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_render_value(v, context) for v in value]
+    return value
+
+
+# ---------- Node runners ----------------------------------------------
+
+
+async def _run_llm(node: dict, context: dict) -> Any:
+    system = _render(node.get("system") or "You are a helpful assistant.", context)
+    user = _render(node.get("user_template") or "", context)
+    if not user.strip():
+        raise WorkflowError(
+            f"llm node {node.get('id')!r} has empty user_template"
+        )
+    text = await complete(system=system, user=user)
+    return {"text": text}
+
+
+async def _run_tool_call(
+    node: dict, context: dict, session: AsyncSession
+) -> Any:
+    conn_id = node.get("connection_id")
+    if not conn_id:
+        raise WorkflowError(
+            f"tool_call node {node.get('id')!r} missing connection_id"
+        )
+    conn = await session.get(Connection, UUID(conn_id))
+    if conn is None:
+        raise WorkflowError(
+            f"tool_call node {node.get('id')!r} references missing "
+            f"connection {conn_id}"
+        )
+    tool_name = node.get("tool_name") or ""
+    args = _render_value(node.get("arguments_template") or {}, context)
+    inv = await invoke_tool(
+        connection=conn, tool_name=tool_name, arguments=args
+    )
+    return {
+        "result": inv.result,
+        "stub": inv.stub,
+        "duration_ms": inv.duration_ms,
+    }
+
+
+# ---------- public entry ----------------------------------------------
+
+
+async def run_workflow(
+    *,
+    workflow: Workflow,
+    initial_context: dict,
+    session: AsyncSession,
+) -> WorkflowRunResult:
+    """Executes the workflow synchronously, returning per-node results
+    + the accumulated context.
+
+    Raises ``WorkflowError`` for cycles or per-node config errors.
+    Hits a deferred node type (approval / branch) → returns a result
+    with ``completed=False`` and ``deferred_reason`` set.
+    """
+    dsl = workflow.dsl_json or {}
+    ordered = _topological_order(dsl)
+
+    context: dict = dict(initial_context)
+    nodes_out: list[NodeResult] = []
+
+    for node in ordered:
+        ntype = node.get("type", "noop")
+        out_var = node.get("output_var") or node["id"]
+
+        try:
+            if ntype == "llm":
+                out = await _run_llm(node, context)
+            elif ntype == "tool_call":
+                out = await _run_tool_call(node, context, session)
+            elif ntype == "noop":
+                out = {"note": node.get("note")}
+            elif ntype in ("approval", "branch", "wait", "webhook_listener"):
+                return WorkflowRunResult(
+                    workflow_id=workflow.id,
+                    completed=False,
+                    nodes=nodes_out,
+                    final_context=context,
+                    deferred_reason=(
+                        f"Node type '{ntype}' requires the WorkflowRun "
+                        "model (paused execution) — not yet implemented."
+                    ),
+                )
+            else:
+                raise WorkflowError(
+                    f"Unknown node type {ntype!r} on node {node.get('id')!r}"
+                )
+        except WorkflowError:
+            raise
+        except Exception as exc:
+            nodes_out.append(
+                NodeResult(
+                    node_id=node["id"],
+                    type=ntype,
+                    output=None,
+                    error=str(exc),
+                )
+            )
+            return WorkflowRunResult(
+                workflow_id=workflow.id,
+                completed=False,
+                nodes=nodes_out,
+                final_context=context,
+                deferred_reason=f"Node {node['id']!r} raised: {exc}",
+            )
+
+        context[out_var] = out
+        nodes_out.append(
+            NodeResult(node_id=node["id"], type=ntype, output=out)
+        )
+
+    return WorkflowRunResult(
+        workflow_id=workflow.id,
+        completed=True,
+        nodes=nodes_out,
+        final_context=context,
+    )
+
+
+__all__ = [
+    "run_workflow",
+    "WorkflowRunResult",
+    "NodeResult",
+    "WorkflowError",
+    "WorkflowDeferredError",
+]
