@@ -36,7 +36,7 @@ The first release. End-to-end demo flow works: log in → set brand → ingest c
 - Approval Inbox at `/inbox` — approve / reject pending agent outputs with optional reasons.
 - Typed API client (`lib/api.ts`) covering all backend endpoints.
 - `AuthGuard` + `AppShell` with role-aware nav.
-- Brand-system enforcement: Poppins font, light-mode-only, DKube design tokens (`brand.css`).
+- Brand-system enforcement: Poppins font, light-mode-only, DClaw design-kit tokens (`brand.css`).
 
 ### Added — infra
 - Helm chart scaffolded (renamed from `dclaw-crm` to `dclaw-marketing`).
@@ -62,7 +62,7 @@ The first release. End-to-end demo flow works: log in → set brand → ingest c
 - **Tenancy first.** Every persistence layer is Org-scoped from day one (some columns NULLABLE in v0.1; tightened in v0.2).
 - **Hard-gate on outbound by default.** Per PLAN-v1.2 §v2.0 §5.2, no agent publishes without explicit human approval.
 - **Stub-friendly externals.** Anthropic and OpenAI calls fall back to deterministic stubs when no API key is set — CI is hermetic, dev works offline.
-- **Light-mode only.** DKube brand tokens are the only style source. No `dark:` Tailwind variants anywhere.
+- **Light-mode only.** DClaw brand tokens are the only style source. No `dark:` Tailwind variants anywhere.
 - **Admin-only user creation.** No self-signup; admins create users with temp passwords. First-login forces a reset.
 
 ### Known v0.1 limitations

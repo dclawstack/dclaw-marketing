@@ -96,7 +96,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branch / commit / PR conventions |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |
 | `backend/app/core/config.py` | All env-driven config |
-| `frontend/src/styles/brand.css` | DKube design tokens (single source of truth) |
+| `frontend/src/styles/brand.css` | DClaw design-kit tokens (single source of truth) |
 
 ---
 

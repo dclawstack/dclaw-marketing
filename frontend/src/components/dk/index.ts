@@ -1,4 +1,4 @@
-// Barrel exports for the DKube-vocabulary component library.
+// Barrel exports for the DClaw design-kit component library.
 //
 // Convention: import from `@/components/dk` rather than individual files.
 //   import { DkButton, DkCard, DkInput } from "@/components/dk";

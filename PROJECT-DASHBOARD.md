@@ -62,7 +62,7 @@ Once those are in place, the entire dev loop runs without manual hops.
 
 See the **closed issues** filtered by `phase:Done`:
 - v1.0 scaffold (Campaign / Lead / AnalyticsEvent CRUD, frontend pages, tests, CI)
-- Brand system (DKube tokens, Poppins, light-mode-only) — [[PLAN-v1.2#Brand|see plan]]
+- Brand system (DClaw design-kit tokens, Poppins, light-mode-only) — [[PLAN-v1.2#Brand|see plan]]
 - v2.0 vision addendum + Appendix A tech choices — merged in PR #8
 - GitHub Project board, fields, milestones, labels, 49 issues
 - Repo→Project link

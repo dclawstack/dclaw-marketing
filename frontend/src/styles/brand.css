@@ -1,7 +1,7 @@
 /* ============================================================
-   DKube Design System — Colors & Type Tokens
-   Source: dkube.io (Webflow site, brand mark SVG)
-   Brand mark colors confirmed from logo SVG fills.
+   DClaw Marketing — Design Kit Tokens
+   The single source of truth for the product's visual language.
+   Token prefix `--dk-*` = "design kit". Light mode only.
    ============================================================ */
 
 /* ---------- Webfonts ---------- */
@@ -12,7 +12,7 @@
 :root {
   /* ============================================================
      COLORS — Brand
-     Sourced directly from the dkube.io trademark logo fills.
+     Purple-led scale; primary is --dk-purple-700.
      ============================================================ */
   --dk-purple-900: #4A3878;       /* deepest, hover/press */
   --dk-purple-800: #5C4A8E;
@@ -27,8 +27,7 @@
 
   /* ============================================================
      COLORS — Neutrals
-     The site uses near-black ink on warm-white, with a #D6D6D6
-     "shadow" gray pulled from the logo's plinth.
+     Near-black ink on warm-white with a soft #D6D6D6 shadow gray.
      ============================================================ */
   --dk-ink:        #0F0F12;       /* headlines */
   --dk-gray-900:   #1A1A20;

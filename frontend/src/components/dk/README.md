@@ -1,10 +1,10 @@
 # Dk Component Library
 
-The canonical primitive library for the DClaw Marketing product UI. Every screen built from Phase 0 onward MUST use these — see [`design/dkube-design-system/project/BRAND_GUIDELINES.md`](../../../../design/dkube-design-system/project/BRAND_GUIDELINES.md).
+The canonical primitive library for the DClaw Marketing product UI. Every screen built from Phase 0 onward MUST use these — see [`design/source/project/BRAND_GUIDELINES.md`](../../../../design/source/project/BRAND_GUIDELINES.md) for the underlying visual rules.
 
 ## Why a new library?
 
-The legacy `@/components/ui/*` set is shadcn-shaped but doesn't apply DKube vocabulary: square buttons, generic gray surfaces, no eyebrow tier, etc. The `Dk*` library re-encodes the brand rules directly:
+The legacy `@/components/ui/*` set is shadcn-shaped but doesn't apply the DClaw brand vocabulary: square buttons, generic gray surfaces, no eyebrow tier, etc. The `Dk*` library re-encodes the brand rules directly:
 
 - **Buttons** are pill-shaped (`--dk-radius-pill`), Poppins 600, brand fill → brand-hover darkening on hover with `--dk-shadow-brand`.
 - **Cards** are 16px-radius, 1px border, soft `shadow-sm` resting → `shadow-md` on hover with `-3px translateY` lift and brand-tinted border.
@@ -53,9 +53,9 @@ import { DkButton, DkCard, DkCardHeader, DkCardTitle, DkInput, DkLabel } from "@
 ## Visual reference
 
 Eyeball comparisons against the source-of-truth previews:
-- [`design/dkube-design-system/project/preview/components-buttons.html`](../../../../design/dkube-design-system/project/preview/components-buttons.html)
-- [`design/dkube-design-system/project/preview/components-card.html`](../../../../design/dkube-design-system/project/preview/components-card.html)
-- [`design/dkube-design-system/project/preview/components-chips.html`](../../../../design/dkube-design-system/project/preview/components-chips.html)
-- [`design/dkube-design-system/project/preview/components-input.html`](../../../../design/dkube-design-system/project/preview/components-input.html)
+- [`design/source/project/preview/components-buttons.html`](../../../../design/source/project/preview/components-buttons.html)
+- [`design/source/project/preview/components-card.html`](../../../../design/source/project/preview/components-card.html)
+- [`design/source/project/preview/components-chips.html`](../../../../design/source/project/preview/components-chips.html)
+- [`design/source/project/preview/components-input.html`](../../../../design/source/project/preview/components-input.html)
 
-A live in-app reference page lives at `/_design` (Story 0.4) once it ships.
+A live in-app reference page lives at `/admin/design` (Story 0.4) once it ships.

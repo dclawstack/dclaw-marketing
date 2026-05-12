@@ -342,7 +342,7 @@ Recommended sequencing for the next ~3 sprints:
 
 ## What "Done" Looks Like for v1.2
 
-- An operator can sign up, connect 5+ MCP integrations, write a one-paragraph campaign brief, hit "generate," review 12 multimedia variants in their brand voice/visuals, schedule a 4-week multi-channel rollout from one calendar, get a daily dashboard of reach + engagement + leads + revenue, and let an agent draft the next week's content while they sleep — all in light mode, all on Poppins, all in DKube purple.
+- An operator can sign up, connect 5+ MCP integrations, write a one-paragraph campaign brief, hit "generate," review 12 multimedia variants in their brand voice/visuals, schedule a 4-week multi-channel rollout from one calendar, get a daily dashboard of reach + engagement + leads + revenue, and let an agent draft the next week's content while they sleep — all in light mode, all on Poppins, all in brand purple.
 
 ---
 
@@ -610,7 +610,7 @@ Six phases. Each phase = its own feature branch and one or more PRs. Per the con
 - Over the next week, the role-Agents draft content, queue posts, build ad sets, draft blog posts, and surface ~30 items for human review. The supervisor at each Station spends ~15 minutes/day approving in their Inbox.
 - The Analyst Agent produces a Monday-morning narrative report ("CTR on LinkedIn carousels +18% WoW driven by hook style X — recommend doubling down").
 - The Manager Station shows a live dashboard of agent activity, retainer burn-down, escalations to handle, and the next week's projected schedule.
-- Zero hardcoded hex anywhere; everything in DKube purple; all `--dk-*` tokens; light mode only.
+- Zero hardcoded hex anywhere; everything in brand purple; all `--dk-*` design-kit tokens; light mode only.
 
 ---
 
@@ -684,7 +684,7 @@ No schema-per-tenant; no database-per-tenant. Single Postgres serves all Orgs in
 | Concern | Choice |
 |---|---|
 | Framework | **Next.js 14 App Router** |
-| Styling | **Tailwind CSS** + `frontend/src/styles/brand.css` (DKube tokens; light-mode only; **no `dark:` variants**) |
+| Styling | **Tailwind CSS** + `frontend/src/styles/brand.css` (DClaw design-kit tokens; light-mode only; **no `dark:` variants**) |
 | Type | **Poppins** loaded via `next/font/google` |
 | API client | Typed fetch wrapper in `src/lib/api.ts` |
 | UI primitives | Pre-built shadcn-style components in `src/components/ui/` — **DO NOT install shadcn CLI** (breaks Tailwind v3) |

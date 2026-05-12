@@ -226,7 +226,7 @@ After 15+ apps, extract shared code to eliminate drift:
 | Library | What It Contains | Impact |
 |---------|-----------------|--------|
 | `dclaw-core` (PyPI) | `Base`, `get_db`, `BaseRepository`, config loader | ~200 lines per app |
-| `@dclawstack/dkube` (npm) | shadcn/ui components, theme, layout shell | ~15 components per app |
+| `@dclawstack/design-kit` (npm) | shadcn/ui components, theme, layout shell | ~15 components per app |
 | `@dclawstack/api-client` (npm) | Typed fetch wrapper, error handling, auth headers | ~100 lines per app |
 
 Until then, the scaffold is the source of truth. Update `dclaw-scaffold` when you discover new anti-patterns or improvements.

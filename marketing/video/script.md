@@ -3,7 +3,7 @@
 **Target length:** ~3 minutes
 **Tone:** confident, direct, no hype
 **Voiceover style:** founder-explaining-the-product, not announcer
-**Brand colors on screen:** DKube purple `#7660A8`, light background
+**Brand colors on screen:** DClaw purple `#7660A8`, light background
 
 ---
 
@@ -110,7 +110,7 @@ Then back to terminal, show:
 >
 > github.com slash dclawstack slash dclaw-marketing. Built with Claude Code."
 
-**End card:** Repo URL + "Built with Claude Code" + DKube logo.
+**End card:** Repo URL + "Built with Claude Code" + DClaw logo.
 
 ---
 

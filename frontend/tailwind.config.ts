@@ -1,16 +1,16 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Tailwind config bound to the DKube design tokens.
+ * Tailwind config bound to the DClaw design-kit tokens.
  *
  * The single source of truth for tokens is `src/styles/brand.css` (CSS
- * custom properties prefixed `--dk-*`). This config exposes them as
- * Tailwind utilities so you can write `bg-brand`, `text-fg-1`,
- * `border-brand-soft`, `shadow-brand`, `rounded-pill`, `ease-out-quart`
- * etc. and they resolve to the token values.
+ * custom properties prefixed `--dk-*`, where `dk` = "design kit"). This
+ * config exposes them as Tailwind utilities so you can write
+ * `bg-brand`, `text-fg-1`, `border-brand-soft`, `shadow-brand`,
+ * `rounded-pill`, `ease-out-quart` etc. and they resolve to the token
+ * values.
  *
- * Light mode only — never add a `.dark` class anywhere in the app;
- * that's a brand-system violation per BRAND_GUIDELINES.md.
+ * Light mode only — never add a `.dark` class anywhere in the app.
  *
  * Conventions:
  * - Prefer semantic aliases (`bg-bg`, `text-fg-1`, `border-brand`)
