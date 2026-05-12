@@ -125,6 +125,13 @@ celery_app.conf.update(
             "task": "app.worker.tasks.approval_notifications.notify_pending_approvals",
             "schedule": 300.0,
         },
+        # Theme D4 / Phase 6 — automation runner. Polls every 30
+        # seconds for pending WebhookEvent rows and dispatches any
+        # matched Automation's actions.
+        "process-pending-webhook-events": {
+            "task": "app.worker.tasks.automation.process_pending_events",
+            "schedule": 30.0,
+        },
         # Phase 11 / I3 — hourly cost-cap evaluation. Warns at 80%,
         # writes a "cost_cap.blocked" audit row at 100%.
         "evaluate-cost-caps-hourly": {

@@ -72,6 +72,62 @@ async def get_active_brand_kit(
     return result.scalar_one_or_none()
 
 
+async def fetch_brand_insights(
+    session: AsyncSession,
+    *,
+    brand_kit_id: UUID,
+    top_k: int = 5,
+    min_confidence: float = 0.6,
+) -> list[dict]:
+    """Return up-to ``top_k`` non-archived BrandKitInsight rows for the
+    given brand kit, highest-confidence first. Format is a list of dicts
+    so call-sites don't have to import the ORM class — keeps the prompt
+    composition layer SQLAlchemy-agnostic.
+    """
+    from app.models.brand_kit_insight import BrandKitInsight
+
+    rows = (
+        await session.execute(
+            select(BrandKitInsight)
+            .where(
+                BrandKitInsight.brand_kit_id == brand_kit_id,
+                BrandKitInsight.is_archived.is_(False),
+                BrandKitInsight.confidence >= float(min_confidence),
+            )
+            .order_by(
+                BrandKitInsight.confidence.desc(),
+                BrandKitInsight.created_at.desc(),
+            )
+            .limit(int(top_k))
+        )
+    ).scalars().all()
+    return [
+        {
+            "kind": r.kind.value,
+            "summary": r.summary,
+            "confidence": float(r.confidence),
+        }
+        for r in rows
+    ]
+
+
+def format_insights_block(insights: list[dict]) -> str:
+    """Render an INSIGHTS section for the agent system prompt. Empty
+    list → empty string so call-sites can unconditionally concatenate.
+    """
+    if not insights:
+        return ""
+    lines = [
+        f"- ({i['kind']}, conf {i['confidence']:.2f}) {i['summary']}"
+        for i in insights
+    ]
+    return (
+        "\nINSIGHTS LEARNED FROM PRIOR RUNS:\n"
+        + "\n".join(lines)
+        + "\n"
+    )
+
+
 def compose_visual_prompt(prompt: str, brand_kit: BrandKit | None) -> str:
     """Returns the user prompt with brand-style direction prepended for
     **image** generation.
@@ -227,4 +283,6 @@ __all__ = [
     "compose_music_prompt",
     "pick_voice_id",
     "get_active_brand_kit",
+    "fetch_brand_insights",
+    "format_insights_block",
 ]

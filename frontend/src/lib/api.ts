@@ -1275,3 +1275,77 @@ export async function deleteBrandInsight(insightId: string): Promise<void> {
     method: "DELETE",
   });
 }
+// ============================================================
+// Theme H — SEO Agent depth
+// ============================================================
+
+export type SeoAuditFinding = {
+  id: string;
+  created_at: string;
+  domain: string | null;
+  kind: string | null;
+  severity: string | null;
+  url: string | null;
+  detail: string | null;
+  stub: boolean;
+};
+
+export type SeoRankingDelta = {
+  keyword: string;
+  country: string;
+  current: number | null;
+  previous: number | null;
+  delta: number | null;
+  snapshot_at: string;
+};
+
+export type SeoInternalLink = {
+  chunk_id: string;
+  source_id: string;
+  source_type: string;
+  source_reference: string;
+  anchor: string;
+  similarity: number;
+};
+
+export async function listSeoAudit(
+  orgId: string,
+  params?: { domain?: string; days?: number; limit?: number },
+): Promise<SeoAuditFinding[]> {
+  const qs = new URLSearchParams();
+  if (params?.domain) qs.set("domain", params.domain);
+  if (params?.days != null) qs.set("days", String(params.days));
+  if (params?.limit != null) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchJson<SeoAuditFinding[]>(`/api/v1/orgs/${orgId}/seo/audit${suffix}`);
+}
+
+export async function runSeoAudit(
+  orgId: string,
+  domain: string,
+): Promise<{ domain: string; findings_count: number; stub: boolean; findings: unknown[] }> {
+  return fetchJson(`/api/v1/orgs/${orgId}/seo/audit/run`, {
+    method: "POST",
+    body: JSON.stringify({ domain }),
+  });
+}
+
+export async function suggestInternalLinks(
+  orgId: string,
+  draftText: string,
+  topK = 5,
+): Promise<SeoInternalLink[]> {
+  return fetchJson<SeoInternalLink[]>(`/api/v1/orgs/${orgId}/seo/internal-links`, {
+    method: "POST",
+    body: JSON.stringify({ draft_text: draftText, top_k: topK }),
+  });
+}
+
+export async function getRankingDelta(
+  orgId: string,
+  days = 7,
+): Promise<SeoRankingDelta[]> {
+  return fetchJson<SeoRankingDelta[]>(
+    `/api/v1/orgs/${orgId}/seo/ranking-delta?days=${days}`,
+  );
+}
