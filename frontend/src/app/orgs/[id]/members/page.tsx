@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ExternalLink, UserPlus, Users } from "lucide-react";
+import { ExternalLink, Mail, UserPlus, Users } from "lucide-react";
+
+import { getToken } from "@/lib/auth";
 
 import {
   DkAvatar,
@@ -17,6 +19,7 @@ import {
   DkDialogFooter,
   DkDialogHeader,
   DkEmptyState,
+  DkInput,
   DkLabel,
   DkPageHeader,
   DkSelect,
@@ -116,6 +119,17 @@ export default function MembersPage() {
   const [pickRole, setPickRole] = useState<OrgRole>("viewer");
   const [adding, setAdding] = useState(false);
 
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState<OrgRole>("viewer");
+  const [inviting, setInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{
+    email: string;
+    user_created: boolean;
+    temp_password: string | null;
+  } | null>(null);
+
   const userMap = useMemo(
     () => new Map(allUsers.map((u) => [u.id, u])),
     [allUsers],
@@ -167,6 +181,44 @@ export default function MembersPage() {
     }
   }
 
+  async function handleInvite() {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/orgs/${orgId}/invite`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          full_name: inviteName.trim() || null,
+          role: inviteRole,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail ?? `Invite failed (${res.status})`);
+      }
+      const data = await res.json();
+      setInviteResult({
+        email: inviteEmail.trim(),
+        user_created: data.user_created,
+        temp_password: data.temp_password,
+      });
+      setInviteEmail("");
+      setInviteName("");
+      setInviteRole("viewer");
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invite failed.");
+    } finally {
+      setInviting(false);
+    }
+  }
+
   async function handleRoleChange(m: OrgMembership, role: OrgRole) {
     try {
       await updateOrgMemberRole(orgId, m.id, role);
@@ -204,10 +256,23 @@ export default function MembersPage() {
         description="Invite teammates and assign their supervision scope. Each role is a bundle of permissions; per-project overrides can layer on top."
         actions={
           me?.is_superuser ? (
-            <DkButton onClick={() => setAddOpen(true)} disabled={loading}>
-              <UserPlus className="h-4 w-4" />
-              Add Member
-            </DkButton>
+            <div className="flex gap-2">
+              <DkButton
+                variant="secondary"
+                onClick={() => {
+                  setInviteOpen(true);
+                  setInviteResult(null);
+                }}
+                disabled={loading}
+              >
+                <Mail className="h-4 w-4" />
+                Invite by email
+              </DkButton>
+              <DkButton onClick={() => setAddOpen(true)} disabled={loading}>
+                <UserPlus className="h-4 w-4" />
+                Add Member
+              </DkButton>
+            </div>
           ) : null
         }
       />
@@ -323,6 +388,103 @@ export default function MembersPage() {
           </DkCardContent>
         </DkCard>
       )}
+
+      <DkDialog
+        open={inviteOpen}
+        onClose={() => !inviting && setInviteOpen(false)}
+        size="md"
+      >
+        <DkDialogHeader
+          title="Invite by email"
+          description="Sends a membership invite. New users get a one-time temporary password to hand off securely."
+          onClose={() => setInviteOpen(false)}
+        />
+        <DkDialogContent className="flex flex-col gap-4">
+          {inviteResult ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-[var(--dk-fg-1)]">
+                Invited <strong>{inviteResult.email}</strong>.{" "}
+                {inviteResult.user_created
+                  ? "Created a new user account."
+                  : "Attached existing user to the organization."}
+              </p>
+              {inviteResult.temp_password && (
+                <div className="rounded-md border border-[var(--dk-border)] bg-[var(--dk-purple-50)] p-3 text-sm">
+                  <p className="mb-1 font-medium text-ink">
+                    Temporary password (hand off out-of-band):
+                  </p>
+                  <code className="font-mono text-xs">
+                    {inviteResult.temp_password}
+                  </code>
+                  <p className="mt-1.5 text-xs text-[var(--dk-fg-2)]">
+                    They will be prompted to set a new password on first login.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <DkLabel htmlFor="inv-email" required>
+                  Email
+                </DkLabel>
+                <DkInput
+                  id="inv-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="teammate@example.com"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <DkLabel htmlFor="inv-name">Full name (optional)</DkLabel>
+                <DkInput
+                  id="inv-name"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <DkLabel htmlFor="inv-role" required>
+                  Role
+                </DkLabel>
+                <DkSelect
+                  id="inv-role"
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as OrgRole)}
+                >
+                  {ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </DkSelect>
+                <p className="text-xs text-[var(--dk-fg-2)]">
+                  {ROLES.find((r) => r.value === inviteRole)?.description}
+                </p>
+              </div>
+            </>
+          )}
+        </DkDialogContent>
+        <DkDialogFooter>
+          <DkButton
+            variant="secondary"
+            onClick={() => setInviteOpen(false)}
+            disabled={inviting}
+          >
+            {inviteResult ? "Close" : "Cancel"}
+          </DkButton>
+          {!inviteResult && (
+            <DkButton
+              onClick={handleInvite}
+              disabled={!inviteEmail.trim() || inviting}
+              loading={inviting}
+            >
+              Send invite
+            </DkButton>
+          )}
+        </DkDialogFooter>
+      </DkDialog>
 
       <DkDialog open={addOpen} onClose={() => setAddOpen(false)} size="md">
         <DkDialogHeader

@@ -59,6 +59,18 @@ class MembershipCreate(BaseModel):
     role: OrganizationRole
 
 
+class MembershipInviteByEmail(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    role: OrganizationRole
+    full_name: str | None = Field(default=None, max_length=255)
+
+
+class MembershipInviteResponse(BaseModel):
+    membership: "MembershipRead"
+    user_created: bool
+    temp_password: str | None  # only returned when a new user was created
+
+
 class MembershipUpdate(BaseModel):
     role: OrganizationRole
 
@@ -301,6 +313,86 @@ async def add_member(
     await session.commit()
     await session.refresh(membership)
     return membership
+
+
+@router.post(
+    "/{org_id}/invite",
+    response_model=MembershipInviteResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def invite_member_by_email(
+    org_id: UUID,
+    body: MembershipInviteByEmail,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> MembershipInviteResponse:
+    """Find-or-create a User by email, then attach a membership.
+
+    SP3-3 invite flow. If the user is new, returns a one-time temporary
+    password the inviter can hand off out-of-band (or that the email
+    transport will deliver, once wired up).
+    """
+    await _require_org_role(
+        session, user, org_id,
+        allowed_roles=(OrganizationRole.admin, OrganizationRole.manager),
+    )
+
+    email = body.email.strip().lower()
+    if "@" not in email:
+        raise HTTPException(status_code=400, detail="Invalid email.")
+
+    target = (
+        await session.execute(select(User).where(User.email == email))
+    ).scalar_one_or_none()
+
+    user_created = False
+    temp_password: str | None = None
+
+    if target is None:
+        import secrets
+        from fastapi_users.password import PasswordHelper
+
+        temp_password = secrets.token_urlsafe(12)
+        helper = PasswordHelper()
+        target = User(
+            email=email,
+            full_name=body.full_name,
+            hashed_password=helper.hash(temp_password),
+            is_active=True,
+            is_verified=False,
+            is_superuser=False,
+        )
+        session.add(target)
+        await session.flush()
+        user_created = True
+
+    existing = (
+        await session.execute(
+            select(OrganizationMembership).where(
+                OrganizationMembership.user_id == target.id,
+                OrganizationMembership.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is already a member of this organization.",
+        )
+
+    membership = OrganizationMembership(
+        user_id=target.id, organization_id=org_id, role=body.role
+    )
+    session.add(membership)
+    await session.flush()
+    await session.commit()
+    await session.refresh(membership)
+
+    return MembershipInviteResponse(
+        membership=MembershipRead.model_validate(membership),
+        user_created=user_created,
+        temp_password=temp_password,
+    )
 
 
 @router.get("/{org_id}/memberships", response_model=list[MembershipRead])
