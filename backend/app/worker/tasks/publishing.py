@@ -24,6 +24,7 @@ from app.models.scheduled_post import (
 from app.models.social_account import SocialAccount, SocialPlatform
 from app.services.cost_logger import record_cost_sync
 from app.services.publishers import PublishResult
+from app.services.sandbox import is_sandbox_mode_sync, sandbox_publish_result
 from app.services.publishers.bluesky import (
     BlueskyAuthError,
     BlueskyPublishError,
@@ -38,6 +39,11 @@ from app.services.publishers.linkedin import (
     LinkedInAuthError,
     LinkedInPublishError,
     publish_to_linkedin,
+)
+from app.services.publishers.mastodon import (
+    MastodonAuthError,
+    MastodonPublishError,
+    publish_to_mastodon,
 )
 from app.services.publishers.x import (
     XAuthError,
@@ -76,6 +82,11 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
     result on success; raises on failure (caller marks the post as
     `failed`).
     """
+    # Phase 11.5 — Sandbox / dry-run. If the org is in sandbox mode,
+    # short-circuit to a synthetic stub before touching any provider.
+    if is_sandbox_mode_sync(session, post.organization_id):
+        return sandbox_publish_result(post.channel.value, post.copy or "")
+
     if post.channel == ScheduledPostChannel.bluesky:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.bluesky
@@ -135,6 +146,22 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             image_url=image_url,
             caption=post.copy or "",
             handle=account.handle if account else None,
+        )
+
+    if post.channel == ScheduledPostChannel.mastodon:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.mastodon
+        )
+        token = account._interim_access_token if account else None
+        instance_url = (
+            (account.auth_metadata_json or {}).get("instance_url")
+            if account
+            else None
+        )
+        return publish_to_mastodon(
+            access_token=token,
+            instance_url=instance_url,
+            text=post.copy or "",
         )
 
     # No adapter for this channel yet — fall back to the v0 stub so
@@ -243,6 +270,11 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (LinkedInAuthError, LinkedInPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"linkedin: {exc}"
+            session.commit()
+            raise
+        except (MastodonAuthError, MastodonPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"mastodon: {exc}"
             session.commit()
             raise
         except (XAuthError, XPublishError) as exc:

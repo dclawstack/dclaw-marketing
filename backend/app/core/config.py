@@ -38,7 +38,12 @@ class Settings(BaseSettings):
     s3_bucket: str = "dclaw-marketing"
     s3_use_ssl: bool = False
 
-    # Email — Resend
+    # Email — multi-provider (Phase 7.4)
+    # Send-priority order tries: SendGrid → Postmark → Resend → stub.
+    # First provider with a non-empty key wins; on transport error
+    # we fall through to the next, then to the stub.
+    sendgrid_api_key: str = ""
+    postmark_api_key: str = ""
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
@@ -59,6 +64,10 @@ class Settings(BaseSettings):
     replicate_music_model: str = ""
     elevenlabs_api_key: str = ""
     elevenlabs_default_voice: str = "21m00Tcm4TlvDq8ikWAM"  # "Rachel"
+
+    # Mastodon (Phase 5.5) — default instance URL. Each SocialAccount
+    # can override via auth_metadata_json["instance_url"].
+    mastodon_default_instance: str = "https://mastodon.social"
 
     # Admin bootstrap — created on first run if no admin user exists
     bootstrap_admin_email: str = "admin@dclaw.io"

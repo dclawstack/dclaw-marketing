@@ -1,12 +1,17 @@
-"""Resend email-send adapter (Phase 7.1).
+"""Multi-provider email-send adapter (Phase 7.1 + 7.4).
 
-Single ``send_email()`` entry point over the Resend Email API, with a
-deterministic stub fallback when ``RESEND_API_KEY`` is unset.
+Providers, in send-priority order:
 
-Stubbed sends record the message into the audit log and return a
-synthetic ``msg_<sha256>`` id so the rest of the email pipeline
-(campaign status updates, sequence-step bookkeeping) works in dev /
-CI without burning real credit.
+  1. SendGrid (sendgrid_api_key)        ← v3 /mail/send, X-Message-Id response
+  2. Postmark (postmark_api_key)        ← /email, MessageID in JSON
+  3. Resend   (resend_api_key)          ← /emails, id in JSON
+  4. Stub                                 ← deterministic msg_stub_<sha>
+
+The first provider with a non-empty API key wins. On transport error
+we fall through to the next provider, then finally to the stub —
+callers can always rely on receiving a ``SendResult`` back so
+downstream bookkeeping (campaign status, sequence-step state, cost
+ledger) never breaks.
 
 Per PLAN-v1.2 §v2.0 §5.2 — outbound email is hard-gated by default;
 this adapter is the *transport*, not the policy. Callers must already
@@ -25,6 +30,8 @@ from app.core.config import settings
 
 
 class SendProvider(str, Enum):
+    sendgrid = "sendgrid"
+    postmark = "postmark"
     resend = "resend"
     stub = "stub"
 
@@ -37,15 +44,17 @@ class SendResult:
     subject: str
 
 
-_RESEND_BASE = "https://api.resend.com"
+# ---------- provider URLs --------------------------------------------
+
+_SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send"
+_POSTMARK_URL = "https://api.postmarkapp.com/email"
+_RESEND_URL = "https://api.resend.com/emails"
 
 
-def _stub_send(
-    to: list[str], subject: str, html: str
-) -> SendResult:
-    """Builds a deterministic synthetic message id from the payload —
-    so two stub sends of the same content come back with the same id.
-    """
+# ---------- stub -----------------------------------------------------
+
+
+def _stub_send(to: list[str], subject: str, html: str) -> SendResult:
     digest = hashlib.sha256(
         ("|".join(sorted(to)) + "::" + subject + "::" + html[:512]).encode(
             "utf-8"
@@ -59,6 +68,134 @@ def _stub_send(
     )
 
 
+# ---------- provider implementations ---------------------------------
+
+
+async def _send_via_sendgrid(
+    *,
+    to: list[str],
+    subject: str,
+    html: str,
+    text: str | None,
+    from_email: str,
+    reply_to: str | None,
+) -> SendResult:
+    body = {
+        "personalizations": [{"to": [{"email": addr} for addr in to]}],
+        "from": {"email": from_email},
+        "subject": subject,
+        "content": [{"type": "text/html", "value": html}],
+    }
+    if text:
+        body["content"].insert(0, {"type": "text/plain", "value": text})
+    if reply_to:
+        body["reply_to"] = {"email": reply_to}
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            _SENDGRID_URL,
+            headers={
+                "Authorization": f"Bearer {settings.sendgrid_api_key}",
+                "Content-Type": "application/json",
+            },
+            json=body,
+        )
+        resp.raise_for_status()
+        # SendGrid returns 202 Accepted with the message id in the
+        # X-Message-Id header.
+        message_id = resp.headers.get("X-Message-Id", "") or resp.headers.get(
+            "x-message-id", ""
+        )
+        return SendResult(
+            message_id=str(message_id),
+            provider=SendProvider.sendgrid,
+            to=list(to),
+            subject=subject,
+        )
+
+
+async def _send_via_postmark(
+    *,
+    to: list[str],
+    subject: str,
+    html: str,
+    text: str | None,
+    from_email: str,
+    reply_to: str | None,
+) -> SendResult:
+    body: dict = {
+        "From": from_email,
+        "To": ",".join(to),
+        "Subject": subject,
+        "HtmlBody": html,
+    }
+    if text:
+        body["TextBody"] = text
+    if reply_to:
+        body["ReplyTo"] = reply_to
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            _POSTMARK_URL,
+            headers={
+                "X-Postmark-Server-Token": settings.postmark_api_key,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=body,
+        )
+        resp.raise_for_status()
+        data = resp.json() if resp.content else {}
+        return SendResult(
+            message_id=str(data.get("MessageID", "")),
+            provider=SendProvider.postmark,
+            to=list(to),
+            subject=subject,
+        )
+
+
+async def _send_via_resend(
+    *,
+    to: list[str],
+    subject: str,
+    html: str,
+    text: str | None,
+    from_email: str,
+    reply_to: str | None,
+) -> SendResult:
+    payload: dict = {
+        "from": from_email,
+        "to": to,
+        "subject": subject,
+        "html": html,
+    }
+    if text:
+        payload["text"] = text
+    if reply_to:
+        payload["reply_to"] = reply_to
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            _RESEND_URL,
+            headers={
+                "Authorization": f"Bearer {settings.resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return SendResult(
+            message_id=str(data.get("id", "")),
+            provider=SendProvider.resend,
+            to=list(to),
+            subject=subject,
+        )
+
+
+# ---------- public entry point ---------------------------------------
+
+
 async def send_email(
     *,
     to: list[str],
@@ -68,48 +205,35 @@ async def send_email(
     from_email: str | None = None,
     reply_to: str | None = None,
 ) -> SendResult:
-    """Sends one email to one or more recipients.
-
-    Falls back to a no-network stub when the Resend key is missing or
-    the API call raises — callers can rely on always getting a
-    ``SendResult`` back so downstream bookkeeping never breaks.
+    """Sends one email. Tries providers in priority order; falls
+    through to the deterministic stub when all providers are absent
+    or all raise.
     """
     if not to:
         raise ValueError("send_email requires at least one recipient")
 
     sender = from_email or settings.resend_from_email
+    common = dict(
+        to=to, subject=subject, html=html, text=text,
+        from_email=sender, reply_to=reply_to,
+    )
 
-    if settings.resend_api_key:
-        payload: dict = {
-            "from": sender,
-            "to": to,
-            "subject": subject,
-            "html": html,
-        }
-        if text:
-            payload["text"] = text
-        if reply_to:
-            payload["reply_to"] = reply_to
+    # Try each provider in priority order. On any exception, fall
+    # through to the next.
+    if settings.sendgrid_api_key:
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(
-                    f"{_RESEND_BASE}/emails",
-                    headers={
-                        "Authorization": f"Bearer {settings.resend_api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json=payload,
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                return SendResult(
-                    message_id=str(data.get("id", "")),
-                    provider=SendProvider.resend,
-                    to=list(to),
-                    subject=subject,
-                )
+            return await _send_via_sendgrid(**common)
         except Exception:
-            # Fall through to stub rather than crash the pipeline.
+            pass
+    if settings.postmark_api_key:
+        try:
+            return await _send_via_postmark(**common)
+        except Exception:
+            pass
+    if settings.resend_api_key:
+        try:
+            return await _send_via_resend(**common)
+        except Exception:
             pass
 
     return _stub_send(to, subject, html)

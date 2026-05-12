@@ -16,7 +16,8 @@ from uuid import UUID
 
 from app.models.approval_request import ApprovalRequest
 from app.services.cost_logger import record_cost_sync
-from app.services.email_send import send_email
+from app.services.email_send import SendProvider, SendResult, send_email
+from app.services.sandbox import is_sandbox_mode_sync
 from app.worker.celery_app import celery_app
 from app.worker.helpers import SyncSession
 
@@ -65,16 +66,35 @@ def deliver_approved_email(self, approval_id: str) -> dict:
             return {"approval_id": approval_id, "result": "bad_payload"}
 
         try:
-            result = asyncio.run(
-                send_email(
+            # Phase 11.5 — Sandbox / dry-run. Skip the Resend call when
+            # the Org is in dry-run; stamp a synthetic id so the rest of
+            # the bookkeeping still happens.
+            sandbox = (
+                ar.organization_id is not None
+                and is_sandbox_mode_sync(session, ar.organization_id)
+            )
+            if sandbox:
+                import hashlib
+                digest = hashlib.sha256(
+                    ("|".join(sorted(to)) + "::" + subject).encode("utf-8")
+                ).hexdigest()[:24]
+                result = SendResult(
+                    message_id=f"msg_sandbox_{digest}",
+                    provider=SendProvider.stub,
                     to=list(to),
                     subject=subject,
-                    html=html,
-                    text=text,
-                    from_email=from_email,
-                    reply_to=reply_to,
                 )
-            )
+            else:
+                result = asyncio.run(
+                    send_email(
+                        to=list(to),
+                        subject=subject,
+                        html=html,
+                        text=text,
+                        from_email=from_email,
+                        reply_to=reply_to,
+                    )
+                )
         except Exception as exc:
             payload["delivery"] = {"error": str(exc)}
             ar.payload_json = payload
