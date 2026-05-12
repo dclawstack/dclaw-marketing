@@ -19,6 +19,12 @@ from app.models.ingestion import (
     IngestionSourceType,
     IngestionStatus,
 )
+from app.models.social_account import (
+    ProjectSocialAccount,
+    SocialAccount,
+    SocialAccountStatus,
+    SocialPlatform,
+)
 from app.models.scheduled_post import (
     ScheduledPost,
     ScheduledPostChannel,
@@ -56,6 +62,10 @@ __all__ = [
     "IngestionSourceType",
     "IngestionStatus",
     "DocumentChunk",
+    "SocialAccount",
+    "SocialAccountStatus",
+    "SocialPlatform",
+    "ProjectSocialAccount",
     "ScheduledPost",
     "ScheduledPostChannel",
     "ScheduledPostStatus",

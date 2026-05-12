@@ -828,6 +828,113 @@ export async function cancelRequest(approvalId: string): Promise<ApprovalRequest
   });
 }
 
+
+// ============================================================
+// Social accounts (Theme C2 / Phase 5)
+// ============================================================
+
+export type SocialPlatform =
+  | "linkedin"
+  | "x"
+  | "instagram"
+  | "threads"
+  | "bluesky"
+  | "facebook"
+  | "youtube"
+  | "tiktok"
+  | "newsletter"
+  | "blog"
+  | "reddit"
+  | "pinterest"
+  | "mastodon"
+  | "snapchat"
+  | "telegram"
+  | "whatsapp"
+  | "discord"
+  | "quora"
+  | "medium"
+  | "substack"
+  | "beehiiv"
+  | "ghost"
+  | "wordpress"
+  | "webflow"
+  | "spotify_podcasters";
+
+export type SocialAccountStatus = "active" | "reauth_required" | "revoked";
+
+export interface SocialAccount {
+  id: string;
+  organization_id: string;
+  platform: SocialPlatform;
+  handle: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  is_default_for_platform: boolean;
+  status: SocialAccountStatus;
+  scopes: string[] | null;
+  last_health_at: string | null;
+  last_publish_at: string | null;
+  last_error_message: string | null;
+  has_token: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listSocialAccounts(
+  orgId: string,
+): Promise<SocialAccount[]> {
+  return fetchJson<SocialAccount[]>(`/api/v1/orgs/${orgId}/social-accounts`);
+}
+
+export async function createSocialAccount(
+  orgId: string,
+  data: {
+    platform: SocialPlatform;
+    handle: string;
+    display_name?: string;
+    avatar_url?: string;
+    interim_access_token?: string;
+    auth_metadata_json?: Record<string, unknown>;
+    scopes?: string[];
+    is_default_for_platform?: boolean;
+  },
+): Promise<SocialAccount> {
+  return fetchJson<SocialAccount>(
+    `/api/v1/orgs/${orgId}/social-accounts`,
+    { method: "POST", body: JSON.stringify(data) },
+  );
+}
+
+export async function setSocialAccountDefault(
+  orgId: string,
+  accountId: string,
+): Promise<SocialAccount> {
+  return fetchJson<SocialAccount>(
+    `/api/v1/orgs/${orgId}/social-accounts/${accountId}/set-default`,
+    { method: "POST" },
+  );
+}
+
+export async function healthCheckSocialAccount(
+  orgId: string,
+  accountId: string,
+): Promise<SocialAccount> {
+  return fetchJson<SocialAccount>(
+    `/api/v1/orgs/${orgId}/social-accounts/${accountId}/health-check`,
+    { method: "POST" },
+  );
+}
+
+export async function revokeSocialAccount(
+  orgId: string,
+  accountId: string,
+): Promise<SocialAccount> {
+  return fetchJson<SocialAccount>(
+    `/api/v1/orgs/${orgId}/social-accounts/${accountId}`,
+    { method: "DELETE" },
+  );
+}
+
 // ============================================================
 // Scheduled posts (Theme C1, Phase 4)
 // ============================================================
