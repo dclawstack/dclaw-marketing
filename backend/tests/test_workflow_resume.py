@@ -78,6 +78,7 @@ async def _seed_workflow(
         await session.flush()
         wf = Workflow(
             organization_id=org.id,
+            slug=f"wf-{slug}",
             name="Test Workflow",
             description="approval-then-noop test",
             status=WorkflowStatus.active,
