@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.routes import health
 from app.auth import current_active_user
 from app.models.user import User
-from app.api.v1 import admin, agent_threads, agents, analytics_router, approvals, assets, audit_events, auth, brand_insights, brand_kits, branding, campaign_analytics, campaigns_router, costs, email_send, gdpr, goals, heatmap, hooks, ingest, integrations, jobs, kg, leads_router, magic_link, me, oauth, orgs, pages, playbooks, projects, quotas, retainer, scheduled_posts, seo, seo_pipeline, social_accounts, time_entries, totp, variants, webhooks_email, webhooks_generic, workflows
+from app.api.v1 import admin, agent_threads, agents, analytics_router, approvals, assets, audit_events, auth, brand_insights, brand_kits, branding, campaign_analytics, campaigns_router, costs, email_send, gdpr, goals, heatmap, hooks, ingest, integrations, jobs, kg, leads_router, magic_link, me, oauth, orgs, pages, playbooks, projects, quotas, retainer, scheduled_posts, seo, seo_pipeline, share_tokens, social_accounts, time_entries, totp, variants, webhooks_email, webhooks_generic, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -164,6 +164,10 @@ app.include_router(retainer.router, prefix="/api/v1")
 
 # SP3-16 — Landing-page builder (Theme H1)
 app.include_router(pages.router, prefix="/api/v1")
+
+
+# Theme M — Signed share-token public dashboards
+app.include_router(share_tokens.router, prefix="/api/v1")
 
 # Legacy v1 routers — Org-scoped as of Sprint 3 (PR SP3-1). Every endpoint
 # requires an `organization_id` query param + caller membership in that Org.
