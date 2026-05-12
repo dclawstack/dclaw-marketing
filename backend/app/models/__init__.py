@@ -6,6 +6,7 @@ from app.models.user import User
 from app.models.organization import Organization, OrganizationMembership, OrganizationRole
 from app.models.project import Project, ProjectMembership, ProjectStatus
 from app.models.campaign import Campaign, CampaignType, CampaignStatus
+from app.models.invoice import Invoice, InvoiceLineItem, InvoiceStatus
 from app.models.lead import (
     Lead,
     LeadActivity,

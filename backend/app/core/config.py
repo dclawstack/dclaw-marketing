@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     mailchimp_api_key: str = ""
     mailchimp_server_prefix: str = ""
 
+    # Billing — Stripe (Phase 10.6)
+    stripe_secret_key: str = ""
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
