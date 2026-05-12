@@ -1,131 +1,127 @@
 # DClaw Marketing
 
-> **A vertical SaaS app for marketing teams** — built on the DClaw Stack.
-> Manage campaigns, track leads, and analyze performance in one place.
+> **An agent-driven marketing operating system.**
+> Set the brand once. Ingest your context. The agents do the work; you supervise.
 
-## Scope
-
-DClaw Marketing is a full-stack marketing platform for **marketing teams and growth hackers**. It covers:
-
-- **Campaign Management** — Create, schedule, and track email, social, PPC, and content campaigns
-- **Lead Management** — Capture and manage leads with full lifecycle tracking (new → contacted → qualified → converted)
-- **Analytics** — Track impressions, clicks, conversions, and bounces per campaign
-- **Dashboard** — Real-time summary of active campaigns, total leads, conversion rates, and total spend
-
-**Tech Stack:** FastAPI (Python 3.11) · Next.js 14 · PostgreSQL · Docker · Kubernetes (Helm)  
-**Ports:** Backend `8102` · Frontend `3015` · Database `dclaw_marketing`
+DClaw Marketing turns a small team (or one operator + AI agents) into a full marketing function. Humans set the brand kit and feed in source material; AI agents draft content, schedule posts, run ads, and surface analytics. Humans supervise their **Station** and approve outbound actions in an **Approval Inbox** — agents never publish without consent.
 
 ---
 
-## v1.0 Features (Current)
+## Quickstart (5 minutes)
 
-- [x] Campaign CRUD — create, read, update, delete campaigns with type (`email`, `social`, `ppc`, `content`) and status filters
-- [x] Lead CRUD — manage leads with source tracking and optional campaign association
-- [x] Analytics event recording — log impressions, clicks, conversions, and bounces
-- [x] Dashboard — summary cards (active campaigns, total leads, conversion rate, spend)
-- [x] Campaign detail page — lead list and analytics summary per campaign
-- [x] Docker + docker-compose deployment with healthchecks
-- [x] Helm chart for Kubernetes deployment
-- [x] Alembic database migrations
-- [x] Backend test suite (pytest-asyncio)
+```bash
+# 1. Clone
+git clone https://github.com/dclawstack/dclaw-marketing.git
+cd dclaw-marketing
 
----
+# 2. Configure environment
+cp .env.example .env
+# Optional: edit .env to set ANTHROPIC_API_KEY, OPENAI_API_KEY for real
+# LLM calls. Without them, the agents and embeddings fall back to
+# deterministic stubs so you can still run the full demo flow.
 
-## v1.2 Features
+# 3. Bring up the stack
+docker compose up -d
+# Starts: Postgres (pgvector) · Redis · MinIO · backend · celery-worker · celery-beat · frontend
 
-### P0 — Must Have
+# 4. Open the app
+open http://localhost:3015
+# Default admin: admin@dclaw.local / ChangeMeOnFirstLogin!
+# (You'll be forced to set a new password on first login.)
+```
 
-#### 1. AI Lead Scoring
-**Description:** Score each lead from 1–100 based on attributes (company, source, engagement history) to prioritize outreach.
-- **Backend:** Scoring service in `app/services/lead_scoring.py`, exposed via `GET /api/v1/leads/{id}/score`
-- **Frontend:** Score badge on lead cards and lead detail page
-
-#### 2. Real Analytics Dashboard
-**Description:** Replace mock chart data with live aggregated analytics from the `AnalyticsEvent` table.
-- **Backend:** Aggregation query in `GET /api/v1/dashboard` returning real counts and time-series trends
-- **Frontend:** Live performance chart on Dashboard and Campaign Detail pages
-
-### P1 — Should Have
-
-#### 3. Campaign Send-Time Optimization
-**Description:** Suggest the best time to send/activate a campaign based on historical engagement patterns.
-- **Backend:** Optimization service in `app/services/campaign_optimizer.py` returning a suggested `start_date`/time
-- **Frontend:** "Optimize Schedule" button on the campaign create/edit form
-
-#### 4. Bulk Lead Status Management
-**Description:** Select multiple leads and update their status in a single action.
-- **Backend:** `PATCH /api/v1/leads/bulk` accepting a list of lead IDs and a target status
-- **Frontend:** Checkbox selection + bulk action toolbar on the Leads table
-
-### P2 — Could Have
-
-#### 5. Email Campaign Integration
-**Description:** Connect campaigns to an email provider (SendGrid / Mailgun) to send actual emails to associated leads.
-- **Backend:** Email service abstraction in `app/services/email.py` with provider config in `app/core/config.py`
-- **Frontend:** "Send Campaign" action button on Campaign Detail page
+→ Full walkthrough in [docs/USER-GUIDE.md](docs/USER-GUIDE.md).
 
 ---
 
-## Tech Stack
+## What's inside
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | FastAPI, SQLAlchemy 2.0 (async), Pydantic v2, Alembic |
-| Frontend | Next.js 14, Tailwind CSS, pre-built UI components |
-| Database | PostgreSQL (`dclaw_marketing`) |
-| Deployment | Docker, docker-compose, Kubernetes (Helm) |
-| Testing | pytest, pytest-asyncio==0.24.0 |
-
----
-
-## Critical Rules for Agents
-
-### DO NOT install shadcn CLI
-The scaffold includes pre-built UI components in `frontend/src/components/ui/`. Installing `shadcn` v4 or `@base-ui/react` will break the Tailwind v3 build.
-
-### DO NOT change the Postgres test port
-`backend/tests/conftest.py` uses `localhost:5432`. GitHub Actions CI maps the Postgres service to port 5432. Changing this breaks CI.
-
-### DO NOT delete `.github/workflows/ci.yml`
-This file is required for GitHub Actions to run tests on every push.
-
-### DO NOT upgrade pytest-asyncio
-Keep `pytest-asyncio==0.24.0` pinned in `requirements.txt`. v1.3.0 breaks fixture scoping.
+| Capability | Status |
+|---|---|
+| **Multi-tenant Org / Project hierarchy** with role-based access | ✅ v0.1 |
+| **Admin-only user creation** with temp passwords + mandatory first-login reset | ✅ v0.1 |
+| **Brand Kit** (versioned palette / fonts / voice / personas) | ✅ v0.1 |
+| **File ingestion** → text chunks → semantic embeddings → Knowledge Graph | ✅ v0.1 |
+| **Creatives Agent** — brief in, N variants out, each routed to Approval Inbox | ✅ v0.1 |
+| **Approval Inbox** with audit log + 4-eye rule | ✅ v0.1 |
+| **Background workers** (Celery + Redis) for long-running jobs + SSE progress streams | ✅ v0.1 |
+| **Object storage** (S3-compatible; MinIO in dev) with presigned uploads | ✅ v0.1 |
+| **Goals + Constraints + Autonomy Posture** per Org for agent guard-rails | ✅ v0.1 |
+| Multi-channel publishing (X, LinkedIn, IG, …) | 🔜 v0.2 |
+| SMM / SEO / Paid Media / Analyst agents | 🔜 v0.2 |
+| Conductor agent (multi-agent orchestration) | 🔜 v0.2 |
 
 ---
 
-## Port Registry
+## Architecture at a glance
 
-| App | Backend Port | Frontend Port | Database |
-|-----|-------------|---------------|----------|
+```
+Browser  ─►  Next.js 14 (frontend, :3015)
+                    │
+                    ▼  JWT bearer
+              FastAPI (backend, :8102)
+                    │
+            ┌───────┼──────────┬─────────┬──────────┐
+            ▼       ▼          ▼         ▼          ▼
+       Postgres   Redis     MinIO   Anthropic    OpenAI
+       (+pgvector)         (S3 API)  (Claude)  (embeddings)
+                    │
+                    ▼  task queue
+              Celery worker + Celery Beat
+              (ingestion, agent runs, scheduled jobs)
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
+
+---
+
+## Critical rules for agents (humans + AI) working in this repo
+
+1. **DO NOT install shadcn CLI** — pre-built UI components in `frontend/src/components/ui/`. Installing the CLI breaks the Tailwind v3 build.
+2. **DO NOT change the Postgres test port** — `conftest.py` and `ci.yml` both use `localhost:5432`.
+3. **DO NOT delete `.github/workflows/ci.yml`** — kills CI on every push.
+4. **DO NOT upgrade `pytest-asyncio`** — pinned at `==0.24.0`; later versions break fixture scoping.
+5. **All UI work uses `--dk-*` brand tokens.** Light mode only. No hard-coded hex. No `dark:` variants. See `frontend/src/styles/brand.css`.
+
+---
+
+## Key files
+
+| File | Purpose |
+|------|---------|
+| [PLAN-v1.2.md](PLAN-v1.2.md) | Roadmap (v1.2 + v2.0 Vision + Appendix A tech choices) |
+| [AGENTS.md](AGENTS.md) | Architecture rules + anti-patterns |
+| [docs/USER-GUIDE.md](docs/USER-GUIDE.md) | How to use the platform end-to-end |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture deep-dive |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Branch / commit / PR conventions |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+| `backend/app/core/config.py` | All env-driven config |
+| `frontend/src/styles/brand.css` | DKube design tokens (single source of truth) |
+
+---
+
+## Port Registry (across the DClaw vertical-app family)
+
+| App | Backend | Frontend | Database |
+|-----|---------|----------|----------|
 | dclaw-chat | 8090 | 3000 | dclaw_chat |
 | dclaw-med | 8092 | 3004 | dclaw_med |
 | dclaw-learn | 8093 | 3003 | dclaw_learn |
 | dclaw-code | 8094 | 3005 | dclaw_code |
-| dclaw-legal | 8099 | 3013 | dclaw_legal |
 | dclaw-crm | 8095 | 3006 | dclaw_crm |
 | dclaw-finance | 8096 | 3007 | dclaw_finance |
 | dclaw-hr | 8097 | 3008 | dclaw_hr |
+| dclaw-legal | 8099 | 3013 | dclaw_legal |
 | **dclaw-marketing** | **8102** | **3015** | **dclaw_marketing** |
-| **TBD #10** | **8100** | **3010** | **dclaw_xxx** |
-
-> **Rule:** New apps take the next available port. Update this table when assigning.
-
----
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `PRODUCT-SPEC.md` | Domain models, business logic, API endpoints |
-| `PLAN-v1.2.md` | v1.2 feature roadmap for coding agents |
-| `AGENTS.md` | Architecture rules and development guide |
-| `SCALING-PLAYBOOK.md` | Parallel agent workflow |
-| `backend/app/core/config.py` | App name, database name |
-| `frontend/src/lib/api.ts` | Typed API client |
 
 ---
 
 ## Contributors
 
 - [Deepro Mallick (@deepro713)](https://github.com/deepro713)
+
+---
+
+## License
+
+TBD.
