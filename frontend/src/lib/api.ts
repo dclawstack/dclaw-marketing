@@ -1201,3 +1201,77 @@ export async function postAgentMessage(orgId: string, threadId: string, content:
     body: JSON.stringify({ content }),
   });
 }
+
+// ============================================================
+// BrandKitInsight — KG write-back loop (Theme Q3 / §6.2)
+// ============================================================
+
+export type BrandInsightKind =
+  | "performance"
+  | "voice"
+  | "audience"
+  | "hashtag"
+  | "timing"
+  | "other";
+
+export interface BrandInsight {
+  id: string;
+  organization_id: string;
+  brand_kit_id: string;
+  kind: BrandInsightKind;
+  summary: string;
+  detail: string | null;
+  confidence: number;
+  source_run_id: string | null;
+  generated_by_agent: string | null;
+  is_human_edited: boolean;
+  is_archived: boolean;
+}
+
+export async function listBrandInsights(
+  orgId: string,
+  kitId: string,
+  includeArchived = false,
+): Promise<BrandInsight[]> {
+  const qs = includeArchived ? "?include_archived=true" : "";
+  return fetchJson<BrandInsight[]>(
+    `/api/v1/orgs/${orgId}/brand-kits/${kitId}/insights${qs}`,
+  );
+}
+
+export async function createBrandInsight(
+  orgId: string,
+  kitId: string,
+  body: {
+    kind: BrandInsightKind;
+    summary: string;
+    detail?: string;
+    confidence?: number;
+  },
+): Promise<BrandInsight> {
+  return fetchJson<BrandInsight>(
+    `/api/v1/orgs/${orgId}/brand-kits/${kitId}/insights`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+export async function updateBrandInsight(
+  insightId: string,
+  body: {
+    summary?: string;
+    detail?: string;
+    confidence?: number;
+    is_archived?: boolean;
+  },
+): Promise<BrandInsight> {
+  return fetchJson<BrandInsight>(`/api/v1/brand-insights/${insightId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteBrandInsight(insightId: string): Promise<void> {
+  await fetchJson<void>(`/api/v1/brand-insights/${insightId}`, {
+    method: "DELETE",
+  });
+}
