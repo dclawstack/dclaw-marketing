@@ -306,3 +306,68 @@ async def remove_member(
     await session.delete(membership)
     await session.flush()
     await session.commit()
+
+
+# ---------- Phase 11.5 — Sandbox / dry-run mode -----------------------
+
+
+class SandboxModeRequest(BaseModel):
+    enabled: bool
+
+
+class SandboxModeResponse(BaseModel):
+    organization_id: UUID
+    sandbox_mode: bool
+
+
+@router.patch("/{org_id}/sandbox-mode", response_model=SandboxModeResponse)
+async def set_org_sandbox_mode(
+    org_id: UUID,
+    body: SandboxModeRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> SandboxModeResponse:
+    """Toggle sandbox / dry-run mode for an Org. Admin-only.
+
+    When enabled, every outbound side-effect (publishers, email send)
+    short-circuits to a stub. Inbound + read paths are unaffected.
+    """
+    await _require_org_role(
+        session, user, org_id,
+        allowed_roles=(OrganizationRole.admin,),
+    )
+
+    from app.services.sandbox import set_sandbox_mode  # local import to avoid cycle
+
+    try:
+        new_value = await set_sandbox_mode(session, org_id, body.enabled)
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc),
+        ) from exc
+
+    await session.commit()
+    return SandboxModeResponse(organization_id=org_id, sandbox_mode=new_value)
+
+
+@router.get("/{org_id}/sandbox-mode", response_model=SandboxModeResponse)
+async def get_org_sandbox_mode(
+    org_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> SandboxModeResponse:
+    """Read the current sandbox flag. Members can read; only admin sets."""
+    await _require_org_role(
+        session, user, org_id,
+        allowed_roles=(
+            OrganizationRole.admin,
+            OrganizationRole.manager,
+            OrganizationRole.reviewer,
+            OrganizationRole.viewer,
+        ),
+    )
+
+    from app.services.sandbox import is_sandbox_mode  # local import
+
+    enabled = await is_sandbox_mode(session, org_id)
+    return SandboxModeResponse(organization_id=org_id, sandbox_mode=enabled)

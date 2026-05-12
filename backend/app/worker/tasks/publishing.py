@@ -23,6 +23,7 @@ from app.models.scheduled_post import (
 )
 from app.models.social_account import SocialAccount, SocialPlatform
 from app.services.publishers import PublishResult
+from app.services.sandbox import is_sandbox_mode_sync, sandbox_publish_result
 from app.services.publishers.bluesky import (
     BlueskyAuthError,
     BlueskyPublishError,
@@ -75,6 +76,11 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
     result on success; raises on failure (caller marks the post as
     `failed`).
     """
+    # Phase 11.5 — Sandbox / dry-run. If the org is in sandbox mode,
+    # short-circuit to a synthetic stub before touching any provider.
+    if is_sandbox_mode_sync(session, post.organization_id):
+        return sandbox_publish_result(post.channel.value, post.copy or "")
+
     if post.channel == ScheduledPostChannel.bluesky:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.bluesky
