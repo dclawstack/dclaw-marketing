@@ -254,6 +254,20 @@ async def approve(
     )
     await session.commit()
     await session.refresh(approval)
+
+    # Phase 7.2 — if this approval was for an email send, enqueue the
+    # delivery task now. We do this AFTER commit so the worker sees the
+    # row in its own transaction.
+    if approval.action_type == "send_email":
+        try:
+            from app.worker.tasks.email_send import deliver_approved_email
+
+            deliver_approved_email.delay(str(approval.id))
+        except Exception:  # pragma: no cover — celery broker down
+            # Best-effort: the approval is still recorded; an admin can
+            # retrigger by re-enqueueing manually.
+            pass
+
     return approval
 
 
