@@ -12,6 +12,7 @@ To run the scheduler (Celery Beat) for cron-like periodic tasks:
 """
 
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config import settings
 
@@ -45,6 +46,13 @@ celery_app.conf.update(
         "scan-due-scheduled-posts": {
             "task": "app.worker.tasks.publishing.scan_due_scheduled_posts",
             "schedule": 60.0,
+        },
+        # Phase 8.1 — daily analytics rollups. Runs at 06:00 UTC, just
+        # after typical EU/US-east overnight data settles. Computes
+        # yesterday's per-channel + org-wide rollups for every Org.
+        "compute-daily-rollups": {
+            "task": "app.worker.tasks.analytics.compute_daily_rollups",
+            "schedule": crontab(hour=6, minute=0),
         },
     },
 )
