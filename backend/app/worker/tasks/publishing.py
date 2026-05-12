@@ -45,6 +45,11 @@ from app.services.publishers.mastodon import (
     MastodonPublishError,
     publish_to_mastodon,
 )
+from app.services.publishers.reddit import (
+    RedditAuthError,
+    RedditPublishError,
+    publish_to_reddit,
+)
 from app.services.publishers.x import (
     XAuthError,
     XPublishError,
@@ -164,6 +169,22 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             text=post.copy or "",
         )
 
+    if post.channel == ScheduledPostChannel.reddit:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.reddit
+        )
+        token = account._interim_access_token if account else None
+        subreddit = (
+            (account.auth_metadata_json or {}).get("subreddit")
+            if account
+            else None
+        ) or "test"
+        return publish_to_reddit(
+            access_token=token,
+            subreddit=subreddit,
+            text=post.copy or "",
+        )
+
     # No adapter for this channel yet — fall back to the v0 stub so
     # the rest of the loop still closes.
     return PublishResult(
@@ -275,6 +296,11 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (MastodonAuthError, MastodonPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"mastodon: {exc}"
+            session.commit()
+            raise
+        except (RedditAuthError, RedditPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"reddit: {exc}"
             session.commit()
             raise
         except (XAuthError, XPublishError) as exc:
