@@ -31,6 +31,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/" className="text-muted-foreground hover:text-ink">
               Dashboard
             </Link>
+            <Link href="/agents/creatives" className="text-muted-foreground hover:text-ink">
+              Creatives
+            </Link>
+            <Link href="/inbox" className="text-muted-foreground hover:text-ink">
+              Inbox
+            </Link>
             <Link href="/campaigns" className="text-muted-foreground hover:text-ink">
               Campaigns
             </Link>

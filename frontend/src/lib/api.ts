@@ -296,3 +296,102 @@ export async function adminResetUserPassword(
 export async function adminRevokeUser(userId: string): Promise<void> {
   return fetchJson<void>(`/api/v1/admin/users/${userId}`, { method: "DELETE" });
 }
+
+/* ============================================================
+   Agents (Phase 2)
+   ============================================================ */
+
+export interface GenerateRequest {
+  organization_id: string;
+  project_id?: string;
+  brief: string;
+  n_variants?: number;
+  channel?: string;
+}
+
+export interface GenerateResultItem {
+  variant: string;
+  approval_request_id: string;
+}
+
+export interface GenerateResponse {
+  organization_id: string;
+  project_id: string | null;
+  channel: string;
+  n_variants: number;
+  results: GenerateResultItem[];
+}
+
+export async function generateCreatives(req: GenerateRequest): Promise<GenerateResponse> {
+  return fetchJson<GenerateResponse>("/api/v1/agents/creatives/generate", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/* ============================================================
+   Approvals (A4)
+   ============================================================ */
+
+export type ApprovalStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "expired"
+  | "auto_approved"
+  | "canceled";
+
+export interface ApprovalRequestItem {
+  id: string;
+  organization_id: string | null;
+  project_id: string | null;
+  requested_by_user_id: string | null;
+  requested_by_agent: string | null;
+  action_type: string;
+  target_type: string | null;
+  target_id: string | null;
+  payload_json: Record<string, unknown> | null;
+  summary: string | null;
+  status: ApprovalStatus;
+  decided_by_user_id: string | null;
+  decided_at: string | null;
+  decision_reason: string | null;
+  expires_at: string | null;
+}
+
+export async function listApprovals(opts?: {
+  organizationId?: string;
+  status?: ApprovalStatus;
+}): Promise<ApprovalRequestItem[]> {
+  const params = new URLSearchParams();
+  if (opts?.organizationId) params.set("organization_id", opts.organizationId);
+  if (opts?.status) params.set("approval_status", opts.status);
+  const qs = params.toString();
+  return fetchJson<ApprovalRequestItem[]>(`/api/v1/approvals${qs ? `?${qs}` : ""}`);
+}
+
+export async function approveRequest(
+  approvalId: string,
+  reason?: string,
+): Promise<ApprovalRequestItem> {
+  return fetchJson<ApprovalRequestItem>(`/api/v1/approvals/${approvalId}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ reason: reason ?? null }),
+  });
+}
+
+export async function rejectRequest(
+  approvalId: string,
+  reason?: string,
+): Promise<ApprovalRequestItem> {
+  return fetchJson<ApprovalRequestItem>(`/api/v1/approvals/${approvalId}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ reason: reason ?? null }),
+  });
+}
+
+export async function cancelRequest(approvalId: string): Promise<ApprovalRequestItem> {
+  return fetchJson<ApprovalRequestItem>(`/api/v1/approvals/${approvalId}/cancel`, {
+    method: "POST",
+  });
+}
