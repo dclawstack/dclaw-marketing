@@ -19,6 +19,7 @@ from app.models.ingestion import (
     IngestionSourceType,
     IngestionStatus,
 )
+from app.models.connection import Connection, ConnectionStatus
 from app.models.social_account import (
     ProjectSocialAccount,
     SocialAccount,
@@ -42,6 +43,32 @@ from app.models.attribution import (
     AttributionResult,
     Conversion,
     Touchpoint,
+)
+from app.models.email_ads import (
+    AdAccount,
+    AdCampaign,
+    AdPlatform,
+    AdSet,
+    AdStatus,
+    EmailCampaign,
+    EmailCampaignStatus,
+    EmailSequence,
+    EmailSequenceStep,
+    EmailTemplate,
+    Segment,
+    SequenceStatus,
+    SequenceStepKind,
+)
+from app.models.ops import (
+    CostLedger,
+    DataExportRequest,
+    DataExportStatus,
+    Playbook,
+    PlaybookKind,
+    QuotaCounter,
+    TimeEntry,
+    Workflow,
+    WorkflowStatus,
 )
 
 __all__ = [
@@ -75,6 +102,8 @@ __all__ = [
     "IngestionSourceType",
     "IngestionStatus",
     "DocumentChunk",
+    "Connection",
+    "ConnectionStatus",
     "SocialAccount",
     "SocialAccountStatus",
     "SocialPlatform",
@@ -91,4 +120,26 @@ __all__ = [
     "AttributionResult",
     "AttributionModel",
     "AnalyticsRollup",
+    "EmailTemplate",
+    "EmailCampaign",
+    "EmailCampaignStatus",
+    "EmailSequence",
+    "EmailSequenceStep",
+    "SequenceStatus",
+    "SequenceStepKind",
+    "AdAccount",
+    "AdCampaign",
+    "AdSet",
+    "AdPlatform",
+    "AdStatus",
+    "Segment",
+    "CostLedger",
+    "QuotaCounter",
+    "TimeEntry",
+    "Workflow",
+    "WorkflowStatus",
+    "Playbook",
+    "PlaybookKind",
+    "DataExportRequest",
+    "DataExportStatus",
 ]
