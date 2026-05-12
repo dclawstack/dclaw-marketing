@@ -29,6 +29,7 @@ async def org_with_connections():
                     server_id=sid,
                     name=sid,
                     status=ConnectionStatus.active,
+                    auth_kind="oauth2",
                     metadata_json={},
                 )
             )
