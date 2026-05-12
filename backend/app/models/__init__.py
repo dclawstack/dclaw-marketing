@@ -31,6 +31,7 @@ from app.models.agent_thread import (
     AgentMessageRole,
     AgentThread,
 )
+<<<<<<< HEAD
 from app.models.email_ads import (
     AdAccount,
     AdCampaign,
@@ -45,6 +46,14 @@ from app.models.email_ads import (
     Segment,
     SequenceStatus,
     SequenceStepKind,
+=======
+from app.models.attribution import (
+    AnalyticsRollup,
+    AttributionModel,
+    AttributionResult,
+    Conversion,
+    Touchpoint,
+>>>>>>> origin/main
 )
 
 __all__ = [
@@ -86,6 +95,7 @@ __all__ = [
     "AgentMessage",
     "AgentKind",
     "AgentMessageRole",
+<<<<<<< HEAD
     "EmailTemplate",
     "EmailCampaign",
     "EmailCampaignStatus",
@@ -99,4 +109,11 @@ __all__ = [
     "AdPlatform",
     "AdStatus",
     "Segment",
+=======
+    "Touchpoint",
+    "Conversion",
+    "AttributionResult",
+    "AttributionModel",
+    "AnalyticsRollup",
+>>>>>>> origin/main
 ]
