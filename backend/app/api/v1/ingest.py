@@ -29,6 +29,12 @@ class IngestFileRequest(BaseModel):
     name: str | None = Field(default=None, max_length=255)
 
 
+class IngestGitRequest(BaseModel):
+    organization_id: UUID
+    repo_url: str = Field(min_length=8, max_length=2048)
+    name: str | None = Field(default=None, max_length=255)
+
+
 class IngestUrlRequest(BaseModel):
     organization_id: UUID
     url: str = Field(min_length=8, max_length=2048)
@@ -202,6 +208,75 @@ async def ingest_url(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Failed to dispatch URL ingestion task: {exc}",
+        )
+
+    return IngestResponse(source_id=src.id, job_id=job.id, status=src.status)
+
+
+@router.post("/git", response_model=IngestResponse, status_code=status.HTTP_201_CREATED)
+async def ingest_git(
+    body: IngestGitRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> IngestResponse:
+    """Trigger git-repo ingestion (SP3-8).
+
+    Shallow-clones the repo, collects README + docs, then chunks/embeds
+    the concatenated text through the standard pipeline. Public repos
+    work out of the box; private repos need credentials baked into the
+    URL (handed off to git clone as-is) and a follow-up will key them
+    off Connection rows instead.
+    """
+    await _require_member(session, user, body.organization_id, _INGEST_ROLES)
+
+    repo_url = body.repo_url.strip()
+    if not (
+        repo_url.startswith("http://")
+        or repo_url.startswith("https://")
+        or repo_url.startswith("git@")
+        or repo_url.startswith("ssh://")
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Repo URL must be http(s), git@, or ssh://",
+        )
+
+    job = Job(
+        organization_id=body.organization_id,
+        initiated_by_user_id=user.id,
+        kind="app.worker.tasks.ingest_git",
+        status=JobStatus.queued,
+    )
+    session.add(job)
+    await session.flush()
+
+    src = IngestionSource(
+        organization_id=body.organization_id,
+        initiated_by_user_id=user.id,
+        source_type=IngestionSourceType.git,
+        source_reference=repo_url,
+        name=body.name,
+        status=IngestionStatus.queued,
+        job_id=job.id,
+    )
+    session.add(src)
+    await session.flush()
+    await session.commit()
+    await session.refresh(src)
+    await session.refresh(job)
+
+    from app.worker.tasks.ingestion import ingest_git as _task
+    try:
+        _task.delay(str(job.id), str(src.id))
+    except Exception as exc:
+        src.status = IngestionStatus.failed
+        src.error_message = f"Failed to dispatch: {exc}"
+        job.status = JobStatus.failed
+        job.error_message = str(exc)
+        await session.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Failed to dispatch git ingestion task: {exc}",
         )
 
     return IngestResponse(source_id=src.id, job_id=job.id, status=src.status)

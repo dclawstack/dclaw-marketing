@@ -163,6 +163,9 @@ def process_ingestion_source(self, source_id: str) -> dict:
     if stype == IngestionSourceType.url:
         ingest_url.delay(job_id, source_id)
         return {"source_id": source_id, "dispatched": "url"}
+    if stype == IngestionSourceType.git:
+        ingest_git.delay(job_id, source_id)
+        return {"source_id": source_id, "dispatched": "git"}
     return {"source_id": source_id, "dispatched": False, "reason": f"unsupported:{stype}"}
 
 
@@ -303,6 +306,204 @@ def _do_url_ingest(session: Session, job_id: UUID, source_id: UUID) -> dict:
         "url": url,
         "chunks": len(chunks),
         "bytes": len(body),
+    }
+    update_job(
+        job_id,
+        status=JobStatus.succeeded,
+        progress=1.0,
+        progress_label=f"ready ({len(chunks)} chunks)",
+        result_json=result,
+    )
+    return result
+
+
+# ---------- Git ingestion (SP3-8) -------------------------------------------
+
+
+_GIT_CLONE_TIMEOUT_SECONDS = 120.0
+_GIT_FILE_MAX_BYTES = 1 * 1024 * 1024  # 1 MiB per file
+_GIT_REPO_MAX_BYTES = 20 * 1024 * 1024  # 20 MiB aggregate text
+_GIT_TEXT_EXTENSIONS = {
+    ".md", ".markdown", ".mdx", ".rst", ".txt", ".adoc",
+}
+
+
+@celery_app.task(name="app.worker.tasks.ingest_git", bind=True)
+def ingest_git(self, job_id: str, source_id: str) -> dict:
+    """Ingest a git-repo IngestionSource → DocumentChunks.
+
+    Shallow-clones the repo (depth 1) into a tempdir, walks for README
+    + docs (*.md / *.rst / *.txt under any directory), concatenates the
+    text with file-path delimiters, then routes through the existing
+    chunk + embed + persist pipeline.
+    """
+    jid = UUID(job_id)
+    sid = UUID(source_id)
+
+    update_job(
+        jid,
+        status=JobStatus.running,
+        celery_task_id=self.request.id,
+        progress_label="cloning",
+    )
+
+    try:
+        with SyncSession() as session:
+            return _do_git_ingest(session, jid, sid)
+    except Exception as exc:
+        update_job(jid, status=JobStatus.failed, error_message=str(exc))
+        with SyncSession() as session:
+            src = session.get(IngestionSource, sid)
+            if src is not None:
+                src.status = IngestionStatus.failed
+                src.error_message = str(exc)
+                session.commit()
+        raise
+
+
+def _clone_and_collect(repo_url: str) -> tuple[str, list[str], int]:
+    """Shallow-clone repo_url into a tempdir, return (concatenated_text,
+    file_paths_collected, total_bytes_of_text)."""
+    import shutil
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    tmp = tempfile.mkdtemp(prefix="dclaw-git-")
+    try:
+        try:
+            subprocess.run(
+                [
+                    "git", "clone", "--depth", "1", "--single-branch",
+                    "--no-tags", repo_url, tmp,
+                ],
+                check=True,
+                capture_output=True,
+                timeout=_GIT_CLONE_TIMEOUT_SECONDS,
+            )
+        except subprocess.CalledProcessError as exc:
+            stderr = (exc.stderr or b"").decode("utf-8", "ignore")[:500]
+            raise RuntimeError(f"git clone failed: {stderr}") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("git clone timed out (>120s)") from exc
+
+        files: list[Path] = []
+        for p in Path(tmp).rglob("*"):
+            if not p.is_file():
+                continue
+            if ".git" in p.parts:
+                continue
+            if p.suffix.lower() not in _GIT_TEXT_EXTENSIONS:
+                continue
+            try:
+                if p.stat().st_size > _GIT_FILE_MAX_BYTES:
+                    continue
+            except OSError:
+                continue
+            files.append(p)
+
+        files.sort(key=lambda x: (
+            0 if x.name.lower().startswith("readme") else
+            (1 if "doc" in str(x.parent).lower() else 2),
+            str(x),
+        ))
+
+        parts: list[str] = []
+        total = 0
+        paths: list[str] = []
+        for fp in files:
+            try:
+                body = fp.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            rel = fp.relative_to(tmp).as_posix()
+            piece = f"\n\n=== file: {rel} ===\n\n{body}"
+            if total + len(piece) > _GIT_REPO_MAX_BYTES:
+                break
+            parts.append(piece)
+            paths.append(rel)
+            total += len(piece)
+
+        return "".join(parts), paths, total
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _do_git_ingest(session: Session, job_id: UUID, source_id: UUID) -> dict:
+    source = session.get(IngestionSource, source_id)
+    if source is None:
+        raise ValueError(f"IngestionSource {source_id} not found.")
+    if source.source_type != IngestionSourceType.git:
+        raise ValueError(
+            f"IngestionSource {source_id} is not a git source; got {source.source_type}."
+        )
+
+    repo_url = source.source_reference
+
+    source.status = IngestionStatus.fetching
+    session.commit()
+    update_job(job_id, progress=0.1, progress_label=f"cloning {repo_url}")
+
+    text, file_paths, byte_size = _clone_and_collect(repo_url)
+
+    source.status = IngestionStatus.parsing
+    session.commit()
+    update_job(
+        job_id,
+        progress=0.4,
+        progress_label=f"collected {len(file_paths)} doc files",
+    )
+
+    source.status = IngestionStatus.chunking
+    session.commit()
+    update_job(job_id, progress=0.6, progress_label="chunking")
+    chunks = chunk_text(text) if text else []
+
+    source.status = IngestionStatus.embedding
+    session.commit()
+    update_job(
+        job_id, progress=0.8, progress_label=f"embedding {len(chunks)} chunks"
+    )
+    vectors, model_name = ([], "")
+    if chunks:
+        vectors, model_name = embed_texts_sync(chunks)
+
+    session.query(DocumentChunk).filter(
+        DocumentChunk.source_id == source.id
+    ).delete()
+    session.flush()
+
+    for i, chunk in enumerate(chunks):
+        session.add(
+            DocumentChunk(
+                organization_id=source.organization_id,
+                source_id=source.id,
+                position=i,
+                text=chunk,
+                estimated_tokens=estimate_tokens(chunk),
+                embedding=vectors[i] if i < len(vectors) else None,
+                embedding_model=model_name if vectors else None,
+            )
+        )
+
+    source.document_chunks_created = len(chunks)
+    source.metadata_json = {
+        "repo_url": repo_url,
+        "files_collected": len(file_paths),
+        "file_paths": file_paths[:50],
+        "text_byte_size": byte_size,
+        "chunk_count": len(chunks),
+        "embedding_model": model_name,
+    }
+    source.status = IngestionStatus.ready
+    source.updated_at = datetime.now(timezone.utc)
+    session.commit()
+
+    result = {
+        "source_id": str(source.id),
+        "repo_url": repo_url,
+        "files": len(file_paths),
+        "chunks": len(chunks),
     }
     update_job(
         job_id,
