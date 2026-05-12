@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
+    # Newsletters — Mailchimp (Phase 7.5)
+    # mailchimp_server_prefix is the data-centre suffix on the API key
+    # (e.g. "abc123-us21" → "us21"). Both must be set for real sends.
+    mailchimp_api_key: str = ""
+    mailchimp_server_prefix: str = ""
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
