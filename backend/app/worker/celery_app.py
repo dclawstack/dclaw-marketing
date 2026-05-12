@@ -132,5 +132,15 @@ celery_app.conf.update(
             "task": "app.worker.tasks.automation.process_pending_events",
             "schedule": 30.0,
         },
+        # Phase 10 / M — weekly client report. Mondays 07:30 UTC.
+        "emit-weekly-client-reports": {
+            "task": "app.worker.tasks.client_reports.emit_weekly_client_reports",
+            "schedule": crontab(day_of_week=1, hour=7, minute=30),
+        },
+        # Phase 10 / M — monthly client report. 1st of the month 08:00 UTC.
+        "emit-monthly-client-reports": {
+            "task": "app.worker.tasks.client_reports.emit_monthly_client_reports",
+            "schedule": crontab(day_of_month=1, hour=8, minute=0),
+        },
     },
 )
