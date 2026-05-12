@@ -70,5 +70,14 @@ celery_app.conf.update(
             "task": "app.worker.tasks.attribution.compute_attribution",
             "schedule": crontab(hour=6, minute=30),
         },
+        # Phase 8.8 follow-up — daily lead rescore + auto stage
+        # promotion (new → mql → sql → customer based on the 0-100
+        # score crossing 25 / 60 / 90 thresholds). Runs at 04:30 UTC
+        # before the rollups so the lifecycle Kanban shows consistent
+        # stage counts.
+        "recompute-lead-scores": {
+            "task": "app.worker.tasks.lead_scoring.recompute_lead_scores",
+            "schedule": crontab(hour=4, minute=30),
+        },
     },
 )
