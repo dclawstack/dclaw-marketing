@@ -87,6 +87,17 @@ celery_app.conf.update(
             "task": "app.worker.tasks.analyst.weekly_analyst_report",
             "schedule": crontab(day_of_week=1, hour=7, minute=0),
         },
+        # Phase 7.x — sequence runner. Every 5 min advance any
+        # SequenceMembership whose next_run_at has elapsed.
+        "advance-sequence-memberships": {
+            "task": "app.worker.tasks.sequences.advance_due_memberships",
+            "schedule": 300.0,
+        },
+        # Phase 7.x — segment materializer. Nightly at 03:30 UTC.
+        "materialize-segments": {
+            "task": "app.worker.tasks.segments.materialize_all_segments",
+            "schedule": crontab(hour=3, minute=30),
+        },
         # Phase 2.x / Q4 — weekly freshness re-ingestion. Re-queues
         # URL + git IngestionSource rows whose updated_at is older
         # than 7 days. File / zip sources are snapshots — not re-fetched.
