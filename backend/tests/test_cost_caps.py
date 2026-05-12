@@ -44,6 +44,7 @@ def test_warn_when_above_80_pct_daily():
         s.add(org)
         s.flush()
         # Spend $85 today.
+        now = datetime.now(tz=timezone.utc)
         for _ in range(85):
             s.add(
                 CostLedger(
@@ -51,6 +52,7 @@ def test_warn_when_above_80_pct_daily():
                     provider="x",
                     kind="x",
                     amount_usd=1.0,
+                    occurred_at=now,
                 )
             )
         s.flush()
@@ -75,6 +77,7 @@ def test_blocked_when_at_or_above_cap():
                 provider="x",
                 kind="x",
                 amount_usd=75.0,
+                occurred_at=datetime.now(tz=timezone.utc),
             )
         )
         s.flush()

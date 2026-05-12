@@ -72,7 +72,7 @@ def evaluate_caps_sync(
             select(func.coalesce(func.sum(CostLedger.amount_usd), 0))
             .where(
                 CostLedger.organization_id == organization_id,
-                CostLedger.created_at >= day_start,
+                CostLedger.occurred_at >= day_start,
             )
         ).scalar()
         or 0
@@ -83,7 +83,7 @@ def evaluate_caps_sync(
             select(func.coalesce(func.sum(CostLedger.amount_usd), 0))
             .where(
                 CostLedger.organization_id == organization_id,
-                CostLedger.created_at >= week_start,
+                CostLedger.occurred_at >= week_start,
             )
         ).scalar()
         or 0
