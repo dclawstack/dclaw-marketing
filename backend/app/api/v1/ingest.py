@@ -29,6 +29,12 @@ class IngestFileRequest(BaseModel):
     name: str | None = Field(default=None, max_length=255)
 
 
+class IngestUrlRequest(BaseModel):
+    organization_id: UUID
+    url: str = Field(min_length=8, max_length=2048)
+    name: str | None = Field(default=None, max_length=255)
+
+
 class IngestResponse(BaseModel):
     source_id: UUID
     job_id: UUID
@@ -139,6 +145,65 @@ async def ingest_file(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Failed to dispatch ingestion task: {exc}",
+        )
+
+    return IngestResponse(source_id=src.id, job_id=job.id, status=src.status)
+
+
+@router.post("/urls", response_model=IngestResponse, status_code=status.HTTP_201_CREATED)
+async def ingest_url(
+    body: IngestUrlRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> IngestResponse:
+    """Trigger URL ingestion. Creates an IngestionSource + Job row + dispatches
+    the Celery task. The worker fetches, extracts HTML/text, chunks, embeds.
+    """
+    await _require_member(session, user, body.organization_id, _INGEST_ROLES)
+
+    url = body.url.strip()
+    if not (url.startswith("http://") or url.startswith("https://")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="URL must start with http:// or https://",
+        )
+
+    job = Job(
+        organization_id=body.organization_id,
+        initiated_by_user_id=user.id,
+        kind="app.worker.tasks.ingest_url",
+        status=JobStatus.queued,
+    )
+    session.add(job)
+    await session.flush()
+
+    src = IngestionSource(
+        organization_id=body.organization_id,
+        initiated_by_user_id=user.id,
+        source_type=IngestionSourceType.url,
+        source_reference=url,
+        name=body.name,
+        status=IngestionStatus.queued,
+        job_id=job.id,
+    )
+    session.add(src)
+    await session.flush()
+    await session.commit()
+    await session.refresh(src)
+    await session.refresh(job)
+
+    from app.worker.tasks.ingestion import ingest_url as _task
+    try:
+        _task.delay(str(job.id), str(src.id))
+    except Exception as exc:
+        src.status = IngestionStatus.failed
+        src.error_message = f"Failed to dispatch: {exc}"
+        job.status = JobStatus.failed
+        job.error_message = str(exc)
+        await session.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Failed to dispatch URL ingestion task: {exc}",
         )
 
     return IngestResponse(source_id=src.id, job_id=job.id, status=src.status)
