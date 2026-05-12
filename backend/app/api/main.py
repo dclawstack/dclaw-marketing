@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, audit_events, auth, brand_insights, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, ingest, integrations, jobs, kg, me, oauth, orgs, projects, scheduled_posts, seo, social_accounts, time_entries, webhooks_email, webhooks_generic, workflows
+from app.api.v1 import admin, agent_threads, agents, approvals, assets, audit_events, auth, brand_insights, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, ingest, integrations, jobs, kg, me, oauth, orgs, projects, quotas, scheduled_posts, seo, social_accounts, time_entries, webhooks_email, webhooks_generic, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -107,6 +107,9 @@ app.include_router(webhooks_email.router, prefix="/api/v1")
 
 # Phase 11.1 — cost-ledger totals + drill-down
 app.include_router(costs.router, prefix="/api/v1")
+
+# Phase 11 / I1 — live QuotaCounter browse for the /admin/quotas dashboard
+app.include_router(quotas.router, prefix="/api/v1")
 
 # Phase 11.4 — GDPR export request + download endpoints
 app.include_router(gdpr.router, prefix="/api/v1")
