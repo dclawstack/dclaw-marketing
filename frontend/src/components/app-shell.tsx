@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { DkButton, DkAvatar, DkOrgSwitcher } from "@/components/dk";
+import { AgentDock } from "@/components/agent-dock";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -137,6 +138,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-container px-6 py-8">
         {children}
       </main>
+      <AgentDock />
     </>
   );
 }
