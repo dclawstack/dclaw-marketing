@@ -73,3 +73,4 @@ export {
 } from "./sidebar";
 export { DkToastProvider, useDkToast } from "./toast";
 export { DkOrgSwitcher } from "./org-switcher";
+export { DkAgentChat, type DkAgentChatProps } from "./agent-chat";

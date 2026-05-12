@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, goals, ingest, integrations, jobs, kg, me, orgs, projects, social_accounts
+from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, goals, ingest, integrations, jobs, kg, me, orgs, projects, scheduled_posts, social_accounts
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -76,6 +76,9 @@ app.include_router(goals.router, prefix="/api/v1")
 
 # Agents — Creatives Agent (Phase 2), more agents in Phase 3
 app.include_router(agents.router, prefix="/api/v1")
+
+# Scheduled posts — calendar + dispatcher (Theme C1, Phase 4)
+app.include_router(scheduled_posts.router, prefix="/api/v1")
 
 # Phase 5 — connected publishing endpoints (Theme C2 / v2.0 §6)
 app.include_router(social_accounts.router, prefix="/api/v1")
