@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     # CRM sync (Phase 8.6+) — HubSpot first.
     hubspot_access_token: str = ""
 
+    # Billing — Stripe (Phase 10.6)
+    stripe_secret_key: str = ""
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
