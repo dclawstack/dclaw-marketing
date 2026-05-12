@@ -41,6 +41,7 @@ class ScheduledPostChannel(str, enum.Enum):
     youtube = "youtube"
     tiktok = "tiktok"
     mastodon = "mastodon"
+    reddit = "reddit"
     newsletter = "newsletter"
     blog = "blog"
 
