@@ -154,12 +154,10 @@ app.include_router(branding.router, prefix="/api/v1")
 # v0.3-prep — branding/magic-link/F1/TOTP
 app.include_router(magic_link.router, prefix="/api/v1")
 
-
-# v0.3-prep — branding/magic-link/F1/TOTP
+# F1 — Per-campaign analytics drill-down
 app.include_router(campaign_analytics.router, prefix="/api/v1")
 
-
-# v0.3-prep — branding/magic-link/F1/TOTP
+# A.11.6 — TOTP 2FA
 app.include_router(totp.router, prefix="/api/v1")
 
 # Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)

@@ -15,7 +15,7 @@ Project- and Organization-scoped roles live in the membership tables.
 from datetime import datetime, timezone
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -30,6 +30,14 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # this set to True; resets to False once /me/password is used.
     password_reset_required: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
+    )
+
+    # A.11.6 — opt-in TOTP 2FA. `totp_secret` is the Fernet-sealed base32
+    # secret; null = not enrolled. `totp_enabled` flips True after the
+    # user submits a verification code that proves they scanned the QR.
+    totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    totp_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
     )
 
     created_at: Mapped[datetime] = mapped_column(
