@@ -991,3 +991,80 @@ export async function healthCheckConnection(orgId: string, connectionId: string)
 export async function revokeConnection(orgId: string, connectionId: string): Promise<Connection> {
   return fetchJson<Connection>(`/api/v1/orgs/${orgId}/connections/${connectionId}`, { method: "DELETE" });
 }
+
+// ============================================================
+// Agent threads (Conductor + role-agents — Phase 9)
+// ============================================================
+
+export type AgentKind =
+  | "conductor"
+  | "creatives"
+  | "smm"
+  | "seo"
+  | "paid_media"
+  | "analyst"
+  | "inbox";
+
+export type AgentMessageRole = "user" | "agent" | "system" | "tool";
+
+export interface AgentThread {
+  id: string;
+  organization_id: string;
+  project_id: string | null;
+  parent_thread_id: string | null;
+  kind: AgentKind;
+  title: string | null;
+  started_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentMessage {
+  id: string;
+  thread_id: string;
+  role: AgentMessageRole;
+  agent_kind: AgentKind | null;
+  content: string;
+  tool_name: string | null;
+  tool_arguments: Record<string, unknown> | null;
+  tool_result: Record<string, unknown> | null;
+  metadata_json: Record<string, unknown> | null;
+  approval_request_id: string | null;
+  created_at: string;
+}
+
+export async function listAgentThreads(
+  orgId: string,
+): Promise<AgentThread[]> {
+  return fetchJson<AgentThread[]>(`/api/v1/orgs/${orgId}/agent-threads`);
+}
+
+export async function createAgentThread(
+  orgId: string,
+  data: { kind?: AgentKind; title?: string; project_id?: string },
+): Promise<AgentThread> {
+  return fetchJson<AgentThread>(`/api/v1/orgs/${orgId}/agent-threads`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function listAgentMessages(
+  orgId: string,
+  threadId: string,
+): Promise<AgentMessage[]> {
+  return fetchJson<AgentMessage[]>(
+    `/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`,
+  );
+}
+
+export async function postAgentMessage(
+  orgId: string,
+  threadId: string,
+  content: string,
+): Promise<AgentMessage[]> {
+  return fetchJson<AgentMessage[]>(
+    `/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`,
+    { method: "POST", body: JSON.stringify({ content }) },
+  );
+}
