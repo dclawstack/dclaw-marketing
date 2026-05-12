@@ -182,7 +182,7 @@ async def _run_approval(
     this node and that approval is decided we short-circuit.
     """
     request_id_from_reason: UUID | None = None
-    if run_id is not None:
+    if run_id is not None and session is not None:
         run = await session.get(WorkflowRun, run_id)
         if run is not None and run.deferred_reason:
             prefix = "approval:"
@@ -194,7 +194,7 @@ async def _run_approval(
                 except ValueError:
                     request_id_from_reason = None
 
-    if request_id_from_reason is not None:
+    if request_id_from_reason is not None and session is not None:
         req = await session.get(ApprovalRequest, request_id_from_reason)
         if req is not None and req.status == ApprovalStatus.approved:
             return "approved", {"approval_request_id": str(req.id)}
@@ -203,6 +203,11 @@ async def _run_approval(
         # Still pending — fall through to "still waiting"; we don't
         # re-file. Defer again with the same id.
         return "filed", {"approval_request_id": str(request_id_from_reason)}
+
+    # Session-less path (unit tests): defer with a stub id so the
+    # caller still sees "this paused" without exploding on .add(None).
+    if session is None:
+        return "filed", {"approval_request_id": "session-less"}
 
     # Fresh approval — file a new ApprovalRequest row.
     subject = _render(

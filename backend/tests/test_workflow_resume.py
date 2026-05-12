@@ -80,7 +80,7 @@ async def _seed_workflow(
             organization_id=org.id,
             name="Test Workflow",
             description="approval-then-noop test",
-            status=WorkflowStatus.published,
+            status=WorkflowStatus.active,
             dsl_json=dsl,
         )
         session.add(wf)
