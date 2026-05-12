@@ -1,42 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import {
-  Building2,
-  Palette,
-  BookOpen,
-  Target,
-  FolderKanban,
-  Users,
-} from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { Building2 } from "lucide-react";
 
 import {
   DkBadge,
-  DkBreadcrumb,
-  DkButton,
   DkCard,
   DkCardContent,
   DkCardDescription,
   DkCardHeader,
   DkCardTitle,
-  DkPageHeader,
   DkSkeleton,
 } from "@/components/dk";
 import { Organization, getOrg } from "@/lib/api";
 
-interface QuickLink {
-  label: string;
-  description: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  disabled?: boolean;
-  soon?: boolean;
-}
-
-export default function OrgDetailPage() {
+/**
+ * Overview tab — surfaced as the default route under the
+ * `/orgs/[id]/layout.tsx` tabbed shell. Renders Org meta + a quick
+ * launchpad of the most common next actions.
+ */
+export default function OrgOverviewTab() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const [org, setOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,145 +38,93 @@ export default function OrgDetailPage() {
       .finally(() => setLoading(false));
   }, [params?.id]);
 
-  const links: QuickLink[] = org
-    ? [
-        {
-          label: "Members",
-          description: "Invite teammates; assign supervision-scope roles.",
-          href: `/orgs/${org.id}/members`,
-          icon: Users,
-        },
-        {
-          label: "Brand Kit",
-          description: "Palette, typography, voice, do-say / don't-say, personas.",
-          href: `/orgs/${org.id}/brand`,
-          icon: Palette,
-        },
-        {
-          label: "Knowledge",
-          description: "Ingest URLs, files, repos into the org's knowledge graph.",
-          href: `/orgs/${org.id}/knowledge`,
-          icon: BookOpen,
-        },
-        {
-          label: "Goals & Autonomy",
-          description: "Objectives, ICPs, budgets, per-action-class trust modes.",
-          href: `/orgs/${org.id}/goals`,
-          icon: Target,
-        },
-        {
-          label: "Projects",
-          description: "Time-boxed initiatives within this organization.",
-          href: `/orgs/${org.id}/projects`,
-          icon: FolderKanban,
-        },
-      ]
-    : [];
-
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
-        <DkSkeleton className="h-8 w-64" />
-        <DkSkeleton className="h-16 w-full" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <DkSkeleton key={i} className="h-32" />
-          ))}
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <DkSkeleton key={i} className="h-32" />
+        ))}
       </div>
     );
   }
 
   if (error || !org) {
     return (
-      <div className="flex flex-col gap-4">
-        <DkBreadcrumb
-          items={[{ label: "Organizations", href: "/orgs" }, { label: "Error" }]}
-        />
-        <div
-          role="alert"
-          className="rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
-        >
-          {error ?? "Organization not found."}
-        </div>
-        <div>
-          <DkButton variant="secondary" onClick={() => router.push("/orgs")}>
-            Back to organizations
-          </DkButton>
-        </div>
+      <div
+        role="alert"
+        className="rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+      >
+        {error ?? "Organization not found."}
       </div>
     );
   }
 
+  const quickActions = [
+    { label: "Connect a social channel", href: "/channels" },
+    { label: "Add knowledge sources", href: `/orgs/${org.id}/knowledge` },
+    { label: "Set goals + autonomy posture", href: `/orgs/${org.id}/goals` },
+    { label: "Create a project", href: `/orgs/${org.id}/projects/new` },
+    { label: "Invite a teammate", href: `/orgs/${org.id}/members` },
+  ];
+
   return (
-    <div className="flex flex-col gap-8">
-      <DkBreadcrumb
-        items={[
-          { label: "Organizations", href: "/orgs" },
-          { label: org.name },
-        ]}
-      />
-
-      <DkPageHeader
-        eyebrow="Organization"
-        title={org.name}
-        description={
-          org.description ??
-          "No description yet. Use the Edit action to add one."
-        }
-        actions={
-          <div className="flex items-center gap-3">
-            {org.is_external && <DkBadge tone="info">external</DkBadge>}
-            <DkButton variant="secondary" disabled>
-              Edit
-            </DkButton>
-          </div>
-        }
-      />
-
-      <div className="flex items-center gap-2 text-sm text-[var(--dk-fg-2)]">
-        <Building2 className="h-4 w-4" />
-        <span className="font-mono">{org.slug}</span>
+    <div className="flex flex-col gap-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <DkCard>
+          <DkCardHeader>
+            <DkCardTitle className="text-base">Slug</DkCardTitle>
+          </DkCardHeader>
+          <DkCardContent>
+            <div className="flex items-center gap-2 text-sm font-mono">
+              <Building2 className="h-4 w-4 text-brand" />
+              {org.slug}
+            </div>
+          </DkCardContent>
+        </DkCard>
+        <DkCard>
+          <DkCardHeader>
+            <DkCardTitle className="text-base">Mode</DkCardTitle>
+          </DkCardHeader>
+          <DkCardContent>
+            <DkBadge tone={org.is_external ? "info" : "brand"}>
+              {org.is_external ? "External / Client" : "Internal"}
+            </DkBadge>
+          </DkCardContent>
+        </DkCard>
+        <DkCard>
+          <DkCardHeader>
+            <DkCardTitle className="text-base">Description</DkCardTitle>
+          </DkCardHeader>
+          <DkCardContent>
+            <p className="text-sm opacity-80">
+              {org.description || (
+                <span className="opacity-60">No description yet.</span>
+              )}
+            </p>
+          </DkCardContent>
+        </DkCard>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-ink">
-          Set Up This Organization
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {links.map((l) => {
-            const Icon = l.icon;
-            const card = (
-              <DkCard hover={!l.disabled && !l.soon} className="h-full">
-                <DkCardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--dk-purple-50)] text-brand shrink-0">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    {l.soon && <DkBadge tone="brand">soon</DkBadge>}
-                  </div>
-                  <DkCardTitle className="text-base">{l.label}</DkCardTitle>
-                  <DkCardDescription>{l.description}</DkCardDescription>
-                </DkCardHeader>
-                <DkCardContent />
-              </DkCard>
-            );
-            return l.soon ? (
-              <div
-                key={l.label}
-                aria-disabled
-                className="cursor-not-allowed opacity-70"
-              >
-                {card}
-              </div>
-            ) : (
-              <a key={l.label} href={l.href} className="block">
-                {card}
-              </a>
-            );
-          })}
-        </div>
-      </div>
+      <DkCard>
+        <DkCardHeader>
+          <DkCardTitle>Quick actions</DkCardTitle>
+          <DkCardDescription>
+            The five highest-leverage moves for a new workspace. Use the tabs
+            above to dive into any one in detail.
+          </DkCardDescription>
+        </DkCardHeader>
+        <DkCardContent className="flex flex-wrap gap-2">
+          {quickActions.map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="inline-flex items-center gap-1.5 rounded-md bg-[var(--dk-purple-50)] px-3 py-1.5 text-sm text-brand font-medium hover:bg-[var(--dk-purple-100)] transition-colors"
+            >
+              {a.label}
+            </Link>
+          ))}
+        </DkCardContent>
+      </DkCard>
     </div>
   );
 }
