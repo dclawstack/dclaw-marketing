@@ -177,6 +177,20 @@ async def generate_social_posts(
         positioning=_format_positioning(brand_kit),
         channel=channel,
     )
+    # §6.2 — append top brand-kit insights so the agent learns from
+    # prior runs without a manual prompt edit.
+    if brand_kit is not None:
+        from app.agents.brand_style import (
+            fetch_brand_insights,
+            format_insights_block,
+        )
+        try:
+            insights = await fetch_brand_insights(
+                session, brand_kit_id=brand_kit.id, top_k=5
+            )
+        except Exception:
+            insights = []
+        system_prompt = system_prompt + format_insights_block(insights)
     user_prompt = _USER_PROMPT_TEMPLATE.format(
         brief=brief,
         context=_format_context(chunks),
