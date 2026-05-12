@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     salesforce_access_token: str = ""
     salesforce_instance_url: str = ""
 
+    # CRM sync (Phase 8.6+) — HubSpot first.
+    hubspot_access_token: str = ""
+
     # Billing — Stripe (Phase 10.6)
     stripe_secret_key: str = ""
 
