@@ -63,6 +63,15 @@ class Settings(BaseSettings):
     # CRM sync (Phase 8.6+) — HubSpot first.
     hubspot_access_token: str = ""
 
+    # Ads — Google Ads. Phase 7.x.
+    # Developer-token is per-MCC, provisioned by Google. Customer-id is
+    # the (10-digit, no hyphens) ad-account id; login-customer-id is
+    # only needed when the token is on a manager account.
+    google_ads_access_token: str = ""
+    google_ads_developer_token: str = ""
+    google_ads_customer_id: str = ""
+    google_ads_login_customer_id: str = ""
+
     # Billing — Stripe (Phase 10.6)
     stripe_secret_key: str = ""
 
