@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
+    # Newsletters (Phase 7.5+) — ConvertKit + Beehiiv. Mailchimp lives
+    # on a separate config block (see #153) once merged.
+    convertkit_api_secret: str = ""
+    beehiiv_api_key: str = ""
+    beehiiv_publication_id: str = ""
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
