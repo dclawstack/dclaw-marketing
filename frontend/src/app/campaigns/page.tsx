@@ -2,26 +2,39 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getCampaigns, Campaign, CampaignStatus, CampaignType } from "@/lib/api";
 
-const statusColors: Record<CampaignStatus, string> = {
-  draft: "bg-slate-100 text-slate-800",
-  scheduled: "bg-blue-100 text-blue-800",
-  active: "bg-green-100 text-green-800",
-  paused: "bg-yellow-100 text-yellow-800",
-  completed: "bg-slate-100 text-slate-800",
+import {
+  DkBadge,
+  DkButton,
+  DkCard,
+  DkCardContent,
+  DkCardHeader,
+  DkCardTitle,
+  DkPageHeader,
+  DkSelect,
+  DkTable,
+  DkTableBody,
+  DkTableCell,
+  DkTableHead,
+  DkTableHeader,
+  DkTableRow,
+} from "@/components/dk";
+import {
+  Campaign,
+  CampaignStatus,
+  CampaignType,
+  getCampaigns,
+} from "@/lib/api";
+
+const STATUS_TONE: Record<
+  CampaignStatus,
+  "brand" | "info" | "success" | "warning" | "neutral"
+> = {
+  draft: "neutral",
+  scheduled: "info",
+  active: "success",
+  paused: "warning",
+  completed: "neutral",
 };
 
 export default function CampaignsPage() {
@@ -40,17 +53,24 @@ export default function CampaignsPage() {
   }, [statusFilter, typeFilter]);
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Campaigns</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Select
+    <div className="flex flex-col gap-8">
+      <DkPageHeader
+        eyebrow="Workspace"
+        title="Campaigns"
+        description="Time-boxed initiatives bundling brief, hypothesis, target persona, channels, and KPIs."
+      />
+
+      <DkCard>
+        <DkCardHeader>
+          <DkCardTitle className="text-base">Filters</DkCardTitle>
+        </DkCardHeader>
+        <DkCardContent>
+          <div className="flex flex-wrap gap-3">
+            <DkSelect
               value={statusFilter}
-              onValueChange={(v) => setStatusFilter(v as CampaignStatus)}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as CampaignStatus)
+              }
               className="w-48"
             >
               <option value="">All Statuses</option>
@@ -59,10 +79,10 @@ export default function CampaignsPage() {
               <option value="active">Active</option>
               <option value="paused">Paused</option>
               <option value="completed">Completed</option>
-            </Select>
-            <Select
+            </DkSelect>
+            <DkSelect
               value={typeFilter}
-              onValueChange={(v) => setTypeFilter(v as CampaignType)}
+              onChange={(e) => setTypeFilter(e.target.value as CampaignType)}
               className="w-48"
             >
               <option value="">All Types</option>
@@ -70,62 +90,67 @@ export default function CampaignsPage() {
               <option value="social">Social</option>
               <option value="ppc">PPC</option>
               <option value="content">Content</option>
-            </Select>
+            </DkSelect>
           </div>
-        </CardContent>
-      </Card>
+        </DkCardContent>
+      </DkCard>
 
-      <Card className="mt-4">
-        <CardContent className="p-0">
+      <DkCard>
+        <DkCardContent className="p-0">
           {loading ? (
-            <div className="p-4 text-slate-500">Loading...</div>
+            <p className="p-6 text-[var(--dk-fg-2)]">Loading…</p>
           ) : error ? (
-            <div className="p-4 text-red-600">Error: {error}</div>
+            <p className="p-6 text-[var(--dk-danger)]">{error}</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>End</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <DkTable>
+              <DkTableHeader>
+                <DkTableRow>
+                  <DkTableHead>Name</DkTableHead>
+                  <DkTableHead>Type</DkTableHead>
+                  <DkTableHead>Status</DkTableHead>
+                  <DkTableHead>Budget</DkTableHead>
+                  <DkTableHead>Start</DkTableHead>
+                  <DkTableHead>End</DkTableHead>
+                  <DkTableHead className="text-right">Actions</DkTableHead>
+                </DkTableRow>
+              </DkTableHeader>
+              <DkTableBody>
                 {campaigns.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-slate-500">
-                      No campaigns found
-                    </TableCell>
-                  </TableRow>
+                  <DkTableRow>
+                    <DkTableCell
+                      colSpan={7}
+                      className="text-center text-[var(--dk-fg-2)] py-8"
+                    >
+                      No campaigns found.
+                    </DkTableCell>
+                  </DkTableRow>
                 )}
                 {campaigns.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell className="capitalize">{c.type}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[c.status]}>{c.status}</Badge>
-                    </TableCell>
-                    <TableCell>{c.budget ? `$${c.budget.toFixed(2)}` : "—"}</TableCell>
-                    <TableCell>{c.start_date || "—"}</TableCell>
-                    <TableCell>{c.end_date || "—"}</TableCell>
-                    <TableCell>
+                  <DkTableRow key={c.id}>
+                    <DkTableCell className="font-medium">{c.name}</DkTableCell>
+                    <DkTableCell className="capitalize">{c.type}</DkTableCell>
+                    <DkTableCell>
+                      <DkBadge tone={STATUS_TONE[c.status]}>{c.status}</DkBadge>
+                    </DkTableCell>
+                    <DkTableCell className="tabular-nums">
+                      {c.budget ? `$${c.budget.toFixed(2)}` : "—"}
+                    </DkTableCell>
+                    <DkTableCell>{c.start_date || "—"}</DkTableCell>
+                    <DkTableCell>{c.end_date || "—"}</DkTableCell>
+                    <DkTableCell className="text-right">
                       <Link href={`/campaigns/${c.id}`}>
-                        <Button size="sm" variant="outline">
+                        <DkButton size="sm" variant="secondary">
                           View
-                        </Button>
+                        </DkButton>
                       </Link>
-                    </TableCell>
-                  </TableRow>
+                    </DkTableCell>
+                  </DkTableRow>
                 ))}
-              </TableBody>
-            </Table>
+              </DkTableBody>
+            </DkTable>
           )}
-        </CardContent>
-      </Card>
+        </DkCardContent>
+      </DkCard>
     </div>
   );
 }

@@ -1,32 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Copy, UserPlus } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DkBadge,
+  DkButton,
+  DkCard,
+  DkCardContent,
+  DkCardDescription,
+  DkCardHeader,
+  DkCardTitle,
+  DkCheckbox,
+  DkDialog,
+  DkDialogContent,
+  DkDialogFooter,
+  DkDialogHeader,
+  DkInput,
+  DkLabel,
+  DkPageHeader,
+  DkTable,
+  DkTableBody,
+  DkTableCell,
+  DkTableHead,
+  DkTableHeader,
+  DkTableRow,
+} from "@/components/dk";
 import {
   AdminUser,
   adminCreateUser,
@@ -40,7 +39,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Create-user form state
   const [createOpen, setCreateOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -95,7 +93,11 @@ export default function AdminUsersPage() {
   }
 
   async function handleRevoke(userId: string) {
-    if (!confirm("Revoke this user's access? They will no longer be able to log in.")) {
+    if (
+      !confirm(
+        "Revoke this user's access? They will no longer be able to log in.",
+      )
+    ) {
       return;
     }
     try {
@@ -106,156 +108,182 @@ export default function AdminUsersPage() {
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Users</h1>
-          <p className="text-sm text-muted-foreground">
-            Admin-only. Create users; share the generated temp password.
-            Users reset on first login.
-          </p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)}>Create user</Button>
-        <Dialog
-          open={createOpen}
-          onOpenChange={(o) => {
-            setCreateOpen(o);
-            if (!o) setTempPassword(null);
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create user</DialogTitle>
-            </DialogHeader>
-            {tempPassword ? (
-              <div className="space-y-3">
-                <p className="text-sm">
-                  Share this temp password with the user. They&apos;ll be
-                  asked to change it on first login. This is shown ONCE —
-                  copy it now.
-                </p>
-                <div className="rounded-md border bg-muted px-3 py-2 font-mono text-sm">
-                  {tempPassword}
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(tempPassword);
-                  }}
-                >
-                  Copy to clipboard
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@company.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="full_name">Full name (optional)</Label>
-                  <Input
-                    id="full_name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={isAdmin}
-                    onChange={(e) => setIsAdmin(e.target.checked)}
-                  />
-                  Make admin (can create other users)
-                </label>
-                {error && (
-                  <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
-                <Button
-                  onClick={handleCreate}
-                  disabled={!email || creating}
-                  className="w-full"
-                >
-                  {creating ? "Creating…" : "Create user & generate temp password"}
-                </Button>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+  function closeCreate() {
+    setCreateOpen(false);
+    setTempPassword(null);
+    setError(null);
+  }
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All users</CardTitle>
-          <CardDescription>{loading ? "Loading…" : `${users.length} total`}</CardDescription>
-        </CardHeader>
-        <CardContent>
+  return (
+    <div className="flex flex-col gap-8">
+      <DkPageHeader
+        eyebrow="Admin"
+        title="Users"
+        description="Admin-only. Create users — share the generated temp password — users reset on first login."
+        actions={
+          <DkButton onClick={() => setCreateOpen(true)}>
+            <UserPlus className="h-4 w-4" />
+            Create User
+          </DkButton>
+        }
+      />
+
+      <DkCard>
+        <DkCardHeader>
+          <DkCardTitle>All Users</DkCardTitle>
+          <DkCardDescription>
+            {loading ? "Loading…" : `${users.length} total`}
+          </DkCardDescription>
+        </DkCardHeader>
+        <DkCardContent className="px-0 pt-0">
           {error && !createOpen && (
-            <div className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              role="alert"
+              className="mx-6 mb-4 rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+            >
               {error}
             </div>
           )}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <DkTable>
+            <DkTableHeader>
+              <DkTableRow>
+                <DkTableHead>Email</DkTableHead>
+                <DkTableHead>Name</DkTableHead>
+                <DkTableHead>Status</DkTableHead>
+                <DkTableHead>Role</DkTableHead>
+                <DkTableHead className="text-right">Actions</DkTableHead>
+              </DkTableRow>
+            </DkTableHeader>
+            <DkTableBody>
               {users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-mono text-sm">{u.email}</TableCell>
-                  <TableCell>{u.full_name ?? "—"}</TableCell>
-                  <TableCell>
-                    {u.is_active ? (
-                      <Badge variant="default">active</Badge>
-                    ) : (
-                      <Badge variant="secondary">revoked</Badge>
-                    )}
-                    {u.password_reset_required && (
-                      <Badge variant="outline" className="ml-2">
-                        reset pending
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{u.is_superuser ? "Admin" : "User"}</TableCell>
-                  <TableCell className="space-x-2 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleResetPassword(u.id)}
-                    >
-                      Reset password
-                    </Button>
-                    {u.is_active && (
-                      <Button
+                <DkTableRow key={u.id}>
+                  <DkTableCell className="font-mono text-sm">
+                    {u.email}
+                  </DkTableCell>
+                  <DkTableCell>{u.full_name ?? "—"}</DkTableCell>
+                  <DkTableCell>
+                    <div className="flex items-center gap-2">
+                      {u.is_active ? (
+                        <DkBadge tone="success">active</DkBadge>
+                      ) : (
+                        <DkBadge tone="neutral">revoked</DkBadge>
+                      )}
+                      {u.password_reset_required && (
+                        <DkBadge tone="warning">reset pending</DkBadge>
+                      )}
+                    </div>
+                  </DkTableCell>
+                  <DkTableCell>{u.is_superuser ? "Admin" : "User"}</DkTableCell>
+                  <DkTableCell className="text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <DkButton
                         size="sm"
-                        variant="destructive"
-                        onClick={() => handleRevoke(u.id)}
+                        variant="secondary"
+                        onClick={() => handleResetPassword(u.id)}
                       >
-                        Revoke
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
+                        Reset Password
+                      </DkButton>
+                      {u.is_active && (
+                        <DkButton
+                          size="sm"
+                          variant="danger"
+                          onClick={() => handleRevoke(u.id)}
+                        >
+                          Revoke
+                        </DkButton>
+                      )}
+                    </div>
+                  </DkTableCell>
+                </DkTableRow>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </DkTableBody>
+          </DkTable>
+        </DkCardContent>
+      </DkCard>
+
+      <DkDialog open={createOpen} onClose={closeCreate} size="md">
+        <DkDialogHeader
+          title={tempPassword ? "Temp Password Issued" : "Create User"}
+          description={
+            tempPassword
+              ? "Copy this now — it's shown once. The user must reset it on first login."
+              : "Generates a one-shot temporary password the user replaces on first login."
+          }
+          onClose={closeCreate}
+        />
+        <DkDialogContent>
+          {tempPassword ? (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-md border border-[var(--dk-border-strong)] bg-[var(--dk-bg-muted)] px-3 py-3 font-mono text-md text-ink break-all">
+                {tempPassword}
+              </div>
+              <DkButton
+                variant="secondary"
+                onClick={() => {
+                  navigator.clipboard.writeText(tempPassword);
+                }}
+              >
+                <Copy className="h-4 w-4" />
+                Copy to Clipboard
+              </DkButton>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <DkLabel htmlFor="email" required>
+                  Email
+                </DkLabel>
+                <DkInput
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="user@company.com"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <DkLabel htmlFor="full_name">Full name (optional)</DkLabel>
+                <DkInput
+                  id="full_name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <DkCheckbox
+                  checked={isAdmin}
+                  onChange={(e) => setIsAdmin(e.target.checked)}
+                />
+                <span className="text-sm text-ink">
+                  Make admin (can create other users)
+                </span>
+              </label>
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+                >
+                  {error}
+                </div>
+              )}
+            </div>
+          )}
+        </DkDialogContent>
+        {!tempPassword && (
+          <DkDialogFooter>
+            <DkButton variant="secondary" onClick={closeCreate}>
+              Cancel
+            </DkButton>
+            <DkButton
+              onClick={handleCreate}
+              disabled={!email || creating}
+              loading={creating}
+            >
+              Create User
+            </DkButton>
+          </DkDialogFooter>
+        )}
+      </DkDialog>
     </div>
   );
 }
