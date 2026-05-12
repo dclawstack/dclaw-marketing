@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_insights, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, ingest, integrations, jobs, kg, me, orgs, projects, scheduled_posts, social_accounts, time_entries, webhooks_email, workflows
+from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_insights, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, ingest, integrations, jobs, kg, me, oauth, orgs, projects, scheduled_posts, social_accounts, time_entries, webhooks_email, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -89,6 +89,9 @@ app.include_router(scheduled_posts.router, prefix="/api/v1")
 
 # Phase 5 — connected publishing endpoints (Theme C2 / v2.0 §6)
 app.include_router(social_accounts.router, prefix="/api/v1")
+
+# Phase 5.7 — OAuth start/callback for publisher accounts
+app.include_router(oauth.router, prefix="/api/v1")
 
 # MCP integrations — registry + per-Org Connection (Theme D / Phase 6)
 app.include_router(integrations.router, prefix="/api/v1")
