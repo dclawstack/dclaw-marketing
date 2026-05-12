@@ -20,7 +20,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents import conductor as conductor_agent
+from app.agents import (
+    analyst as analyst_agent,
+    conductor as conductor_agent,
+    paid_media as paid_media_agent,
+    seo as seo_agent,
+    smm as smm_agent,
+)
 from app.auth import current_active_user
 from app.core.database import get_db
 from app.models.agent_thread import (
@@ -199,31 +205,51 @@ async def post_message(
     session.add(user_msg)
     await session.flush()
 
-    # 2. Agent reply
-    if thread.kind == AgentKind.conductor:
-        turn = conductor_agent.reply(body.content)
-        agent_msg = AgentMessage(
-            thread_id=thread.id,
-            role=AgentMessageRole.agent,
-            agent_kind=AgentKind.conductor,
-            content=turn.text,
-            metadata_json={
-                "confidence": turn.confidence,
-                "suggestions": turn.suggestions or [],
-            },
-        )
-    else:
-        # Role-agent threads — Phase 9.x adds real per-agent stubs.
+    # 2. Agent reply — fetch the thread's prior turns so the agent has
+    #    context (last 10 turns are passed to Claude).
+    prior = await session.execute(
+        select(AgentMessage)
+        .where(AgentMessage.thread_id == thread.id)
+        .order_by(AgentMessage.created_at.asc())
+    )
+    history = [
+        {"role": m.role.value, "content": m.content}
+        for m in prior.scalars().all()
+        if m.id != user_msg.id
+    ]
+
+    # Route by AgentKind to the right role-agent module (Phase 9.2).
+    _ROUTER = {
+        AgentKind.conductor: conductor_agent.reply,
+        AgentKind.smm: smm_agent.reply,
+        AgentKind.seo: seo_agent.reply,
+        AgentKind.paid_media: paid_media_agent.reply,
+        AgentKind.analyst: analyst_agent.reply,
+    }
+    runner = _ROUTER.get(thread.kind)
+    if runner is None:
+        # Unknown / not-yet-implemented kind (e.g. inbox agent).
         agent_msg = AgentMessage(
             thread_id=thread.id,
             role=AgentMessageRole.agent,
             agent_kind=thread.kind,
             content=(
-                "I'll respond more substantively once the Phase 9.x "
-                f"{thread.kind.value} agent stub lands. For now the "
-                "Conductor (/agent) is the place to bring requests."
+                f"The {thread.kind.value} agent stub isn't online yet. "
+                "Bring requests to the Conductor at /agent for now."
             ),
             metadata_json={"confidence": 0.4},
+        )
+    else:
+        turn = await runner(body.content, history=history)
+        agent_msg = AgentMessage(
+            thread_id=thread.id,
+            role=AgentMessageRole.agent,
+            agent_kind=thread.kind,
+            content=turn.text,
+            metadata_json={
+                "confidence": turn.confidence,
+                "suggestions": turn.suggestions or [],
+            },
         )
     session.add(agent_msg)
 
