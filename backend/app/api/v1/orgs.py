@@ -11,7 +11,7 @@ import re
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -181,6 +181,62 @@ async def get_org(
     if org is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Org not found.")
     return org
+
+
+@router.delete("/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_org(
+    org_id: UUID,
+    request: Request,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> None:
+    """Permanently delete an Organization and every row that hangs off it.
+
+    Permission: superuser OR the Org's own ``admin`` role member. The
+    cascade FKs on every child model (campaigns, leads, scheduled posts,
+    ingested chunks, agent threads, …) tear the dependent data down in
+    one statement. The audit event we write before the delete uses
+    ``organization_id=None`` so it survives the cascade — the org id is
+    preserved in ``target_id`` and the payload.
+    """
+    org = await session.get(Organization, org_id)
+    if org is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Org not found."
+        )
+
+    if not user.is_superuser:
+        result = await session.execute(
+            select(OrganizationMembership).where(
+                OrganizationMembership.user_id == user.id,
+                OrganizationMembership.organization_id == org_id,
+            )
+        )
+        membership = result.scalar_one_or_none()
+        if membership is None or membership.role != OrganizationRole.admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Only a superuser or the organization's own admin "
+                    "can delete an organization."
+                ),
+            )
+
+    from app.services.audit import write_audit_event
+
+    await write_audit_event(
+        session,
+        action_type="org.delete",
+        organization_id=None,
+        actor_user_id=user.id,
+        target_type="organization",
+        target_id=str(org_id),
+        payload={"slug": org.slug, "name": org.name},
+        request=request,
+    )
+
+    await session.delete(org)
+    await session.commit()
 
 
 @router.patch("/{org_id}", response_model=OrganizationRead)

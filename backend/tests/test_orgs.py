@@ -171,6 +171,99 @@ async def test_admin_can_add_member_to_org(client):
 
 
 @pytest.mark.asyncio
+async def test_superuser_can_delete_org_and_cascade_clears_memberships(client):
+    alice = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with_member("doomed", alice, OrganizationRole.admin)
+
+    await _seed_user("root@example.com", "RootPwd123!", is_superuser=True)
+    token = await _login(client, "root@example.com", "RootPwd123!")
+
+    res = await client.delete(
+        f"/api/v1/orgs/{org.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 204, res.text
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        from sqlalchemy import select
+        from app.models.audit_event import AuditEvent
+
+        assert (await session.get(Organization, org.id)) is None
+        result = await session.execute(
+            select(OrganizationMembership).where(
+                OrganizationMembership.organization_id == org.id
+            )
+        )
+        assert result.scalar_one_or_none() is None
+
+        # Audit row was written with organization_id=NULL so it survives.
+        audit = await session.execute(
+            select(AuditEvent).where(
+                AuditEvent.action_type == "org.delete",
+                AuditEvent.target_id == str(org.id),
+            )
+        )
+        row = audit.scalar_one_or_none()
+        assert row is not None
+        assert row.organization_id is None
+        assert row.payload_json == {"slug": "doomed", "name": "Org doomed"}
+
+
+@pytest.mark.asyncio
+async def test_org_admin_can_delete_own_org(client):
+    alice = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with_member("acme", alice, OrganizationRole.admin)
+
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+    res = await client.delete(
+        f"/api/v1/orgs/{org.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 204, res.text
+
+
+@pytest.mark.asyncio
+async def test_org_manager_cannot_delete_org(client):
+    alice = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with_member("acme", alice, OrganizationRole.manager)
+
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+    res = await client.delete(
+        f"/api/v1/orgs/{org.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_non_member_cannot_delete_org(client):
+    alice = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with_member("acme", alice, OrganizationRole.admin)
+    await _seed_user("intruder@example.com", "Intruder123!")
+
+    token = await _login(client, "intruder@example.com", "Intruder123!")
+    res = await client.delete(
+        f"/api/v1/orgs/{org.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_org_returns_404(client):
+    from uuid import uuid4
+
+    await _seed_user("root@example.com", "RootPwd123!", is_superuser=True)
+    token = await _login(client, "root@example.com", "RootPwd123!")
+
+    res = await client.delete(
+        f"/api/v1/orgs/{uuid4()}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_viewer_cannot_add_member(client):
     alice = await _seed_user("alice@example.com", "AlicePwd123!")
     bob = await _seed_user("bob@example.com", "BobPwd123456!")
