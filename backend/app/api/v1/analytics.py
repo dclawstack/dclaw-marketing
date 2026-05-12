@@ -70,7 +70,7 @@ async def _require_member(
 @router.get("/rollups")
 async def list_rollups(
     organization_id: UUID,
-    scope: Optional[str] = Query(None, regex="^(org|channel|project|campaign)$"),
+    scope: Optional[str] = Query(None, pattern="^(org|channel|project|campaign)$"),
     days: int = Query(7, ge=1, le=90),
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -110,4 +110,66 @@ async def list_rollups(
             }
             for r in rows
         ],
+    }
+
+
+@router.get("/totals")
+async def org_totals(
+    organization_id: UUID,
+    days: int = Query(30, ge=1, le=365),
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Aggregates the last ``days`` of org-scope rollups into a single
+    summary — perfect for dashboard hero cards.
+
+    Returns: {touchpoints, conversions, revenue_usd, days, prev_period_*}
+    where prev_period_* is the same metric computed over the
+    immediately-preceding window of the same length, for percent-change
+    chips on the UI.
+    """
+    await _require_member(db, user, organization_id)
+
+    now = datetime.now(tz=timezone.utc)
+    cur_start = now - timedelta(days=days)
+    prev_start = cur_start - timedelta(days=days)
+
+    rows = (
+        (
+            await db.execute(
+                select(AnalyticsRollup).where(
+                    AnalyticsRollup.organization_id == organization_id,
+                    AnalyticsRollup.scope == "org",
+                    AnalyticsRollup.day >= prev_start,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    cur = {"touchpoints": 0, "conversions": 0, "revenue_usd": 0.0}
+    prev = {"touchpoints": 0, "conversions": 0, "revenue_usd": 0.0}
+    for r in rows:
+        bucket = cur if r.day >= cur_start else prev
+        m = r.metric_json or {}
+        bucket["touchpoints"] += int(m.get("touchpoints", 0) or 0)
+        bucket["conversions"] += int(m.get("conversions", 0) or 0)
+        bucket["revenue_usd"] += float(m.get("revenue_usd", 0.0) or 0.0)
+
+    def _pct(a: float, b: float) -> float | None:
+        if b == 0:
+            return None
+        return round(((a - b) / b) * 100.0, 1)
+
+    return {
+        "organization_id": str(organization_id),
+        "days": days,
+        "current": cur,
+        "previous": prev,
+        "delta_pct": {
+            "touchpoints": _pct(cur["touchpoints"], prev["touchpoints"]),
+            "conversions": _pct(cur["conversions"], prev["conversions"]),
+            "revenue_usd": _pct(cur["revenue_usd"], prev["revenue_usd"]),
+        },
     }
