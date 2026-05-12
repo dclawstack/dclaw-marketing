@@ -98,17 +98,12 @@ celery_app.conf.update(
             "task": "app.worker.tasks.segments.materialize_all_segments",
             "schedule": crontab(hour=3, minute=30),
         },
-        # Phase 2.x / Q4 — weekly freshness re-ingestion. Re-queues
-        # URL + git IngestionSource rows whose updated_at is older
-        # than 7 days. File / zip sources are snapshots — not re-fetched.
+        # Phase 2.x / Q4 — weekly freshness re-ingestion.
         "refresh-stale-knowledge-sources": {
             "task": "app.worker.tasks.freshness.refresh_stale_sources",
             "schedule": crontab(day_of_week=0, hour=2, minute=0),
         },
-        # Phase 2.x / Q2 — live input pollers. Notion + Drive surface
-        # new pages/files via their MCP adapters every 30 min; git
-        # repos every 4h; URL crawls every 24h (more aggressive than
-        # the Q4 weekly task, which still owns the long tail).
+        # Phase 2.x / Q2 — live input pollers.
         "poll-notion-workspaces": {
             "task": "app.worker.tasks.live_pollers.poll_notion_workspaces",
             "schedule": 30 * 60.0,
@@ -129,6 +124,12 @@ celery_app.conf.update(
         "notify-pending-approvals": {
             "task": "app.worker.tasks.approval_notifications.notify_pending_approvals",
             "schedule": 300.0,
+        },
+        # Phase 11 / I3 — hourly cost-cap evaluation. Warns at 80%,
+        # writes a "cost_cap.blocked" audit row at 100%.
+        "evaluate-cost-caps-hourly": {
+            "task": "app.worker.tasks.cost_caps.evaluate_all_orgs",
+            "schedule": crontab(minute=15),
         },
         # Phase 10 / M — weekly client report. Mondays 07:30 UTC.
         "emit-weekly-client-reports": {
