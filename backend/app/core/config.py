@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     # Billing — Stripe (Phase 10.6)
     stripe_secret_key: str = ""
 
+    # Billing — QuickBooks Online (Phase 10.7). access_token rotates
+    # hourly; realm_id is the company id. Both required for real calls.
+    quickbooks_access_token: str = ""
+    quickbooks_realm_id: str = ""
+
     # Ads — Meta (Facebook + Instagram). Phase 7.x.
     # The access_token is an ad-account-scoped token, not a user token.
     meta_ads_access_token: str = ""

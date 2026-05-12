@@ -79,6 +79,25 @@ celery_app.conf.update(
             "task": "app.worker.tasks.lead_scoring.recompute_lead_scores",
             "schedule": crontab(hour=4, minute=30),
         },
+        # Phase 9 — Analyst Agent weekly report. Runs Monday at
+        # 07:00 UTC (after Sunday's rollups have settled). 3σ
+        # anomaly-detection over the past 21 days; Markdown
+        # narrative written into AuditEvent.payload_json.
+        "weekly-analyst-report": {
+            "task": "app.worker.tasks.analyst.weekly_analyst_report",
+            "schedule": crontab(day_of_week=1, hour=7, minute=0),
+        },
+        # Phase 7.x — sequence runner. Every 5 min advance any
+        # SequenceMembership whose next_run_at has elapsed.
+        "advance-sequence-memberships": {
+            "task": "app.worker.tasks.sequences.advance_due_memberships",
+            "schedule": 300.0,
+        },
+        # Phase 7.x — segment materializer. Nightly at 03:30 UTC.
+        "materialize-segments": {
+            "task": "app.worker.tasks.segments.materialize_all_segments",
+            "schedule": crontab(hour=3, minute=30),
+        },
         # Phase 11 / I3 — hourly cost-cap evaluation. Warns at 80%,
         # writes a "cost_cap.blocked" audit row at 100%. Per-Org
         # config under autonomy_posture_json.{daily_cap_usd, weekly_cap_usd}.
