@@ -125,5 +125,11 @@ celery_app.conf.update(
             "task": "app.worker.tasks.live_pollers.poll_website_crawls",
             "schedule": crontab(hour=1, minute=30),
         },
+        # §6.11 — ping pending approvals to Slack / Discord every 5 min.
+        # Org configures channels via constraints_json.approvals_notify.
+        "notify-pending-approvals": {
+            "task": "app.worker.tasks.approval_notifications.notify_pending_approvals",
+            "schedule": 300.0,
+        },
     },
 )
