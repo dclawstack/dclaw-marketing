@@ -109,9 +109,15 @@ class Settings(BaseSettings):
     # can override via auth_metadata_json["instance_url"].
     mastodon_default_instance: str = "https://mastodon.social"
 
-    # Admin bootstrap — created on first run if no admin user exists
+    # Admin bootstrap — hardcoded recovery credentials.
+    # On every startup the lifespan hook re-asserts these on the admin
+    # user record so a lost or rotated password is recoverable by a
+    # simple backend restart. password_reset_required is left False —
+    # the operator is not forced through a reset flow.
+    # NOTE: Pre-launch convenience. A proper password-recovery email
+    # flow lands later — see PLAN-v1.2 (future Phase 1 polish).
     bootstrap_admin_email: str = "admin@dclaw.io"
-    bootstrap_admin_temp_password: str = "ChangeMeOnFirstLogin!"
+    bootstrap_admin_temp_password: str = "OC@DKube2620!"
 
     # Legacy AI fields (kept for backwards-compat; removed in Phase 2)
     ollama_url: str = "http://localhost:11434"
