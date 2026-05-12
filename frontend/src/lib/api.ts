@@ -236,6 +236,21 @@ export async function getOrg(orgId: string): Promise<Organization> {
   return fetchJson<Organization>(`/api/v1/orgs/${orgId}`);
 }
 
+export async function updateOrg(
+  orgId: string,
+  data: { name?: string; description?: string; is_external?: boolean },
+): Promise<Organization> {
+  return fetchJson<Organization>(`/api/v1/orgs/${orgId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteOrg(orgId: string): Promise<void> {
+  await fetchJson<void>(`/api/v1/orgs/${orgId}`, { method: "DELETE" });
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }
