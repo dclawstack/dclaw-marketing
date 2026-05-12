@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.brand_style import compose_visual_prompt, get_active_brand_kit
 from app.agents.creatives import generate_social_posts
 from app.auth import current_active_user
 from app.core.database import get_db
@@ -149,8 +150,10 @@ async def creatives_generate_images(
         session, user, body.organization_id, allowed_roles=_CREATIVES_ROLES
     )
 
+    brand_kit = await get_active_brand_kit(session, body.organization_id)
+    composed_prompt = compose_visual_prompt(body.prompt, brand_kit)
     images = await generate_image(
-        body.prompt, n=body.n, aspect_ratio=body.aspect_ratio
+        composed_prompt, n=body.n, aspect_ratio=body.aspect_ratio
     )
 
     results: list[ImagesGenerateResultItem] = []
@@ -164,6 +167,8 @@ async def creatives_generate_images(
             target_type="image_draft",
             payload_json={
                 "prompt": body.prompt,
+                "composed_prompt": composed_prompt,
+                "brand_kit_id": str(brand_kit.id) if brand_kit else None,
                 "url": img.url,
                 "provider": img.provider.value,
                 "aspect_ratio": body.aspect_ratio,
