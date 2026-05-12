@@ -98,5 +98,12 @@ celery_app.conf.update(
             "task": "app.worker.tasks.segments.materialize_all_segments",
             "schedule": crontab(hour=3, minute=30),
         },
+        # Phase 2.x / Q4 — weekly freshness re-ingestion. Re-queues
+        # URL + git IngestionSource rows whose updated_at is older
+        # than 7 days. File / zip sources are snapshots — not re-fetched.
+        "refresh-stale-knowledge-sources": {
+            "task": "app.worker.tasks.freshness.refresh_stale_sources",
+            "schedule": crontab(day_of_week=0, hour=2, minute=0),
+        },
     },
 )
