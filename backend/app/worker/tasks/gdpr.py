@@ -185,21 +185,88 @@ def build_export(session: Session, organization_id: UUID) -> dict:
 
 
 @celery_app.task(name="app.worker.tasks.gdpr.export_organization_data")
-def export_organization_data(organization_id: str) -> dict:
-    """Celery task entry point. Builds the export, returns a summary
-    of row counts. Persistence to MinIO lands in a follow-up — for
-    now the JSON is returned in-band so the caller can write it.
+def export_organization_data(
+    organization_id: str,
+    *,
+    request_id: str | None = None,
+) -> dict:
+    """Celery task entry point.
+
+    Builds the JSON payload via ``build_export``, uploads it to the
+    MinIO object store under ``gdpr-exports/<org>/<request_id>.json``,
+    and updates the ``DataExportRequest`` row with the storage key +
+    expires_at (7 days). Returns a summary dict.
+
+    When ``request_id`` is None, the export still runs but isn't
+    persisted — useful for in-band tests + ad-hoc tooling.
     """
+    from datetime import timedelta
+
+    from app.models.ops import DataExportRequest, DataExportStatus
+    from app.services.storage import sync_s3_client
+
     org_uuid = UUID(organization_id)
+    started_at = datetime.now(tz=timezone.utc)
+
+    req_uuid = UUID(request_id) if request_id else None
     with SyncSession() as session:
+        # Mark running.
+        if req_uuid is not None:
+            req = session.get(DataExportRequest, req_uuid)
+            if req is not None:
+                req.status = DataExportStatus.running
+                session.commit()
+
         payload = build_export(session, org_uuid)
+
+    body = json.dumps(payload, default=str).encode("utf-8")
+    size = len(body)
+
+    storage_key: str | None = None
+    error: str | None = None
+    if req_uuid is not None:
+        # Upload to MinIO. We use the sync client so we can run in this
+        # Celery worker context.
+        storage_key = (
+            f"gdpr-exports/{organization_id}/{request_id}.json"
+        )
+        try:
+            from app.core.config import settings as _settings
+
+            client = sync_s3_client()
+            client.put_object(
+                Bucket=_settings.s3_bucket,
+                Key=storage_key,
+                Body=body,
+                ContentType="application/json",
+            )
+        except Exception as exc:  # pragma: no cover — surfaced via row
+            error = str(exc)
+            storage_key = None
+
+        # Update the request row.
+        with SyncSession() as session:
+            req = session.get(DataExportRequest, req_uuid)
+            if req is not None:
+                if error or storage_key is None:
+                    req.status = DataExportStatus.failed
+                    req.error_message = error or "no storage key"
+                else:
+                    req.status = DataExportStatus.ready
+                    req.storage_key = storage_key
+                    req.expires_at = started_at + timedelta(days=7)
+                req.completed_at = datetime.now(tz=timezone.utc)
+                session.commit()
 
     counts = {
         k: len(v) for k, v in payload.items() if isinstance(v, list)
     }
     return {
         "organization_id": organization_id,
+        "request_id": request_id,
+        "storage_key": storage_key,
         "exported_at": payload["exported_at"],
         "counts": counts,
-        "size_bytes": len(json.dumps(payload, default=str)),
+        "size_bytes": size,
+        "error": error,
     }
