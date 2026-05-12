@@ -251,6 +251,46 @@ export async function deleteOrg(orgId: string): Promise<void> {
   await fetchJson<void>(`/api/v1/orgs/${orgId}`, { method: "DELETE" });
 }
 
+export async function listOrgMembers(orgId: string): Promise<OrgMembership[]> {
+  return fetchJson<OrgMembership[]>(`/api/v1/orgs/${orgId}/memberships`);
+}
+
+export async function addOrgMember(
+  orgId: string,
+  data: { user_id: string; role: OrgRole },
+): Promise<OrgMembership> {
+  return fetchJson<OrgMembership>(`/api/v1/orgs/${orgId}/memberships`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateOrgMemberRole(
+  orgId: string,
+  membershipId: string,
+  role: OrgRole,
+): Promise<OrgMembership> {
+  return fetchJson<OrgMembership>(
+    `/api/v1/orgs/${orgId}/memberships/${membershipId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    },
+  );
+}
+
+export async function removeOrgMember(
+  orgId: string,
+  membershipId: string,
+): Promise<void> {
+  await fetchJson<void>(
+    `/api/v1/orgs/${orgId}/memberships/${membershipId}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }

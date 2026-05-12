@@ -59,7 +59,6 @@ export default function OrgDetailPage() {
           description: "Invite teammates; assign supervision-scope roles.",
           href: `/orgs/${org.id}/members`,
           icon: Users,
-          soon: true,
         },
         {
           label: "Brand Kit",
