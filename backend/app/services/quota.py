@@ -223,7 +223,12 @@ def is_breaker_open_sync(
     ).scalar_one_or_none()
     if row is None or row.count < row.limit:
         return False, None
-    opens_at = row.window_start + timedelta(seconds=row.window_seconds)
+    # SQLite strips tz info on DateTime columns; reattach UTC for the
+    # comparison so we don't blow up with "can't compare naive + aware".
+    ws = row.window_start
+    if ws.tzinfo is None:
+        ws = ws.replace(tzinfo=timezone.utc)
+    opens_at = ws + timedelta(seconds=row.window_seconds)
     return (clock < opens_at), opens_at
 
 
