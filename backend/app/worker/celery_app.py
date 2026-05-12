@@ -79,5 +79,13 @@ celery_app.conf.update(
             "task": "app.worker.tasks.lead_scoring.recompute_lead_scores",
             "schedule": crontab(hour=4, minute=30),
         },
+        # Phase 9 — Analyst Agent weekly report. Runs Monday at
+        # 07:00 UTC (after Sunday's rollups have settled). 3σ
+        # anomaly-detection over the past 21 days; Markdown
+        # narrative written into AuditEvent.payload_json.
+        "weekly-analyst-report": {
+            "task": "app.worker.tasks.analyst.weekly_analyst_report",
+            "schedule": crontab(day_of_week=1, hour=7, minute=0),
+        },
     },
 )
