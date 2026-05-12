@@ -647,6 +647,25 @@ export async function deleteAsset(assetId: string): Promise<void> {
   await fetchJson<void>(`/api/v1/assets/${assetId}`, { method: "DELETE" });
 }
 
+/**
+ * Trigger ingestion of an already-uploaded Asset into the Knowledge
+ * Graph. Returns the new IngestionSource id + Job id.
+ */
+export async function ingestAssetIntoKG(
+  organizationId: string,
+  assetId: string,
+  name?: string,
+): Promise<{ source_id: string; job_id: string; status: string }> {
+  return fetchJson(`/api/v1/ingest/files`, {
+    method: "POST",
+    body: JSON.stringify({
+      organization_id: organizationId,
+      asset_id: assetId,
+      name,
+    }),
+  });
+}
+
 export function inferAssetKind(mimeType: string, filename: string): AssetKind {
   const m = mimeType.toLowerCase();
   if (m.startsWith("image/")) return "image";

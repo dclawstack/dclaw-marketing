@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Archive,
+  Brain,
   Database,
   Download,
   File,
   FileText,
   Image as ImageIcon,
+  Loader2,
   Music,
   Video,
   Trash2,
@@ -27,6 +29,7 @@ import {
   Asset,
   AssetKind,
   deleteAsset,
+  ingestAssetIntoKG,
   getAssetDownloadUrl,
   listAssets,
 } from "@/lib/api";
@@ -105,6 +108,23 @@ export default function LibraryPage() {
       await refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Delete failed.");
+    }
+  }
+
+  const [ingestingId, setIngestingId] = useState<string | null>(null);
+
+  async function ingest(a: Asset) {
+    if (!currentOrg) return;
+    setIngestingId(a.id);
+    try {
+      await ingestAssetIntoKG(currentOrg.id, a.id, a.original_filename ?? undefined);
+      alert(
+        `Ingestion queued. Watch progress on /knowledge — the source will move through queued → fetching → parsing → chunking → embedding → ready.`,
+      );
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Ingest failed.");
+    } finally {
+      setIngestingId(null);
     }
   }
 
@@ -217,6 +237,23 @@ export default function LibraryPage() {
                       <Download className="h-3.5 w-3.5" />
                       Download
                     </DkButton>
+                    {(a.kind === "document" || a.kind === "data") && (
+                      <DkButton
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Ingest into Knowledge Graph"
+                        title="Ingest into Knowledge Graph"
+                        onClick={() => ingest(a)}
+                        disabled={ingestingId === a.id}
+                        className="px-2"
+                      >
+                        {ingestingId === a.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Brain className="h-3.5 w-3.5" />
+                        )}
+                      </DkButton>
+                    )}
                     <DkButton
                       size="sm"
                       variant="ghost"
