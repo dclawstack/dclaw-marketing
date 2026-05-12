@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Plus } from "lucide-react";
+import { Clock, Pause, Play, Plus, Square } from "lucide-react";
 
 import {
   DkButton,
@@ -39,6 +39,38 @@ interface TimeEntry {
   project_id: string | null;
 }
 
+const TIMER_KEY_PREFIX = "dclaw.timer.v1";
+type RunningTimer = {
+  startedAtMs: number;
+  description: string;
+  hourlyRate: number | null;
+};
+
+function readTimer(orgId: string): RunningTimer | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`${TIMER_KEY_PREFIX}.${orgId}`);
+    return raw ? (JSON.parse(raw) as RunningTimer) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeTimer(orgId: string, t: RunningTimer | null) {
+  if (typeof window === "undefined") return;
+  const k = `${TIMER_KEY_PREFIX}.${orgId}`;
+  if (t === null) window.localStorage.removeItem(k);
+  else window.localStorage.setItem(k, JSON.stringify(t));
+}
+
+function fmtElapsed(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+}
+
 export default function TimeTrackerPage() {
   const { currentOrg } = useOrg();
   const [rows, setRows] = useState<TimeEntry[]>([]);
@@ -49,6 +81,70 @@ export default function TimeTrackerPage() {
   const [hours, setHours] = useState("");
   const [rate, setRate] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Start/stop timer state
+  const [timer, setTimer] = useState<RunningTimer | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
+  const [timerDesc, setTimerDesc] = useState("");
+  const [timerRate, setTimerRate] = useState("");
+
+  useEffect(() => {
+    if (!currentOrg) return;
+    setTimer(readTimer(currentOrg.id));
+  }, [currentOrg]);
+
+  // Tick once a second when a timer is running
+  useEffect(() => {
+    if (!timer) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [timer]);
+
+  function startTimer() {
+    if (!currentOrg) return;
+    const t: RunningTimer = {
+      startedAtMs: Date.now(),
+      description: timerDesc.trim(),
+      hourlyRate: timerRate ? Number(timerRate) : null,
+    };
+    writeTimer(currentOrg.id, t);
+    setTimer(t);
+  }
+
+  async function stopTimer() {
+    if (!currentOrg || !timer) return;
+    const elapsedMs = Date.now() - timer.startedAtMs;
+    const hours = elapsedMs / 3_600_000;
+    try {
+      await fetch(`/api/v1/orgs/${currentOrg.id}/time-entries`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          description: timer.description || "Timer entry",
+          hours: Number(hours.toFixed(3)),
+          hourly_rate_usd: timer.hourlyRate,
+          is_billable: !!timer.hourlyRate,
+          occurred_on: new Date().toISOString().slice(0, 10),
+        }),
+      });
+      writeTimer(currentOrg.id, null);
+      setTimer(null);
+      setTimerDesc("");
+      setTimerRate("");
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to log time entry.");
+    }
+  }
+
+  function cancelTimer() {
+    if (!currentOrg) return;
+    writeTimer(currentOrg.id, null);
+    setTimer(null);
+  }
 
   async function load() {
     if (!currentOrg) return;
@@ -115,6 +211,60 @@ export default function TimeTrackerPage() {
           </DkButton>
         }
       />
+
+      {/* SP3-21 — start/stop timer widget */}
+      <DkCard>
+        <DkCardHeader>
+          <DkCardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-brand" />
+            Timer
+          </DkCardTitle>
+        </DkCardHeader>
+        <DkCardContent>
+          {timer ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-mono text-2xl font-semibold text-brand">
+                {fmtElapsed(now - timer.startedAtMs)}
+              </span>
+              <span className="text-sm opacity-70 grow">
+                {timer.description || "(no description)"}
+                {timer.hourlyRate ? ` · $${timer.hourlyRate}/h` : null}
+              </span>
+              <DkButton onClick={stopTimer} variant="primary">
+                <Square className="h-4 w-4" /> Stop &amp; log
+              </DkButton>
+              <DkButton onClick={cancelTimer} variant="ghost">
+                <Pause className="h-4 w-4" /> Discard
+              </DkButton>
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-[1fr_140px_auto]">
+              <div>
+                <DkLabel>What are you working on?</DkLabel>
+                <DkInput
+                  placeholder="e.g. Q3 launch brief"
+                  value={timerDesc}
+                  onChange={(e) => setTimerDesc(e.target.value)}
+                />
+              </div>
+              <div>
+                <DkLabel>$/hour (optional)</DkLabel>
+                <DkInput
+                  type="number"
+                  min={0}
+                  value={timerRate}
+                  onChange={(e) => setTimerRate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end">
+                <DkButton onClick={startTimer} disabled={!currentOrg}>
+                  <Play className="h-4 w-4" /> Start
+                </DkButton>
+              </div>
+            </div>
+          )}
+        </DkCardContent>
+      </DkCard>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <DkCard>
