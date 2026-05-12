@@ -3,10 +3,16 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DkButton,
+  DkCard,
+  DkCardContent,
+  DkCardDescription,
+  DkCardHeader,
+  DkCardTitle,
+  DkInput,
+  DkLabel,
+} from "@/components/dk";
 import { useAuth } from "@/contexts/auth-context";
 import { changePassword } from "@/lib/auth";
 
@@ -26,7 +32,6 @@ export default function FirstLoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // If a user lands here who doesn't need to reset, bounce them
     if (user && !user.password_reset_required) {
       router.replace("/");
     }
@@ -62,71 +67,83 @@ export default function FirstLoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-2xl">Set your password</CardTitle>
-        <CardDescription>
-          Your admin issued a temporary password. Please replace it before
-          continuing.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current">Current (temp) password</Label>
-            <Input
-              id="current"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              disabled={submitting}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="new">New password</Label>
-            <Input
-              id="new"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={10}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={submitting}
-            />
-            <p className="text-xs text-muted-foreground">
-              At least 10 characters; must differ from your email&apos;s local part.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm">Confirm new password</Label>
-            <Input
-              id="confirm"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={10}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={submitting}
-            />
-          </div>
-          {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
+    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center py-12">
+      <DkCard className="w-full max-w-md">
+        <DkCardHeader className="gap-2 pt-8">
+          <DkCardTitle className="text-2xl">Set Your Password</DkCardTitle>
+          <DkCardDescription>
+            Your admin issued a temporary password. Replace it before continuing.
+          </DkCardDescription>
+        </DkCardHeader>
+        <DkCardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <DkLabel htmlFor="current">Current (temp) password</DkLabel>
+              <DkInput
+                id="current"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={submitting}
+              />
             </div>
-          )}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={submitting || !currentPassword || !newPassword || !confirmPassword}
-          >
-            {submitting ? "Saving…" : "Set password and continue"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            <div className="flex flex-col gap-1.5">
+              <DkLabel
+                htmlFor="new"
+                description="At least 10 characters; must differ from your email's local part."
+              >
+                New password
+              </DkLabel>
+              <DkInput
+                id="new"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={10}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <DkLabel htmlFor="confirm">Confirm new password</DkLabel>
+              <DkInput
+                id="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={10}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+            {error && (
+              <div
+                role="alert"
+                className="rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+              >
+                {error}
+              </div>
+            )}
+            <DkButton
+              type="submit"
+              className="w-full mt-2"
+              loading={submitting}
+              disabled={
+                submitting ||
+                !currentPassword ||
+                !newPassword ||
+                !confirmPassword
+              }
+            >
+              {submitting ? "Saving" : "Set Password and Continue"}
+            </DkButton>
+          </form>
+        </DkCardContent>
+      </DkCard>
+    </div>
   );
 }

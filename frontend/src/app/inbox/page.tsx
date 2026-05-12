@@ -1,18 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ListChecks, RefreshCw } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DkBadge,
+  DkButton,
+  DkCard,
+  DkCardContent,
+  DkCardDescription,
+  DkCardHeader,
+  DkCardTitle,
+  DkEmptyState,
+  DkInput,
+  DkLabel,
+  DkPageHeader,
+  DkSelect,
+} from "@/components/dk";
 import {
   ApprovalRequestItem,
   ApprovalStatus,
@@ -21,19 +25,25 @@ import {
   rejectRequest,
 } from "@/lib/api";
 
-/**
- * Approval Inbox — the human's primary surface for Hard-gate items.
- * The Creatives Agent (and future agents) prepare drafts; humans
- * decide approve / reject here. Approving will (in a later iteration)
- * fire the actual publish; for v0.1 the approval is the demo's end
- * state.
- */
+const STATUS_TONE: Record<
+  ApprovalStatus,
+  "brand" | "success" | "danger" | "neutral"
+> = {
+  pending: "brand",
+  approved: "success",
+  auto_approved: "success",
+  rejected: "danger",
+  canceled: "neutral",
+};
+
 export default function InboxPage() {
   const [items, setItems] = useState<ApprovalRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<ApprovalStatus | "all">("pending");
-  const [decisionReason, setDecisionReason] = useState<Record<string, string>>({});
+  const [decisionReason, setDecisionReason] = useState<Record<string, string>>(
+    {},
+  );
   const [busy, setBusy] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -83,139 +93,159 @@ export default function InboxPage() {
     }
   }
 
-  function statusVariant(s: ApprovalStatus) {
-    if (s === "pending") return "default";
-    if (s === "approved" || s === "auto_approved") return "secondary";
-    if (s === "rejected") return "destructive";
-    return "outline";
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Approval Inbox</h1>
-          <p className="text-sm text-muted-foreground">
-            Agent-prepared actions awaiting your decision. Approving
-            authorises the action; rejecting kills it with a reason.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="filter" className="text-sm text-muted-foreground">
-            Filter:
-          </Label>
-          <select
-            id="filter"
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as ApprovalStatus | "all")}
-          >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="all">All</option>
-          </select>
-          <Button size="sm" variant="outline" onClick={() => void refresh()}>
-            Refresh
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-8">
+      <DkPageHeader
+        eyebrow="Supervision"
+        title="Approval Inbox"
+        description="Agent-prepared actions awaiting your decision. Approving authorises the action; rejecting kills it with a reason."
+        actions={
+          <>
+            <div className="flex items-center gap-2">
+              <DkLabel htmlFor="filter">Filter</DkLabel>
+              <DkSelect
+                id="filter"
+                value={filter}
+                onChange={(e) =>
+                  setFilter(e.target.value as ApprovalStatus | "all")
+                }
+                className="w-36"
+              >
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="all">All</option>
+              </DkSelect>
+            </div>
+            <DkButton
+              variant="secondary"
+              size="sm"
+              onClick={() => void refresh()}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </DkButton>
+          </>
+        }
+      />
 
       {error && (
-        <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+        >
           {error}
         </div>
       )}
 
       {loading ? (
-        <p className="text-muted-foreground">Loading…</p>
+        <p className="text-[var(--dk-fg-2)]">Loading…</p>
       ) : items.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Nothing here. {filter === "pending" ? "No pending items — agents are quiet." : ""}
-          </CardContent>
-        </Card>
+        <DkEmptyState
+          icon={<ListChecks className="h-6 w-6" />}
+          title="Nothing pending"
+          description={
+            filter === "pending"
+              ? "No approvals waiting — agents are quiet."
+              : "No items match this filter."
+          }
+        />
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {items.map((item) => {
-            const text = (item.payload_json?.text as string | undefined) ?? null;
-            const channel = (item.payload_json?.channel as string | undefined) ?? null;
-            const brief = (item.payload_json?.brief as string | undefined) ?? null;
-            const ownDecision = item.status !== "pending";
+            const text =
+              (item.payload_json?.text as string | undefined) ?? null;
+            const channel =
+              (item.payload_json?.channel as string | undefined) ?? null;
+            const brief =
+              (item.payload_json?.brief as string | undefined) ?? null;
+            const decided = item.status !== "pending";
             return (
-              <Card key={item.id}>
-                <CardHeader className="pb-3">
+              <DkCard key={item.id}>
+                <DkCardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <CardTitle className="text-base font-semibold">
+                    <div className="flex flex-col gap-1">
+                      <DkCardTitle className="text-base font-semibold">
                         {item.action_type}
-                        {channel ? (
-                          <span className="ml-2 text-sm font-normal text-muted-foreground">
+                        {channel && (
+                          <span className="ml-2 text-sm font-normal text-[var(--dk-fg-2)]">
                             → {channel}
                           </span>
-                        ) : null}
-                      </CardTitle>
-                      <CardDescription>
-                        {item.requested_by_agent ? (
-                          <span>
-                            Requested by agent{" "}
-                            <span className="font-mono">{item.requested_by_agent}</span>
-                          </span>
-                        ) : (
-                          <span>Requested by user</span>
                         )}
-                      </CardDescription>
+                      </DkCardTitle>
+                      <DkCardDescription>
+                        {item.requested_by_agent ? (
+                          <>
+                            Requested by agent{" "}
+                            <span className="font-mono">
+                              {item.requested_by_agent}
+                            </span>
+                          </>
+                        ) : (
+                          <>Requested by user</>
+                        )}
+                      </DkCardDescription>
                     </div>
-                    <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
+                    <DkBadge tone={STATUS_TONE[item.status]}>
+                      {item.status}
+                    </DkBadge>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                </DkCardHeader>
+                <DkCardContent className="flex flex-col gap-3">
                   {text && (
-                    <div className="rounded-md border border-border bg-muted/50 p-3 text-sm">
+                    <div className="rounded-md border border-[var(--dk-border)] bg-[var(--dk-bg-tint)] p-3 text-sm leading-relaxed text-[var(--dk-fg-1)]">
                       {text}
                     </div>
                   )}
                   {brief && (
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium">Brief:</span> {brief}
+                    <p className="text-xs text-[var(--dk-fg-2)]">
+                      <span className="font-semibold text-[var(--dk-fg-1)]">
+                        Brief:
+                      </span>{" "}
+                      {brief}
                     </p>
                   )}
                   {item.decision_reason && (
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium">Decision reason:</span>{" "}
+                    <p className="text-xs text-[var(--dk-fg-2)]">
+                      <span className="font-semibold text-[var(--dk-fg-1)]">
+                        Decision reason:
+                      </span>{" "}
                       {item.decision_reason}
                     </p>
                   )}
-                  {!ownDecision && (
-                    <div className="space-y-2 pt-2">
-                      <Input
+                  {!decided && (
+                    <div className="flex flex-col gap-2 pt-2">
+                      <DkInput
                         placeholder="Optional reason / note"
                         value={decisionReason[item.id] ?? ""}
                         onChange={(e) =>
-                          setDecisionReason((d) => ({ ...d, [item.id]: e.target.value }))
+                          setDecisionReason((d) => ({
+                            ...d,
+                            [item.id]: e.target.value,
+                          }))
                         }
                       />
                       <div className="flex gap-2">
-                        <Button
+                        <DkButton
                           size="sm"
                           onClick={() => onApprove(item.id)}
-                          disabled={busy === item.id}
+                          loading={busy === item.id}
                         >
-                          {busy === item.id ? "…" : "Approve"}
-                        </Button>
-                        <Button
+                          Approve
+                        </DkButton>
+                        <DkButton
                           size="sm"
-                          variant="destructive"
+                          variant="danger"
                           onClick={() => onReject(item.id)}
-                          disabled={busy === item.id}
+                          loading={busy === item.id}
                         >
                           Reject
-                        </Button>
+                        </DkButton>
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </DkCardContent>
+              </DkCard>
             );
           })}
         </div>
