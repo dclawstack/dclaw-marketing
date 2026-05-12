@@ -8,24 +8,21 @@
 
 - Build the **full v1.2 / v2.0 promise** end-to-end. No deadline cap.
 - Every operator workflow runs **from the UI**, not the CLI. Curl recipes in `docs/USER-GUIDE.md` exist only as developer references; the product itself never asks an operator to open a terminal.
-- Apply the **DKube design system** correctly across every screen — `--dk-*` tokens, `.dk-*` semantic classes, Poppins, light-mode only.
-- **Product brand stays "DClaw Marketing"**. DKube tokens are the visual system. The DKube cube glyph only appears when representing the parent brand (footer attribution, login page).
+- Apply the **DClaw design kit** correctly across every screen — `--dk-*` tokens (where `dk` = "design kit"), `.dk-*` semantic classes, Poppins, light-mode only.
+- DClaw Marketing is a standalone product brand. No parent-brand attribution in the product UI.
 
 ## Design system — already in place
 
-The Claude Design ingest (`design/dkube-design-system/`) confirms `frontend/src/styles/brand.css` is **token-identical** to the design's `colors_and_type.css`. The gap is application: existing pages use generic Tailwind classes instead of the brand vocabulary. Phase 0 fixes that before any new screen ships.
+The historical design ingest under `design/source/` provided the visual system that's already mirrored in `frontend/src/styles/brand.css`. The gap was application: existing pages used generic Tailwind classes instead of the brand vocabulary. Phase 0 fixes that before any new screen ships.
 
-Reference materials in `design/dkube-design-system/`:
+Reference materials in `design/source/project/`:
 
 | Path | Use |
 |---|---|
-| `BRAND_GUIDELINES.md` | Voice, logo, color, type, components, motion rules — authoritative |
+| `BRAND_GUIDELINES.md` | Voice, logo, color, type, components, motion rules |
 | `colors_and_type.css` | Token definitions — already mirrored in `frontend/src/styles/brand.css` |
-| `assets/` | Logo lockups, customer logos, pillar icons, brand imagery |
-| `fonts/` | Poppins woff2 (we load via `next/font/google` — bundled set is reference) |
 | `preview/*.html` | Component reference cards — eyeball every `<Dk*>` against these |
-| `ui_kits/marketing-site/` | Marketing-site React kit — reference for component composition |
-| `slides/` | 15 master slide layouts + arch diagram primitives |
+| `slides/` | Slide master layouts + arch diagram primitives |
 
 ---
 
@@ -42,7 +39,7 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 - 0.3 `<Dk*>` component library — `<DkButton>` (pill, primary/secondary/ghost), `<DkCard>` (soft shadow + hover lift), `<DkChip>`, `<DkInput>`, `<DkSelect>`, `<DkTextarea>`, `<DkTable>`, `<DkBadge>`, `<DkDialog>`, `<DkTabs>`, `<DkToast>`, `<DkEyebrow>`, `<DkAvatar>`, `<DkSlider>`, `<DkSwitch>`, `<DkCheckbox>`, `<DkRadioGroup>`, `<DkProgress>`, `<DkSkeleton>`, `<DkEmptyState>`, `<DkPageHeader>`, `<DkBreadcrumb>`, `<DkSidebar>`
 - 0.4 `/_design` reference page (admin-only) rendering every component variant — eyeball-comparable with the design's `preview/*.html`
 - 0.5 Refactor existing pages to the new vocabulary: login, first-login, dashboard, admin/users, agents/creatives, inbox, campaigns, leads
-- 0.6 DKube cube logo in nav (subtle attribution) + favicon
+- 0.6 DClaw logo in nav + favicon
 - 0.7 Top-level shell rebuild — sticky header, max-width 1280px container, brand-tinted hover states, motion easing
 - 0.8 Voice + casing audit — strip emojis / exclamations from copy; apply Title Case to headings; em-dashes for hard pivots
 
@@ -73,7 +70,7 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 
 **Stories:**
 - 2.1 **Q1 Brand Setup Studio** — `/orgs/[id]/brand`
-  - Palette: color pickers for primary / secondary / surfaces / ink (defaulted to DKube purple)
+  - Palette: color pickers for primary / secondary / surfaces / ink (defaulted to brand purple)
   - Type: font picker (default Poppins), weight presets, headline/body samples
   - Voice sliders: formal↔casual, technical↔witty, calm↔energetic
   - Do-say / don't-say lists with add/remove chips

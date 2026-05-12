@@ -47,7 +47,7 @@ The best agent-shaped patterns from Y Combinator: Copy.ai (templates), Letterdro
 
 ## Stack
 
-FastAPI · Next.js 14 · Postgres + pgvector · Redis · Celery · MinIO · Claude Agent SDK · Anthropic API · OpenAI embeddings · Helm-shipped to Kubernetes · Light-mode-only DKube brand system.
+FastAPI · Next.js 14 · Postgres + pgvector · Redis · Celery · MinIO · Claude Agent SDK · Anthropic API · OpenAI embeddings · Helm-shipped to Kubernetes · Light-mode-only DClaw brand system.
 
 ## What ships in v0.1.0 (May 2026)
 

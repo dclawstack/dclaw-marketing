@@ -6,7 +6,7 @@
 @layer base {
   /* ------------------------------------------------------------------
      Light-mode-only theme. shadcn-style HSL tokens are remapped to the
-     DKube brand palette (see styles/brand.css). Do NOT add a `.dark`
+     DClaw brand palette (see styles/brand.css). Do NOT add a `.dark`
      block — this project is light-mode only per brand guidelines.
      ------------------------------------------------------------------ */
   :root {

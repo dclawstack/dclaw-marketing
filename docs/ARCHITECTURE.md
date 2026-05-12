@@ -253,7 +253,7 @@ Every consequential action (approve, reject, future publish) writes an `AuditEve
 
 ## Frontend
 
-Next.js 14 App Router. Brand-themed via `frontend/src/styles/brand.css` (DKube design tokens — light mode only).
+Next.js 14 App Router. Brand-themed via `frontend/src/styles/brand.css` (DClaw design-kit tokens — light mode only).
 
 **Routes**:
 

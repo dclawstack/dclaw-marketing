@@ -80,12 +80,12 @@ Remote: [github.com/dclawstack/dclaw-marketing](https://github.com/dclawstack/dc
 
 - [app/layout.tsx](frontend/src/app/layout.tsx) — root layout, loads Poppins via `next/font`
 - [app/page.tsx](frontend/src/app/page.tsx) — Dashboard
-- [app/globals.css](frontend/src/app/globals.css) — imports brand.css, remaps shadcn HSL tokens to DKube palette
+- [app/globals.css](frontend/src/app/globals.css) — imports brand.css, remaps shadcn HSL tokens to DClaw palette
 - [app/campaigns/](frontend/src/app/campaigns/) · [app/leads/](frontend/src/app/leads/)
 - [components/ui/](frontend/src/components/ui/) — pre-built shadcn-style components (Button, Card, Input, Dialog, Table, Tabs, …)
 - [lib/api.ts](frontend/src/lib/api.ts) — typed fetch client
 - [lib/utils.ts](frontend/src/lib/utils.ts) — `cn()` helper
-- [styles/brand.css](frontend/src/styles/brand.css) — **single source of truth** for design tokens (DKube palette, type, spacing, radii, shadows, motion)
+- [styles/brand.css](frontend/src/styles/brand.css) — **single source of truth** for design tokens (DClaw palette, type, spacing, radii, shadows, motion)
 
 ## helm/
 
