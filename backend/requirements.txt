@@ -49,3 +49,8 @@ cryptography>=42.0.0
 pytest>=7.4.0
 pytest-asyncio==0.24.0
 aiosqlite>=0.19.0
+
+# Observability (§6.12). sentry-sdk is optional in dev — bootstrap
+# is a no-op when sentry_dsn is empty.
+sentry-sdk>=2.0.0
+redis>=5.0.0

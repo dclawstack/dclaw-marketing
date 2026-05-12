@@ -143,6 +143,11 @@ class Settings(BaseSettings):
     mastodon_client_id: str = ""
     mastodon_client_secret: str = ""
 
+    # Observability (§6.12). Both opt-in. Sentry DSN empty → no-op.
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.0
+    json_logging_enabled: bool = False
+
     # Admin bootstrap — hardcoded recovery credentials.
     # On every startup the lifespan hook re-asserts these on the admin
     # user record so a lost or rotated password is recoverable by a

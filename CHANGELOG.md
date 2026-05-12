@@ -10,6 +10,66 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ---
 
+## [1.2.0-rc1] — 2026-05-13 — *Sprint 2 closeout*
+
+Forty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + a complete A.11 auth-roadmap doc. Everything except the explicitly user-owned marketing collaterals (#52 demo video, #53 launch posts) is in.
+
+### Added — backend
+
+- **Phase 5 — Multi-Account Publishing**
+  - Substack drafts (`#162`), Facebook Pages + Meta Threads (`#163`), TikTok Business + YouTube multipart upload (`#164`).
+  - OAuth 2.0 scaffold + 7-provider registry (LinkedIn, X with PKCE, Instagram, Reddit with Basic, Pinterest with PKCE, Discord, Mastodon per-instance) (`#186`). State signed via JWT (10-min); access tokens stored on `SocialAccount._interim_access_token` for v1.
+- **Phase 6 — MCP Integration Hub**
+  - 11 concrete per-server adapters batched 3×: HubSpot / GA4 / Stripe (`#182`), Ahrefs / Webflow / WordPress / Ghost (`#183`), Slack / Discord / Notion / Google Drive (`#184`). Stub fallback inherited from the protocol layer.
+- **Phase 7 — Email + Ads + Sequences**
+  - Inbound email-event webhooks for Resend / Postmark / SendGrid with per-provider signature verification + LeadActivity bridge (`#168`).
+  - Meta + LinkedIn paused-campaign create adapters (`#166`); Google Ads two-step create with developer-token + login-customer-id headers (`#167`).
+  - `SequenceMembership` model + every-5-min sequence runner; segment-filter evaluator + nightly materializer (`#178`).
+- **Phase 8 — Lead 2.0 + CRM + Attribution**
+  - Pipedrive + Attio two-way sync adapters (`#165`).
+  - Daily lead-rescore beat task with auto stage promotion (mql / sql / customer thresholds) (`#169`).
+  - Time-decay attribution model + `/analytics/sankey` endpoint (`#177`).
+- **Phase 9 — Agent Fleet**
+  - 3σ rolling-baseline anomaly detector + weekly Monday-morning Analyst narrative (`#174`).
+- **Phase 10 — Agency Operations**
+  - QuickBooks Online invoice adapter (`#173`).
+  - WorkflowRun resume + approval/branch node implementations + `POST /workflow-runs/{id}/resume` (`#176`).
+  - Weekly + monthly client HTML reports uploaded to MinIO (`#191`).
+- **Phase 11 — Compliance + Reliability**
+  - Sliding-window QuotaCounter writer + circuit breaker (`#170`).
+  - Cost-cap evaluator with warn/blocked states + per-action confidence threshold (`#175`).
+  - GDPR export MinIO persistence + HTTP request/download endpoints (`#171`).
+  - Sentry SDK + JSON structured logging bootstrap + `/health/dependencies` probe (`#192`).
+  - Hardcoded admin recovery credentials + restart-recovery flow + A.11 future-auth roadmap (`#180`).
+  - Hard-delete users from `/admin/users` with typed-confirm dialog (`#181`).
+- **Phase 2 / Knowledge Graph**
+  - Weekly Q4 freshness re-ingestion (`#179`); Q2 live pollers for Notion / Drive / Git / web (`#185`).
+- **Theme D4 — Generic Webhook Receiver + Automation Rules** (`#172`)
+  - New `Webhook` / `WebhookEvent` / `Automation` models + signed-payload public endpoint + every-30-sec automation runner.
+- **Phase 6 / §6.11 — Approval pings** to Slack / Discord via the MCP adapters (`#190`).
+- **Org-delete primitive** (`#161`).
+
+### Added — frontend
+
+- 8 new pages in batch 1 (`#187`): `/workflows`, `/workflows/[id]`, `/workflows/runs/[id]` (with Resume), `/invoices`, `/invoices/[id]`, `/time` tracker, `/playbooks`, `/analytics` root with hero cards + inline Sankey bar chart.
+- 5 new pages in batch 2 (`#188`) — the **Client Portal** at `/client/*`: Overview, Approvals (inline Approve/Reject), read-only Schedule, asset Content gallery, white-label Analytics.
+- 4 editor pages in batch 3 (`#189`): `/projects/[id]/briefs/new`, `/segments/new`, `/email/sequences/new`, `/ads/[id]`.
+
+### Ops
+
+- `scripts/backup_postgres.sh` + `scripts/backup_minio.sh` + `scripts/RESTORE_RUNBOOK.md` (`#192`).
+- A.11 future auth-roadmap doc in `PLAN-v1.2.md` covering admin-only password recovery + admin-mediated user resets + magic-link auth.
+
+### Deferred past 1.2
+
+- Snapchat / Telegram publishers (low priority).
+- React-flow visual editors for sequence + workflow + segment (plain forms cover the use case for v1).
+- Markov-chain attribution (per-conversion is no-op; population-level model follows).
+- Helm chart rebuild (existing chart works for the v1.0 deployment surface).
+- True PDF output for client reports (HTML is browser-printable today).
+
+---
+
 ## [0.1.0] — 2026-05-15 — *MVP*
 
 The first release. End-to-end demo flow works: log in → set brand → ingest context → generate content → approve in Inbox.

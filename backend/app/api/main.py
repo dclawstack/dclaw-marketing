@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, ingest, integrations, jobs, kg, me, oauth, orgs, projects, scheduled_posts, social_accounts, time_entries, webhooks_email, workflows
+from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_insights, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, ingest, integrations, jobs, kg, me, oauth, orgs, projects, scheduled_posts, social_accounts, time_entries, webhooks_email, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -16,13 +16,17 @@ from app.models.lead import Lead, LeadStatus
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.core.observability import init_sentry, init_structured_logging
+
+    init_sentry()
+    init_structured_logging()
     await init_db()
     yield
 
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version="1.2.0-rc1",
     lifespan=lifespan,
     description="DClaw Marketing — agent-driven marketing operating system",
 )
@@ -64,6 +68,9 @@ app.include_router(approvals.router, prefix="/api/v1")
 
 # Brand Kits — per-Org versioned brand identity (Theme Q1)
 app.include_router(brand_kits.router, prefix="/api/v1")
+
+# Theme Q3 — Brand kit insights (KG write-back loop §6.2)
+app.include_router(brand_insights.router, prefix="/api/v1")
 
 # Ingestion — file/url/git/zip → text chunks (Theme Q2)
 app.include_router(ingest.router, prefix="/api/v1")
