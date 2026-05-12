@@ -26,14 +26,14 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/" },
+  { label: "Conductor", href: "/agent" },
   { label: "Calendar", href: "/calendar" },
   { label: "Channels", href: "/channels" },
+  { label: "Integrations", href: "/integrations" },
   { label: "Creatives", href: "/agents/creatives" },
   { label: "Inbox", href: "/inbox" },
   { label: "Library", href: "/library" },
   { label: "Orgs", href: "/orgs" },
-  { label: "Campaigns", href: "/campaigns" },
-  { label: "Leads", href: "/leads" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

@@ -185,7 +185,7 @@ export default function CalendarPage() {
       arr.push(p);
       map.set(key, arr);
     }
-    for (const arr of map.values()) {
+    for (const arr of Array.from(map.values())) {
       arr.sort(
         (a, b) =>
           new Date(a.scheduled_at).getTime() -

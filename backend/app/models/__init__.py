@@ -30,6 +30,19 @@ from app.models.scheduled_post import (
     ScheduledPostChannel,
     ScheduledPostStatus,
 )
+from app.models.agent_thread import (
+    AgentKind,
+    AgentMessage,
+    AgentMessageRole,
+    AgentThread,
+)
+from app.models.attribution import (
+    AnalyticsRollup,
+    AttributionModel,
+    AttributionResult,
+    Conversion,
+    Touchpoint,
+)
 
 __all__ = [
     "User",
@@ -69,4 +82,13 @@ __all__ = [
     "ScheduledPost",
     "ScheduledPostChannel",
     "ScheduledPostStatus",
+    "AgentThread",
+    "AgentMessage",
+    "AgentKind",
+    "AgentMessageRole",
+    "Touchpoint",
+    "Conversion",
+    "AttributionResult",
+    "AttributionModel",
+    "AnalyticsRollup",
 ]

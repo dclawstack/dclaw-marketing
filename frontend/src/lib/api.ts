@@ -936,6 +936,8 @@ export async function revokeSocialAccount(
 }
 
 // ============================================================
+
+// ============================================================
 // Scheduled posts (Theme C1, Phase 4)
 // ============================================================
 
@@ -995,9 +997,7 @@ export async function listScheduledPosts(
   if (opts.status) q.set("status", opts.status);
   if (opts.project_id) q.set("project_id", opts.project_id);
   const qs = q.toString();
-  return fetchJson<ScheduledPost[]>(
-    `/api/v1/orgs/${orgId}/scheduled-posts${qs ? `?${qs}` : ""}`,
-  );
+  return fetchJson<ScheduledPost[]>(`/api/v1/orgs/${orgId}/scheduled-posts${qs ? `?${qs}` : ""}`);
 }
 
 export async function createScheduledPost(
@@ -1021,36 +1021,18 @@ export async function createScheduledPost(
 export async function updateScheduledPost(
   orgId: string,
   postId: string,
-  data: {
-    channel?: ScheduledPostChannel;
-    scheduled_at?: string;
-    copy?: string;
-    asset_ids?: string[];
-    tags?: string[];
-  },
+  data: { channel?: ScheduledPostChannel; scheduled_at?: string; copy?: string; asset_ids?: string[]; tags?: string[] },
 ): Promise<ScheduledPost> {
-  return fetchJson<ScheduledPost>(
-    `/api/v1/orgs/${orgId}/scheduled-posts/${postId}`,
-    { method: "PATCH", body: JSON.stringify(data) },
-  );
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts/${postId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }
 
-export async function cancelScheduledPost(
-  orgId: string,
-  postId: string,
-): Promise<ScheduledPost> {
-  return fetchJson<ScheduledPost>(
-    `/api/v1/orgs/${orgId}/scheduled-posts/${postId}`,
-    { method: "DELETE" },
-  );
+export async function cancelScheduledPost(orgId: string, postId: string): Promise<ScheduledPost> {
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts/${postId}`, { method: "DELETE" });
 }
 
-export async function publishScheduledPostNow(
-  orgId: string,
-  postId: string,
-): Promise<ScheduledPost> {
-  return fetchJson<ScheduledPost>(
-    `/api/v1/orgs/${orgId}/scheduled-posts/${postId}/publish-now`,
-    { method: "POST" },
-  );
+export async function publishScheduledPostNow(orgId: string, postId: string): Promise<ScheduledPost> {
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts/${postId}/publish-now`, { method: "POST" });
 }
