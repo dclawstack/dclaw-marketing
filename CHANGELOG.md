@@ -6,7 +6,17 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ## [Unreleased]
 
-### Added — backend
+—
+
+---
+
+## [0.2.0] — 2026-05-13 — *Sprint 2 closeout*
+
+> **Naming note.** The roadmap doc is titled `PLAN-v1.2.md` (carried over from the original spec); this release is `v0.2.0` per the post-MVP versioning. Future plan-doc revisions will be retitled to remove the confusion.
+
+Sixty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + Theme H SEO depth + a complete A.11 auth-roadmap doc. Everything except the explicitly user-owned marketing collaterals (#52 demo video, #53 launch posts) is in. Builds on `v0.1.0-mvp` (the first end-to-end demo flow).
+
+### Added — backend (post-rc1 stretch, #194–#210)
 - **§6.2 KG write-back loop** — `BrandKitInsight` model + CRUD (`#194`); composer that injects top-K insights into the Creatives Agent system prompt (`#197`).
 - **§6.6 Workflow templates** — `Workflow.is_template` + clone endpoint (`#196`).
 - **Theme H — SEO depth** — site audit / internal-link suggester / ranking-delta tracker + daily Celery beat tasks + 4 API endpoints, backed by the Ahrefs MCP adapter (`#195`).
@@ -15,17 +25,13 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 - **Phase 11 / I1 dashboard** — live `QuotaCounter` browse endpoint with pct-used + is-breaker pre-computed (`#207`).
 - **Theme Q2 follow-up — URL ingestion** — pure-Python HTML→text stripper + new `ingest_url` Celery task + `POST /api/v1/ingest/urls` + `process_ingestion_source` dispatcher (`#205`).
 
-### Added — frontend
+### Added — frontend (post-rc1 stretch, #194–#210)
 - New top-level pages: `/agents/seo` (`#198`), `/brand-insights` (`#199`), `/workflows` templates section + clone + toggle (`#201`), `/admin/health` (`#203`), `/admin/audit` (`#204`), `/admin/costs` (real, wired) + `/admin/quotas` (real, wired) (`#207`), `/knowledge` Knowledge Console (`#206`) with drag-drop file upload (`#208`).
 - "Authorize via OAuth" button + `?oauth_error=` surface on `/channels` (`#200`).
 - "Ingest into KG" button on `/library` asset cards (part of `#206`).
 - Top-nav surfaces Knowledge / SEO / Workflows / Analytics (`#209`).
 
----
-
-## [1.2.0-rc1] — 2026-05-13 — *Sprint 2 closeout*
-
-Forty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + a complete A.11 auth-roadmap doc. Everything except the explicitly user-owned marketing collaterals (#52 demo video, #53 launch posts) is in.
+### Added — earlier Sprint 2 work (folded in from the prior rc1 enumeration)
 
 ### Added — backend
 
@@ -83,7 +89,7 @@ Forty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + a c
 
 ---
 
-## [0.1.0] — 2026-05-15 — *MVP*
+## [0.1.0-mvp] — *MVP*
 
 The first release. End-to-end demo flow works: log in → set brand → ingest context → generate content → approve in Inbox.
 
@@ -145,4 +151,5 @@ The first release. End-to-end demo flow works: log in → set brand → ingest c
 - Conductor agent (multi-agent orchestration) is v0.2 / Phase 3.
 - Legacy v1.0 `/api/v1/campaigns`, `/leads`, `/analytics` routes don't yet require Org/Project context.
 
-[0.1.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v0.1.0
+[0.2.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v0.2.0
+[0.1.0-mvp]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v0.1.0-mvp
