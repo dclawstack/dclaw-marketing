@@ -291,6 +291,54 @@ export async function removeOrgMember(
   );
 }
 
+// ============================================================
+// Goals / Constraints / Autonomy Posture (Theme Q5)
+// ============================================================
+
+export interface Goals {
+  objectives?: string[];
+  north_star_metric?: string;
+  target_quarterly_value?: number | null;
+  icps?: string[];
+  channels_of_interest?: string[];
+}
+
+export interface Constraints {
+  brand_safety_lines?: string[];
+  monthly_budget_usd?: number | null;
+  max_daily_posts?: number | null;
+}
+
+export type TrustMode = "autopilot" | "soft_gate" | "hard_gate";
+
+export type AutonomyPosture = Partial<Record<string, TrustMode>>;
+
+export interface GoalsRead {
+  organization_id: string;
+  goals: Goals | null;
+  constraints: Constraints | null;
+  autonomy_posture: AutonomyPosture | null;
+}
+
+export async function getGoals(orgId: string): Promise<GoalsRead> {
+  return fetchJson<GoalsRead>(`/api/v1/orgs/${orgId}/goals`);
+}
+
+export async function updateGoals(
+  orgId: string,
+  data: {
+    goals?: Goals | null;
+    constraints?: Constraints | null;
+    autonomy_posture?: AutonomyPosture | null;
+  },
+): Promise<GoalsRead> {
+  return fetchJson<GoalsRead>(`/api/v1/orgs/${orgId}/goals`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }

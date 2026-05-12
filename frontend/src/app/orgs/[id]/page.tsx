@@ -79,7 +79,6 @@ export default function OrgDetailPage() {
           description: "Objectives, ICPs, budgets, per-action-class trust modes.",
           href: `/orgs/${org.id}/goals`,
           icon: Target,
-          soon: true,
         },
         {
           label: "Projects",
