@@ -148,5 +148,15 @@ celery_app.conf.update(
             "task": "app.worker.tasks.client_reports.emit_monthly_client_reports",
             "schedule": crontab(day_of_month=1, hour=8, minute=0),
         },
+        # Theme H — SEO daily audit (06:45 UTC) + ranking snapshot (07:15 UTC).
+        # Ordered after the analytics rollups so dashboards read consistently.
+        "daily-seo-audit": {
+            "task": "app.worker.tasks.seo.daily_seo_audit",
+            "schedule": crontab(hour=6, minute=45),
+        },
+        "daily-ranking-snapshot": {
+            "task": "app.worker.tasks.seo.daily_ranking_snapshot",
+            "schedule": crontab(hour=7, minute=15),
+        },
     },
 )
