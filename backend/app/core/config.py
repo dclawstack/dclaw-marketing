@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
+    # Email-event webhook ingest (Phase 7.4) — per-provider secrets used
+    # to verify inbound webhook signatures. When a secret is empty the
+    # endpoint accepts unverified payloads with a warning log (dev mode).
+    resend_webhook_secret: str = ""
+    postmark_webhook_secret: str = ""
+    sendgrid_webhook_verify: bool = False  # ECDSA verify ships with OAuth flow
+
     # Newsletters (Phase 7.5+)
     # mailchimp_server_prefix is the data-centre suffix on the API key
     # (e.g. "abc123-us21" → "us21"). Both must be set for real sends.
