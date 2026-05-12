@@ -1,4 +1,4 @@
-"""Phase 4 — ScheduledPost dispatcher (with Phase 5.1 Bluesky adapter).
+"""Phase 4 — ScheduledPost dispatcher (Phases 5.1 Bluesky + 5.2 LinkedIn).
 
 The Celery beat scheduler runs `scan_due_scheduled_posts` every minute.
 It finds queued posts whose `scheduled_at <= now()` and hands each off
@@ -27,6 +27,11 @@ from app.services.publishers.bluesky import (
     BlueskyAuthError,
     BlueskyPublishError,
     publish_to_bluesky,
+)
+from app.services.publishers.linkedin import (
+    LinkedInAuthError,
+    LinkedInPublishError,
+    publish_to_linkedin,
 )
 from app.worker.celery_app import celery_app
 from app.worker.helpers import SyncSession
@@ -69,6 +74,22 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         return publish_to_bluesky(
             handle=handle,
             app_password=password,
+            text=post.copy or "",
+        )
+
+    if post.channel == ScheduledPostChannel.linkedin:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.linkedin
+        )
+        token = account._interim_access_token if account else None
+        author_urn = (
+            (account.auth_metadata_json or {}).get("author_urn")
+            if account
+            else None
+        ) or "urn:li:person:stub"
+        return publish_to_linkedin(
+            access_token=token,
+            author_urn=author_urn,
             text=post.copy or "",
         )
 
@@ -159,6 +180,11 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (BlueskyAuthError, BlueskyPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"bluesky: {exc}"
+            session.commit()
+            raise
+        except (LinkedInAuthError, LinkedInPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"linkedin: {exc}"
             session.commit()
             raise
         except Exception as exc:  # pragma: no cover — defensive
