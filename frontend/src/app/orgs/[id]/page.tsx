@@ -72,7 +72,6 @@ export default function OrgDetailPage() {
           description: "Ingest URLs, files, repos into the org's knowledge graph.",
           href: `/orgs/${org.id}/knowledge`,
           icon: BookOpen,
-          soon: true,
         },
         {
           label: "Goals & Autonomy",

@@ -339,6 +339,121 @@ export async function updateGoals(
   });
 }
 
+// ============================================================
+// Ingestion + Knowledge Graph (Theme Q2 / Q3)
+// ============================================================
+
+export type IngestionSourceType = "file" | "url" | "git" | "zip";
+export type IngestionStatus =
+  | "queued"
+  | "fetching"
+  | "parsing"
+  | "chunking"
+  | "embedding"
+  | "ready"
+  | "failed";
+
+export interface IngestionSource {
+  id: string;
+  organization_id: string;
+  source_type: IngestionSourceType;
+  source_reference: string;
+  name: string | null;
+  status: IngestionStatus;
+  document_chunks_created: number;
+  error_message: string | null;
+  metadata_json: Record<string, unknown> | null;
+  job_id: string | null;
+}
+
+export interface DocumentChunk {
+  id: string;
+  source_id: string;
+  position: number;
+  text: string;
+  estimated_tokens: number | null;
+  metadata_json: Record<string, unknown> | null;
+}
+
+export interface IngestResponse {
+  source_id: string;
+  job_id: string;
+  status: IngestionStatus;
+}
+
+export async function listIngestions(
+  orgId: string,
+  limit = 50,
+): Promise<IngestionSource[]> {
+  return fetchJson<IngestionSource[]>(
+    `/api/v1/ingest?organization_id=${orgId}&limit=${limit}`,
+  );
+}
+
+export async function getIngestion(sourceId: string): Promise<IngestionSource> {
+  return fetchJson<IngestionSource>(`/api/v1/ingest/${sourceId}`);
+}
+
+export async function getIngestionChunks(
+  sourceId: string,
+): Promise<DocumentChunk[]> {
+  return fetchJson<DocumentChunk[]>(`/api/v1/ingest/${sourceId}/chunks`);
+}
+
+export async function ingestFile(data: {
+  organization_id: string;
+  asset_id: string;
+  name?: string;
+}): Promise<IngestResponse> {
+  return fetchJson<IngestResponse>(`/api/v1/ingest/files`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export interface KGSearchResultChunk {
+  chunk_id: string;
+  source_id: string;
+  position: number;
+  text: string;
+  score: number;
+  estimated_tokens: number | null;
+  source_name: string | null;
+  source_type: IngestionSourceType;
+  source_reference: string;
+}
+
+export interface KGSearchResponse {
+  query: string;
+  top_k: number;
+  organization_id: string;
+  results: KGSearchResultChunk[];
+}
+
+export async function kgSearch(
+  orgId: string,
+  query: string,
+  topK = 10,
+): Promise<KGSearchResponse> {
+  return fetchJson<KGSearchResponse>(`/api/v1/kg/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ organization_id: orgId, query, top_k: topK }),
+  });
+}
+
+export interface KGStats {
+  organization_id: string;
+  chunk_count: number;
+  embedded_count: number;
+  source_count: number;
+}
+
+export async function kgStats(orgId: string): Promise<KGStats> {
+  return fetchJson<KGStats>(`/api/v1/kg/stats?organization_id=${orgId}`);
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }
