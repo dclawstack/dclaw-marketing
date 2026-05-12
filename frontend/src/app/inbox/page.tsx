@@ -27,13 +27,14 @@ import {
 
 const STATUS_TONE: Record<
   ApprovalStatus,
-  "brand" | "success" | "danger" | "neutral"
+  "brand" | "success" | "danger" | "neutral" | "warning"
 > = {
   pending: "brand",
   approved: "success",
   auto_approved: "success",
   rejected: "danger",
   canceled: "neutral",
+  expired: "warning",
 };
 
 export default function InboxPage() {
