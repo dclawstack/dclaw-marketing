@@ -27,6 +27,7 @@ async def kit_with_insights():
         await session.flush()
         kit = BrandKit(
             organization_id=org.id,
+            name="Active Kit",
             version=1,
             is_active=True,
             palette_json={},
