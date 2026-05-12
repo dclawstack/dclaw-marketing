@@ -74,3 +74,37 @@ async def delete_lead(lead_id: UUID, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Lead not found")
     await repo.delete(lead)
     return None
+
+
+# ---------- E2 Lead enrichment fan-out (SP3-12) ---------------------------
+
+
+@router.post("/{lead_id}/enrich")
+async def post_enrich_lead(lead_id: UUID, db: AsyncSession = Depends(get_db)):
+    """Run the Apollo / Clearbit / PDL chain against this Lead's email
+    and merge the result into ``Lead.enrichment_json``.
+
+    Provider-or-stub: returns deterministic stubs when no API key is set.
+    """
+    from app.services.enrichment import enrich_lead_email
+
+    repo = LeadRepository(db)
+    lead = await repo.get_by_id(lead_id)
+    if not lead:
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=404, detail="Lead not found")
+    if not lead.email:
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=400, detail="Lead has no email to enrich.")
+
+    result = await enrich_lead_email(lead.email)
+    existing = lead.enrichment_json or {}
+    # Merge first-wins so human edits stay sticky.
+    for k, v in result["merged"].items():
+        if k not in existing or existing[k] in (None, "", [], {}):
+            existing[k] = v
+    existing.setdefault("audit", []).extend(result["audit"])
+    lead.enrichment_json = existing
+    await db.commit()
+    await db.refresh(lead)
+    return {"lead_id": str(lead.id), "enrichment_json": lead.enrichment_json}
