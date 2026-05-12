@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, goals, ingest, integrations, jobs, kg, me, orgs, projects, scheduled_posts, social_accounts
+from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, goals, ingest, integrations, jobs, kg, me, orgs, projects, scheduled_posts, social_accounts, time_entries
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -94,6 +94,9 @@ app.include_router(email_send.router, prefix="/api/v1")
 
 # Phase 11.1 — cost-ledger totals + drill-down
 app.include_router(costs.router, prefix="/api/v1")
+
+# Phase 10.5 — time tracking (TimeEntry CRUD + totals for retainer burn-down)
+app.include_router(time_entries.router, prefix="/api/v1")
 
 # Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
