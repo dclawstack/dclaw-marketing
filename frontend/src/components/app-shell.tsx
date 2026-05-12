@@ -93,26 +93,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {user && (
             <div className="flex items-center gap-3 shrink-0">
-              <div className="hidden sm:flex flex-col items-end leading-tight">
-                <span className="text-sm font-medium text-ink">
-                  {user.full_name ?? user.email}
-                </span>
-                {user.full_name && (
-                  <span className="text-xs text-[var(--dk-fg-2)]">
-                    {user.email}
+              <Link
+                href="/settings/profile"
+                className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-[var(--dk-gray-50)] transition-colors duration-fast"
+                aria-label="Account settings"
+              >
+                <div className="hidden sm:flex flex-col items-end leading-tight">
+                  <span className="text-sm font-medium text-ink">
+                    {user.full_name ?? user.email}
                   </span>
-                )}
-              </div>
-              <DkAvatar
-                size="sm"
-                name={user.full_name ?? user.email}
-              />
+                  {user.full_name && (
+                    <span className="text-xs text-[var(--dk-fg-2)]">
+                      {user.email}
+                    </span>
+                  )}
+                </div>
+                <DkAvatar
+                  size="sm"
+                  name={user.full_name ?? user.email}
+                />
+              </Link>
               <DkButton
                 variant="secondary"
                 size="sm"
                 onClick={() => logout()}
               >
-                Sign out
+                Sign Out
               </DkButton>
             </div>
           )}
