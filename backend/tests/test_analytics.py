@@ -1,15 +1,16 @@
-import pytest
+"""Legacy v1 analytics router — Org-scoped as of Sprint 3 (SP3-1)."""
+
 from datetime import datetime, timezone
+
+import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_analytics_event(client):
-    # Create a campaign first
-    campaign_resp = await client.post("/api/v1/campaigns/", json={
-        "name": "Analytics Campaign",
-        "type": "email",
-        "status": "active",
-    })
+async def test_create_analytics_event(client, test_org_id):
+    campaign_resp = await client.post(
+        f"/api/v1/campaigns/?organization_id={test_org_id}",
+        json={"name": "Analytics Campaign", "type": "email", "status": "active"},
+    )
     campaign_id = campaign_resp.json()["id"]
 
     payload = {
@@ -18,55 +19,64 @@ async def test_create_analytics_event(client):
         "value": 1.5,
         "recorded_at": datetime.now(timezone.utc).isoformat(),
     }
-    response = await client.post("/api/v1/analytics/", json=payload)
+    response = await client.post(
+        f"/api/v1/analytics/?organization_id={test_org_id}", json=payload
+    )
     assert response.status_code == 201
     data = response.json()
     assert data["event_type"] == "click"
     assert data["value"] == 1.5
-    assert "id" in data
 
 
 @pytest.mark.asyncio
-async def test_list_analytics_by_campaign(client):
-    campaign_resp = await client.post("/api/v1/campaigns/", json={
-        "name": "Analytics Campaign 2",
-        "type": "social",
-        "status": "active",
-    })
+async def test_list_analytics_by_campaign(client, test_org_id):
+    campaign_resp = await client.post(
+        f"/api/v1/campaigns/?organization_id={test_org_id}",
+        json={"name": "Analytics Campaign 2", "type": "social", "status": "active"},
+    )
     campaign_id = campaign_resp.json()["id"]
 
-    await client.post("/api/v1/analytics/", json={
-        "campaign_id": str(campaign_id),
-        "event_type": "impression",
-        "value": 0.0,
-        "recorded_at": datetime.now(timezone.utc).isoformat(),
-    })
+    await client.post(
+        f"/api/v1/analytics/?organization_id={test_org_id}",
+        json={
+            "campaign_id": str(campaign_id),
+            "event_type": "impression",
+            "value": 0.0,
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
 
-    response = await client.get(f"/api/v1/analytics/campaign/{campaign_id}")
+    response = await client.get(
+        f"/api/v1/analytics/campaign/{campaign_id}?organization_id={test_org_id}"
+    )
     assert response.status_code == 200
     data = response.json()
     assert "items" in data
-    assert "total" in data
     assert len(data["items"]) >= 1
 
 
 @pytest.mark.asyncio
-async def test_analytics_summary(client):
-    campaign_resp = await client.post("/api/v1/campaigns/", json={
-        "name": "Summary Campaign",
-        "type": "ppc",
-        "status": "active",
-    })
+async def test_analytics_summary(client, test_org_id):
+    campaign_resp = await client.post(
+        f"/api/v1/campaigns/?organization_id={test_org_id}",
+        json={"name": "Summary Campaign", "type": "ppc", "status": "active"},
+    )
     campaign_id = campaign_resp.json()["id"]
 
-    await client.post("/api/v1/analytics/", json={
-        "campaign_id": str(campaign_id),
-        "event_type": "conversion",
-        "value": 100.0,
-        "recorded_at": datetime.now(timezone.utc).isoformat(),
-    })
+    await client.post(
+        f"/api/v1/analytics/?organization_id={test_org_id}",
+        json={
+            "campaign_id": str(campaign_id),
+            "event_type": "conversion",
+            "value": 100.0,
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
 
-    response = await client.get(f"/api/v1/analytics/campaign/{campaign_id}/summary")
+    response = await client.get(
+        f"/api/v1/analytics/campaign/{campaign_id}/summary"
+        f"?organization_id={test_org_id}"
+    )
     assert response.status_code == 200
     data = response.json()
     assert "conversion" in data

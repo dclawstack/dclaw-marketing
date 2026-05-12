@@ -13,6 +13,7 @@ class LeadRepository(BaseRepository[Lead]):
 
     async def list_filtered(
         self,
+        organization_id: Optional[UUID] = None,
         search: Optional[str] = None,
         source: Optional[str] = None,
         status: Optional[LeadStatus] = None,
@@ -23,6 +24,9 @@ class LeadRepository(BaseRepository[Lead]):
         query = select(Lead)
         count_query = select(func.count()).select_from(Lead)
 
+        if organization_id is not None:
+            query = query.where(Lead.organization_id == organization_id)
+            count_query = count_query.where(Lead.organization_id == organization_id)
         if search:
             like = f"%{search}%"
             query = query.where(
@@ -53,6 +57,11 @@ class LeadRepository(BaseRepository[Lead]):
         total = count_result.scalar() or 0
         return items, total
 
-    async def get_by_email(self, email: str) -> Optional[Lead]:
-        result = await self.db.execute(select(Lead).where(Lead.email == email))
+    async def get_by_email(
+        self, email: str, organization_id: Optional[UUID] = None
+    ) -> Optional[Lead]:
+        stmt = select(Lead).where(Lead.email == email)
+        if organization_id is not None:
+            stmt = stmt.where(Lead.organization_id == organization_id)
+        result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

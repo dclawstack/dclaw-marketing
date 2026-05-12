@@ -1,25 +1,23 @@
+"""Legacy /api/v1/dashboard — Org-scoped as of Sprint 3 (SP3-1)."""
+
 import pytest
-from datetime import datetime, timezone
 
 
 @pytest.mark.asyncio
-async def test_dashboard_stats(client):
-    # Create an active campaign
-    await client.post("/api/v1/campaigns/", json={
-        "name": "Active Campaign",
-        "type": "email",
-        "status": "active",
-    })
+async def test_dashboard_stats(client, test_org_id):
+    await client.post(
+        f"/api/v1/campaigns/?organization_id={test_org_id}",
+        json={"name": "Active Campaign", "type": "email", "status": "active"},
+    )
+    await client.post(
+        f"/api/v1/leads/?organization_id={test_org_id}",
+        json={"email": "dash@example.com", "status": "converted"},
+    )
 
-    # Create a lead
-    await client.post("/api/v1/leads/", json={
-        "email": "dash@example.com",
-        "status": "converted",
-    })
-
-    response = await client.get("/api/v1/dashboard")
+    response = await client.get(f"/api/v1/dashboard?organization_id={test_org_id}")
     assert response.status_code == 200
     data = response.json()
+    assert data["organization_id"] == test_org_id
     assert "active_campaigns" in data
     assert "total_leads" in data
     assert "conversion_rate" in data

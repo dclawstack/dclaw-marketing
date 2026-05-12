@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from uuid import UUID
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
+from app.auth import current_active_user
+from app.models.user import User
 from app.api.v1 import admin, agent_threads, agents, analytics_router, approvals, assets, audit_events, auth, brand_insights, brand_kits, branding, campaign_analytics, campaigns_router, costs, email_send, gdpr, goals, heatmap, hooks, ingest, integrations, jobs, kg, leads_router, magic_link, me, oauth, orgs, pages, playbooks, projects, quotas, retainer, scheduled_posts, seo, seo_pipeline, social_accounts, time_entries, totp, variants, webhooks_email, webhooks_generic, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
@@ -138,18 +141,14 @@ app.include_router(variants.router, prefix="/api/v1")
 # Theme B6 — Hook & Headline Lab
 app.include_router(hooks.router, prefix="/api/v1")
 
-
 # Theme F2 — Content Performance Heatmap
 app.include_router(heatmap.router, prefix="/api/v1")
-
 
 # Theme N — Playbook search + editor
 app.include_router(playbooks.router, prefix="/api/v1")
 
-
 # v0.3-prep — branding/magic-link/F1/TOTP
 app.include_router(branding.router, prefix="/api/v1")
-
 
 # v0.3-prep — branding/magic-link/F1/TOTP
 app.include_router(magic_link.router, prefix="/api/v1")
@@ -160,38 +159,73 @@ app.include_router(campaign_analytics.router, prefix="/api/v1")
 # A.11.6 — TOTP 2FA
 app.include_router(totp.router, prefix="/api/v1")
 
-
 # SP3-22 — per-Org retainer + monthly budget burn-down
 app.include_router(retainer.router, prefix="/api/v1")
-
 
 # SP3-16 — Landing-page builder (Theme H1)
 app.include_router(pages.router, prefix="/api/v1")
 
-# Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
+# Legacy v1 routers — Org-scoped as of Sprint 3 (PR SP3-1). Every endpoint
+# requires an `organization_id` query param + caller membership in that Org.
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
 app.include_router(leads_router, prefix="/api/v1/leads", tags=["leads"])
 app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["analytics"])
 
 
 @app.get("/api/v1/dashboard", tags=["dashboard"])
-async def get_dashboard(db: AsyncSession = Depends(get_db)):
-    """TEMPORARY: returns global aggregates. Will be Org-scoped in a
-    follow-up commit once existing v1 routers are migrated to require
-    organization_id + project_id.
+async def get_dashboard(
+    organization_id: UUID,
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Org-scoped dashboard aggregates (Sprint 3 multi-tenant safety fix).
+
+    Returns active-campaign / lead-count / conversion-rate / spend aggregates
+    for the given Organization. Caller must be a member (or a superuser).
     """
+    # Member check (mirrors the legacy-router pattern).
+    if not user.is_superuser:
+        from app.models.organization import OrganizationMembership as _OM
+
+        m = (
+            await db.execute(
+                select(_OM).where(
+                    _OM.user_id == user.id,
+                    _OM.organization_id == organization_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if m is None:
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=403, detail="Not a member of this organization."
+            )
+
     active_result = await db.execute(
         select(func.count())
         .select_from(Campaign)
-        .where(Campaign.status == CampaignStatus.active)
+        .where(
+            Campaign.organization_id == organization_id,
+            Campaign.status == CampaignStatus.active,
+        )
     )
     active_campaigns = active_result.scalar() or 0
 
-    total_leads_result = await db.execute(select(func.count()).select_from(Lead))
+    total_leads_result = await db.execute(
+        select(func.count())
+        .select_from(Lead)
+        .where(Lead.organization_id == organization_id)
+    )
     total_leads = total_leads_result.scalar() or 0
 
     converted_result = await db.execute(
-        select(func.count()).select_from(Lead).where(Lead.status == LeadStatus.converted)
+        select(func.count())
+        .select_from(Lead)
+        .where(
+            Lead.organization_id == organization_id,
+            Lead.status == LeadStatus.converted,
+        )
     )
     converted_leads = converted_result.scalar() or 0
 
@@ -201,12 +235,14 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
 
     total_spend_result = await db.execute(
         select(func.sum(AnalyticsEvent.value)).where(
-            AnalyticsEvent.event_type == EventType.conversion
+            AnalyticsEvent.organization_id == organization_id,
+            AnalyticsEvent.event_type == EventType.conversion,
         )
     )
     total_spend = total_spend_result.scalar() or 0.0
 
     return {
+        "organization_id": str(organization_id),
         "active_campaigns": active_campaigns,
         "total_leads": total_leads,
         "conversion_rate": round(conversion_rate, 2),

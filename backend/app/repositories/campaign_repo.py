@@ -13,6 +13,7 @@ class CampaignRepository(BaseRepository[Campaign]):
 
     async def list_filtered(
         self,
+        organization_id: Optional[UUID] = None,
         status: Optional[CampaignStatus] = None,
         type: Optional[CampaignType] = None,
         limit: int = 20,
@@ -21,6 +22,9 @@ class CampaignRepository(BaseRepository[Campaign]):
         query = select(Campaign)
         count_query = select(func.count()).select_from(Campaign)
 
+        if organization_id is not None:
+            query = query.where(Campaign.organization_id == organization_id)
+            count_query = count_query.where(Campaign.organization_id == organization_id)
         if status is not None:
             query = query.where(Campaign.status == status)
             count_query = count_query.where(Campaign.status == status)

@@ -18,32 +18,74 @@ from app.repositories.analytics_event_repo import AnalyticsEventRepository
 router = APIRouter()
 
 
+async def _require_member(
+    session: AsyncSession, user: User, organization_id: UUID
+) -> None:
+    """Sprint 3 — multi-tenant safety on the legacy v1 endpoints."""
+    if user.is_superuser:
+        return
+    m = (
+        await session.execute(
+            select(OrganizationMembership).where(
+                OrganizationMembership.user_id == user.id,
+                OrganizationMembership.organization_id == organization_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if m is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not a member of this organization.",
+        )
+
+
 @router.post("/", response_model=AnalyticsEventRead, status_code=201)
-async def create_analytics_event(data: AnalyticsEventCreate, db: AsyncSession = Depends(get_db)):
+async def create_analytics_event(
+    data: AnalyticsEventCreate,
+    organization_id: UUID = Query(...),
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await _require_member(db, user, organization_id)
     repo = AnalyticsEventRepository(db)
-    event = AnalyticsEvent(**data.model_dump())
+    event = AnalyticsEvent(organization_id=organization_id, **data.model_dump())
     return await repo.create(event)
 
 
 @router.get("/campaign/{campaign_id}", response_model=dict)
 async def list_analytics_by_campaign(
     campaign_id: UUID,
+    organization_id: UUID = Query(...),
     event_type: Optional[EventType] = Query(None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await _require_member(db, user, organization_id)
     repo = AnalyticsEventRepository(db)
     items, total = await repo.list_by_campaign(
-        campaign_id=campaign_id, event_type=event_type, limit=limit, offset=offset
+        campaign_id=campaign_id,
+        organization_id=organization_id,
+        event_type=event_type,
+        limit=limit,
+        offset=offset,
     )
     return {"items": [AnalyticsEventRead.model_validate(item) for item in items], "total": total}
 
 
 @router.get("/campaign/{campaign_id}/summary")
-async def get_campaign_summary(campaign_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_campaign_summary(
+    campaign_id: UUID,
+    organization_id: UUID = Query(...),
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await _require_member(db, user, organization_id)
     repo = AnalyticsEventRepository(db)
-    summary = await repo.get_summary_by_campaign(campaign_id)
+    summary = await repo.get_summary_by_campaign(
+        campaign_id, organization_id=organization_id
+    )
     return summary
 
 
