@@ -26,6 +26,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/" },
+  { label: "Calendar", href: "/calendar" },
+  { label: "Channels", href: "/channels" },
   { label: "Creatives", href: "/agents/creatives" },
   { label: "Inbox", href: "/inbox" },
   { label: "Library", href: "/library" },
