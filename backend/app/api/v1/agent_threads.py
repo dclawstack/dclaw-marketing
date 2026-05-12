@@ -201,7 +201,18 @@ async def post_message(
 
     # 2. Agent reply
     if thread.kind == AgentKind.conductor:
-        turn = conductor_agent.reply(body.content)
+        # Pass the recent conversation so the agent has context.
+        prior = await session.execute(
+            select(AgentMessage)
+            .where(AgentMessage.thread_id == thread.id)
+            .order_by(AgentMessage.created_at.asc())
+        )
+        history = [
+            {"role": m.role.value, "content": m.content}
+            for m in prior.scalars().all()
+            if m.id != user_msg.id  # exclude the just-flushed user msg
+        ]
+        turn = await conductor_agent.reply(body.content, history=history)
         agent_msg = AgentMessage(
             thread_id=thread.id,
             role=AgentMessageRole.agent,
