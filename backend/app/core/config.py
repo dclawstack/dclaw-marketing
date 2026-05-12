@@ -125,6 +125,24 @@ class Settings(BaseSettings):
     # can override via auth_metadata_json["instance_url"].
     mastodon_default_instance: str = "https://mastodon.social"
 
+    # Publisher OAuth (Phase 5.7). Each connected publisher exposes
+    # an OAuth 2.0 authorization-code flow at /api/v1/oauth/{provider}/start
+    # and /callback. Client ID + secret per provider.
+    linkedin_client_id: str = ""
+    linkedin_client_secret: str = ""
+    x_client_id: str = ""
+    x_client_secret: str = ""
+    instagram_client_id: str = ""
+    instagram_client_secret: str = ""
+    reddit_client_id: str = ""
+    reddit_client_secret: str = ""
+    pinterest_client_id: str = ""
+    pinterest_client_secret: str = ""
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+    mastodon_client_id: str = ""
+    mastodon_client_secret: str = ""
+
     # Observability (§6.12). Both opt-in. Sentry DSN empty → no-op.
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0
