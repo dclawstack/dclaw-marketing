@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""  # for embeddings
 
     # Admin bootstrap — created on first run if no admin user exists
-    bootstrap_admin_email: str = "admin@dclaw.local"
+    bootstrap_admin_email: str = "admin@dclaw.io"
     bootstrap_admin_temp_password: str = "ChangeMeOnFirstLogin!"
 
     # Legacy AI fields (kept for backwards-compat; removed in Phase 2)

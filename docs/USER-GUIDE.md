@@ -14,7 +14,7 @@ After `docker compose up -d`, navigate to **http://localhost:3015**. You'll be r
 Default bootstrap credentials (configurable in `.env`):
 
 ```
-Email:    admin@dclaw.local
+Email:    admin@dclaw.io
 Password: ChangeMeOnFirstLogin!
 ```
 
@@ -214,7 +214,7 @@ An audit UI is on the v0.2 roadmap.
 ## 3-minute demo walkthrough
 
 1. `docker compose up -d` (wait ~30s for healthchecks)
-2. Open `http://localhost:3015` → log in as `admin@dclaw.local` / `ChangeMeOnFirstLogin!`
+2. Open `http://localhost:3015` → log in as `admin@dclaw.io` / `ChangeMeOnFirstLogin!`
 3. Set new password → land on dashboard
 4. Create Org + Brand Kit via API (or use a seeded one — coming in v0.2)
 5. Upload `brief.md` + ingest → KG populated
