@@ -23,6 +23,8 @@ from app.services.asset_gen import (
     generate_video,
     generate_voice,
 )
+from app.services.cost_logger import record_cost
+from app.services.image_gen import generate_image
 
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -102,6 +104,18 @@ async def creatives_generate(
         channel=body.channel,
         requesting_user_id=user.id,
     )
+    # Cost — rough estimate: ~300 input tokens + 200 output tokens per variant.
+    await record_cost(
+        session,
+        organization_id=body.organization_id,
+        project_id=body.project_id,
+        provider="anthropic",
+        kind="llm",
+        units=float(body.n_variants * 200),
+        units_kind="output_token",
+        amount_usd=body.n_variants * (300 * 0.000003 + 200 * 0.000015),
+        metadata={"n_variants": body.n_variants, "channel": body.channel},
+    )
 
     return CreativesGenerateResponse(
         organization_id=body.organization_id,
@@ -159,6 +173,18 @@ async def creatives_generate_images(
     images = await generate_image(
         composed_prompt, n=body.n, aspect_ratio=body.aspect_ratio
     )
+    # Cost logging — assume provider is what the first image reports.
+    if images:
+        await record_cost(
+            session,
+            organization_id=body.organization_id,
+            project_id=body.project_id,
+            provider=images[0].provider.value,
+            kind="image",
+            units=float(len(images)),
+            units_kind="image",
+            metadata={"aspect_ratio": body.aspect_ratio, "n": body.n},
+        )
 
     results: list[ImagesGenerateResultItem] = []
     for img in images:
@@ -280,6 +306,17 @@ async def creatives_generate_videos(
     assets = await generate_video(
         body.prompt, n=body.n, duration_s=body.duration_s
     )
+    if assets:
+        await record_cost(
+            session,
+            organization_id=body.organization_id,
+            project_id=body.project_id,
+            provider=assets[0].provider.value,
+            kind="video",
+            units=float(len(assets)) * body.duration_s,
+            units_kind="video_second",
+            metadata={"n": body.n, "duration_s": body.duration_s},
+        )
     results: list[AssetResultItem] = []
     for a in assets:
         ar = _file_asset(
@@ -345,6 +382,17 @@ async def creatives_generate_voice(
         session, user, body.organization_id, allowed_roles=_CREATIVES_ROLES
     )
     assets = await generate_voice(body.text, voice_id=body.voice_id, n=body.n)
+    if assets:
+        await record_cost(
+            session,
+            organization_id=body.organization_id,
+            project_id=body.project_id,
+            provider=assets[0].provider.value,
+            kind="voice",
+            units=float(len(body.text) * body.n),
+            units_kind="char",
+            metadata={"n": body.n, "voice_id": body.voice_id},
+        )
     results: list[AssetResultItem] = []
     for a in assets:
         ar = _file_asset(
@@ -413,6 +461,17 @@ async def creatives_generate_music(
     assets = await generate_music(
         body.prompt, n=body.n, duration_s=body.duration_s
     )
+    if assets:
+        await record_cost(
+            session,
+            organization_id=body.organization_id,
+            project_id=body.project_id,
+            provider=assets[0].provider.value,
+            kind="music",
+            units=float(len(assets)) * body.duration_s,
+            units_kind="music_second",
+            metadata={"n": body.n, "duration_s": body.duration_s},
+        )
     results: list[AssetResultItem] = []
     for a in assets:
         ar = _file_asset(
