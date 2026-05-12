@@ -725,9 +725,12 @@ export async function adminResetUserPassword(
   );
 }
 
-export async function adminRevokeUser(userId: string): Promise<void> {
+export async function adminDeleteUser(userId: string): Promise<void> {
   return fetchJson<void>(`/api/v1/admin/users/${userId}`, { method: "DELETE" });
 }
+
+// Back-compat alias — older code paths called this adminRevokeUser.
+export const adminRevokeUser = adminDeleteUser;
 
 /* ============================================================
    Agents (Phase 2)

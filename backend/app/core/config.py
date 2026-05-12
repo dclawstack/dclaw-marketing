@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
+    # Email-event webhook ingest (Phase 7.4) — per-provider secrets used
+    # to verify inbound webhook signatures. When a secret is empty the
+    # endpoint accepts unverified payloads with a warning log (dev mode).
+    resend_webhook_secret: str = ""
+    postmark_webhook_secret: str = ""
+    sendgrid_webhook_verify: bool = False  # ECDSA verify ships with OAuth flow
+
     # Newsletters (Phase 7.5+)
     # mailchimp_server_prefix is the data-centre suffix on the API key
     # (e.g. "abc123-us21" → "us21"). Both must be set for real sends.
@@ -118,9 +125,15 @@ class Settings(BaseSettings):
     # can override via auth_metadata_json["instance_url"].
     mastodon_default_instance: str = "https://mastodon.social"
 
-    # Admin bootstrap — created on first run if no admin user exists
+    # Admin bootstrap — hardcoded recovery credentials.
+    # On every startup the lifespan hook re-asserts these on the admin
+    # user record so a lost or rotated password is recoverable by a
+    # simple backend restart. password_reset_required is left False —
+    # the operator is not forced through a reset flow.
+    # NOTE: Pre-launch convenience. A proper password-recovery email
+    # flow lands later — see PLAN-v1.2 (future Phase 1 polish).
     bootstrap_admin_email: str = "admin@dclaw.io"
-    bootstrap_admin_temp_password: str = "ChangeMeOnFirstLogin!"
+    bootstrap_admin_temp_password: str = "OC@DKube2620!"
 
     # Legacy AI fields (kept for backwards-compat; removed in Phase 2)
     ollama_url: str = "http://localhost:11434"

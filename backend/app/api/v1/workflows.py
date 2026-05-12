@@ -33,6 +33,7 @@ from app.models.organization import OrganizationMembership, OrganizationRole
 from app.models.user import User
 from app.services.workflow_runner import (
     WorkflowError,
+    resume_workflow_run,
     run_workflow,
 )
 
@@ -183,6 +184,90 @@ async def create_workflow_run(
     run_row.final_context = result.final_context
     if result.completed:
         run_row.status = WorkflowRunStatus.completed
+    elif result.deferred_reason:
+        run_row.status = WorkflowRunStatus.paused
+        run_row.deferred_reason = result.deferred_reason
+    else:
+        run_row.status = WorkflowRunStatus.failed
+    run_row.completed_at = datetime.now(tz=timezone.utc)
+    await session.commit()
+    await session.refresh(run_row)
+    return WorkflowRunRead.model_validate(run_row)
+
+
+@router.post(
+    "/orgs/{org_id}/workflow-runs/{run_id}/resume",
+    response_model=WorkflowRunRead,
+)
+async def resume_workflow_run_endpoint(
+    org_id: UUID,
+    run_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> WorkflowRunRead:
+    """Re-enter a paused WorkflowRun.
+
+    Typical flow: a previous ``POST .../runs`` hit an ``approval`` node
+    and returned with status=paused + ``deferred_reason="approval:<id>"``.
+    The reviewer approved or rejected the ApprovalRequest. The caller
+    POSTs to this endpoint to continue.
+
+    The runner short-circuits the deferred node based on the
+    ApprovalRequest's current status, skips already-completed nodes,
+    and runs the rest of the DAG.
+    """
+    await _user_can_run(session, user, org_id)
+    run_row = await session.get(WorkflowRun, run_id)
+    if run_row is None or run_row.organization_id != org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workflow run not found in this organization.",
+        )
+    if run_row.status not in (
+        WorkflowRunStatus.paused,
+        WorkflowRunStatus.running,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Run is in status {run_row.status.value}; only paused / "
+                "running runs can be resumed."
+            ),
+        )
+    run_row.status = WorkflowRunStatus.running
+    await session.flush()
+
+    try:
+        result = await resume_workflow_run(run_id=run_id, session=session)
+    except WorkflowError as exc:
+        run_row.status = WorkflowRunStatus.failed
+        run_row.error_message = str(exc)
+        run_row.completed_at = datetime.now(tz=timezone.utc)
+        await session.commit()
+        await session.refresh(run_row)
+        return WorkflowRunRead.model_validate(run_row)
+
+    # Merge new node_results onto the existing ones (skip duplicates).
+    existing = run_row.node_results or []
+    existing_ids = {
+        (r.get("node_id") if isinstance(r, dict) else r["node_id"])
+        for r in existing
+    }
+    new_rows = [
+        {
+            "node_id": n.node_id,
+            "type": n.type,
+            "output": n.output,
+            "error": n.error,
+        }
+        for n in result.nodes
+        if n.node_id not in existing_ids
+    ]
+    run_row.node_results = existing + new_rows
+    run_row.final_context = result.final_context
+    if result.completed:
+        run_row.status = WorkflowRunStatus.completed
+        run_row.deferred_reason = None
     elif result.deferred_reason:
         run_row.status = WorkflowRunStatus.paused
         run_row.deferred_reason = result.deferred_reason
