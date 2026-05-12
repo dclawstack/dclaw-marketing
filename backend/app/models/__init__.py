@@ -34,6 +34,13 @@ from app.models.sequence_membership import (
     SequenceMembership,
     SequenceMembershipStatus,
 )
+from app.models.webhook import (
+    Automation,
+    AutomationAction,
+    Webhook,
+    WebhookEvent,
+    WebhookEventStatus,
+)
 from app.models.social_account import (
     ProjectSocialAccount,
     SocialAccount,
@@ -125,6 +132,11 @@ __all__ = [
     "EmailEventProvider",
     "SequenceMembership",
     "SequenceMembershipStatus",
+    "Webhook",
+    "WebhookEvent",
+    "WebhookEventStatus",
+    "Automation",
+    "AutomationAction",
     "SocialAccount",
     "SocialAccountStatus",
     "SocialPlatform",
