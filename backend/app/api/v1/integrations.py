@@ -34,6 +34,7 @@ from app.models.organization import (
 )
 from app.models.user import User
 from app.services import mcp_registry
+from app.services.mcp_client import MCPInvocationError, invoke_tool
 from app.services.secret_box import seal
 
 
@@ -334,3 +335,91 @@ async def revoke_connection(
     await session.commit()
     await session.refresh(c)
     return _to_read(c)
+
+
+# ---------- Phase 6.1 — MCP tool invocation --------------------------
+
+
+class ToolInvokeRequest(BaseModel):
+    tool_name: str = Field(min_length=1, max_length=128)
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
+class ToolInvokeResponse(BaseModel):
+    server_id: str
+    tool_name: str
+    arguments: dict[str, Any]
+    result: Any
+    duration_ms: int
+    stub: bool
+
+
+@router.post(
+    "/orgs/{org_id}/connections/{connection_id}/invoke",
+    response_model=ToolInvokeResponse,
+)
+async def invoke_connection_tool(
+    org_id: UUID,
+    connection_id: UUID,
+    body: ToolInvokeRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> ToolInvokeResponse:
+    """Calls one of the MCP server's tools via this Connection.
+
+    The tool must be declared in the registry's ``tools`` list for the
+    Connection's server. Real HTTP transport is used when
+    ``metadata_json.endpoint`` is set; otherwise the call falls back
+    to a deterministic stub.
+    """
+    await _require_member(session, user, org_id, write=False)
+    c = await _get_or_404(session, org_id, connection_id)
+
+    if c.status != ConnectionStatus.active:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Connection is {c.status.value}, not active.",
+        )
+
+    server = mcp_registry.get(c.server_id)
+    if server is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server '{c.server_id}' missing from registry.",
+        )
+    if body.tool_name not in server["tools"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Unknown tool '{body.tool_name}' for server "
+                f"'{c.server_id}'. Allowed: {', '.join(server['tools'])}"
+            ),
+        )
+
+    try:
+        result = await invoke_tool(
+            connection=c,
+            tool_name=body.tool_name,
+            arguments=body.arguments,
+        )
+    except MCPInvocationError as exc:
+        c.last_error_message = str(exc)
+        await session.commit()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    # Successful invocation clears stale error + stamps health.
+    c.last_error_message = None
+    c.last_health_at = datetime.now(tz=timezone.utc)
+    await session.commit()
+
+    return ToolInvokeResponse(
+        server_id=result.server_id,
+        tool_name=result.tool_name,
+        arguments=result.arguments,
+        result=result.result,
+        duration_ms=result.duration_ms,
+        stub=result.stub,
+    )
