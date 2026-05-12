@@ -98,11 +98,36 @@ celery_app.conf.update(
             "task": "app.worker.tasks.segments.materialize_all_segments",
             "schedule": crontab(hour=3, minute=30),
         },
+        # Phase 2.x / Q4 — weekly freshness re-ingestion.
+        "refresh-stale-knowledge-sources": {
+            "task": "app.worker.tasks.freshness.refresh_stale_sources",
+            "schedule": crontab(day_of_week=0, hour=2, minute=0),
+        },
+        # Phase 2.x / Q2 — live input pollers.
+        "poll-notion-workspaces": {
+            "task": "app.worker.tasks.live_pollers.poll_notion_workspaces",
+            "schedule": 30 * 60.0,
+        },
+        "poll-google-drive-folders": {
+            "task": "app.worker.tasks.live_pollers.poll_google_drive_folders",
+            "schedule": 30 * 60.0,
+        },
+        "poll-git-repos": {
+            "task": "app.worker.tasks.live_pollers.poll_git_repos",
+            "schedule": crontab(minute=15, hour="*/4"),
+        },
+        "poll-website-crawls": {
+            "task": "app.worker.tasks.live_pollers.poll_website_crawls",
+            "schedule": crontab(hour=1, minute=30),
+        },
+        # §6.11 — ping pending approvals to Slack / Discord every 5 min.
+        "notify-pending-approvals": {
+            "task": "app.worker.tasks.approval_notifications.notify_pending_approvals",
+            "schedule": 300.0,
+        },
         # Theme D4 / Phase 6 — automation runner. Polls every 30
         # seconds for pending WebhookEvent rows and dispatches any
-        # matched Automation's actions. Short interval because the
-        # latency budget for "external system → DClaw response" is
-        # tight (CRM sync flows, Stripe webhooks, etc).
+        # matched Automation's actions.
         "process-pending-webhook-events": {
             "task": "app.worker.tasks.automation.process_pending_events",
             "schedule": 30.0,
