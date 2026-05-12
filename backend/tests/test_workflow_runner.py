@@ -28,8 +28,8 @@ async def setup_db():
 
 
 def _workflow(dsl: dict):
-    """Workflow-shaped duck — only .id and .dsl_json are read."""
-    return SimpleNamespace(id=uuid4(), dsl_json=dsl)
+    """Workflow-shaped duck — .id, .dsl_json, .organization_id."""
+    return SimpleNamespace(id=uuid4(), dsl_json=dsl, organization_id=uuid4())
 
 
 def test_render_substitutes_vars():
