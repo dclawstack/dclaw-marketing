@@ -79,5 +79,12 @@ celery_app.conf.update(
             "task": "app.worker.tasks.lead_scoring.recompute_lead_scores",
             "schedule": crontab(hour=4, minute=30),
         },
+        # Phase 11 / I3 — hourly cost-cap evaluation. Warns at 80%,
+        # writes a "cost_cap.blocked" audit row at 100%. Per-Org
+        # config under autonomy_posture_json.{daily_cap_usd, weekly_cap_usd}.
+        "evaluate-cost-caps-hourly": {
+            "task": "app.worker.tasks.cost_caps.evaluate_all_orgs",
+            "schedule": crontab(minute=15),
+        },
     },
 )
