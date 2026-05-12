@@ -19,6 +19,12 @@ from app.models.ingestion import (
     IngestionSourceType,
     IngestionStatus,
 )
+from app.models.social_account import (
+    ProjectSocialAccount,
+    SocialAccount,
+    SocialAccountStatus,
+    SocialPlatform,
+)
 
 __all__ = [
     "User",
@@ -51,4 +57,8 @@ __all__ = [
     "IngestionSourceType",
     "IngestionStatus",
     "DocumentChunk",
+    "SocialAccount",
+    "SocialAccountStatus",
+    "SocialPlatform",
+    "ProjectSocialAccount",
 ]
