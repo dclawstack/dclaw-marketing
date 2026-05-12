@@ -827,3 +827,110 @@ export async function cancelRequest(approvalId: string): Promise<ApprovalRequest
     method: "POST",
   });
 }
+
+// ============================================================
+// MCP Integrations (Theme D / Phase 6)
+// ============================================================
+
+export type IntegrationCategory =
+  | "social"
+  | "generation"
+  | "dam"
+  | "hosting"
+  | "crm"
+  | "analytics"
+  | "cms"
+  | "email"
+  | "ads"
+  | "productivity";
+
+export type IntegrationAuth = "oauth2" | "pat" | "api_key" | "basic_auth";
+
+export interface IntegrationCatalogEntry {
+  server_id: string;
+  name: string;
+  category: IntegrationCategory;
+  auth: IntegrationAuth;
+  docs_url: string;
+  description: string;
+  tools: string[];
+}
+
+export type ConnectionStatus = "active" | "reauth_required" | "revoked" | "error";
+
+export interface Connection {
+  id: string;
+  organization_id: string;
+  server_id: string;
+  name: string;
+  auth_kind: IntegrationAuth;
+  metadata_json: Record<string, unknown> | null;
+  scopes: string[] | null;
+  status: ConnectionStatus;
+  has_secret: boolean;
+  last_health_at: string | null;
+  last_error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getIntegrationRegistry(): Promise<IntegrationCatalogEntry[]> {
+  return fetchJson<IntegrationCatalogEntry[]>(`/api/v1/integrations/registry`);
+}
+
+export async function listConnections(orgId: string): Promise<Connection[]> {
+  return fetchJson<Connection[]>(`/api/v1/orgs/${orgId}/connections`);
+}
+
+export async function createConnection(
+  orgId: string,
+  data: {
+    server_id: string;
+    name: string;
+    secret?: string;
+    metadata_json?: Record<string, unknown>;
+    scopes?: string[];
+  },
+): Promise<Connection> {
+  return fetchJson<Connection>(`/api/v1/orgs/${orgId}/connections`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateConnection(
+  orgId: string,
+  connectionId: string,
+  data: {
+    name?: string;
+    secret?: string;
+    metadata_json?: Record<string, unknown>;
+    scopes?: string[];
+    status?: ConnectionStatus;
+  },
+): Promise<Connection> {
+  return fetchJson<Connection>(
+    `/api/v1/orgs/${orgId}/connections/${connectionId}`,
+    { method: "PATCH", body: JSON.stringify(data) },
+  );
+}
+
+export async function healthCheckConnection(
+  orgId: string,
+  connectionId: string,
+): Promise<Connection> {
+  return fetchJson<Connection>(
+    `/api/v1/orgs/${orgId}/connections/${connectionId}/health-check`,
+    { method: "POST" },
+  );
+}
+
+export async function revokeConnection(
+  orgId: string,
+  connectionId: string,
+): Promise<Connection> {
+  return fetchJson<Connection>(
+    `/api/v1/orgs/${orgId}/connections/${connectionId}`,
+    { method: "DELETE" },
+  );
+}

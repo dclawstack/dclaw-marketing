@@ -19,6 +19,7 @@ from app.models.ingestion import (
     IngestionSourceType,
     IngestionStatus,
 )
+from app.models.connection import Connection, ConnectionStatus
 
 __all__ = [
     "User",
@@ -51,4 +52,6 @@ __all__ = [
     "IngestionSourceType",
     "IngestionStatus",
     "DocumentChunk",
+    "Connection",
+    "ConnectionStatus",
 ]
