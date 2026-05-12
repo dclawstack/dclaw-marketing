@@ -26,7 +26,7 @@ docker compose up -d
 
 # 4. Open the app
 open http://localhost:3015
-# Default admin: admin@dclaw.local / ChangeMeOnFirstLogin!
+# Default admin: admin@dclaw.io / ChangeMeOnFirstLogin!
 # (You'll be forced to set a new password on first login.)
 ```
 
