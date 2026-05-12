@@ -754,3 +754,132 @@ These are common in mature platforms but explicitly OUT of v2.0 scope to keep th
 - Dark mode (forbidden by the brand system; explicitly out)
 - Mobile native apps (web responsive only)
 - Real-time collaborative editing of the same campaign (basic optimistic-lock for v2.0)
+
+
+## A.11 Future planning — Auth surface beyond v1.2
+
+These are NOT in scope for the current sprint. Listed here so the
+work isn't lost when the v1.2-rc1 release closes.
+
+**Core principle:** the only account that can self-recover is the
+**admin** (single bootstrap superuser per install). Every other user's
+password is **always reset by admin** — there is no self-serve
+"forgot password" path for non-admin users. This matches the
+agency-as-customer model: the agency owns user lifecycle, the platform
+owner owns admin recovery.
+
+### A.11.1 Admin-only password recovery flow
+
+**Current state (May 2026):** The bootstrap admin's password is hardcoded
+in ``backend/app/core/config.py`` (``bootstrap_admin_temp_password``)
+and re-asserted on every backend startup via ``init_db()``. This is the
+"lost admin password" recovery path today — operator edits the config
+and restarts the backend.
+
+**Future scope (admin user only):**
+
+1. **Forgot-password endpoint** — POST ``/api/v1/auth/forgot-password``
+   takes an email. **Checks ``user.is_superuser`` first**: if False,
+   silently returns 202 and emits an audit row but does NOT send an
+   email. If True, generates a single-use, time-bound (15-min) reset
+   token and sends an email to that admin address containing
+   ``$ORIGIN/reset?token=…``. Always returns 202 to the caller (no
+   enumeration of admin vs non-admin).
+2. **Reset-password endpoint** — POST ``/api/v1/auth/reset-password``
+   takes ``{token, new_password}``. Validates the token (signature,
+   expiry, single-use marker, ``user.is_superuser`` still True).
+   Updates ``hashed_password``. Audit event written either way.
+3. **Frontend** — ``/forgot`` page (email form). The page copy reminds
+   non-admin users to contact their admin. ``/reset?token=…`` page
+   (new password + confirmation). Both behind ``DkPageHeader``, pure
+   DKube tokens, light-mode only.
+4. **Email template** — short transactional email via the existing
+   send chain (SendGrid → Postmark → Resend). Subject:
+   "Reset your DClaw admin password". Body: greeting + 1 click-through
+   CTA + plain-text fallback URL + 15-min expiry notice + a footer
+   reminding them this is an admin-only flow.
+5. **Token shape** — JWT signed with ``settings.jwt_secret`` containing
+   ``{sub: user_id, purpose: "admin_password_reset", jti: <uuid>, exp: ts}``.
+   ``jti`` recorded in a small ``password_reset_tokens`` table so each
+   token is single-use. The ``purpose`` claim is checked on consume
+   so the token can't be repurposed for non-admin resets.
+6. **Rate-limit** — at most 3 forgot-password requests per admin email
+   per hour (uses the existing sliding-window QuotaCounter primitive).
+7. **Backwards compat** — the hardcoded re-assert path stays for
+   emergency recovery in case the email provider is down. Documented
+   as such.
+
+**Acceptance:** an admin who has forgotten their password can recover
+it without any backend restart. Non-admin users get a 202 + nothing
+sent (covered by an integration test).
+
+### A.11.2 Admin-mediated user-password reset
+
+The mirror flow for every non-admin user: an admin clicks "reset
+password" on the user's row in ``/admin/users`` → backend generates a
+new temp password, emails it to the user (or shows it to the admin
+in-band — both modes supported), and sets ``password_reset_required=True``
+on the user so they're forced through a first-login change.
+
+**Future scope:**
+
+1. **Endpoint already exists** — POST
+   ``/api/v1/admin/users/{id}/reset-password`` (admin-only) is the
+   existing primitive. The follow-up here is the email-delivery
+   piece + the UI button.
+2. **Email template** — separate from the admin recovery email.
+   Subject: "Your DClaw account — temporary password". Body: the temp
+   password + the login URL + a reminder that they'll be asked to
+   change it on first login.
+3. **Frontend** — Reset-password button on each row in
+   ``/admin/users``; opens a small confirm dialog that lets the admin
+   pick "email the user" or "show me the temp password and I'll
+   share it manually".
+
+### A.11.3 Email-based authentication / magic links (admin only)
+
+Optional follow-up after A.11.1.
+
+**Concept:** the **admin** types email → backend emails a magic-link →
+click-through logs them in for the session. No password.
+
+**Critical scope note:** this is **admin-only**. Non-admin users still
+must use the admin-provisioned password + admin-mediated reset flow.
+
+**Future scope:**
+
+1. **Request endpoint** — POST ``/api/v1/auth/magic-link`` with
+   ``{email}`` → emails a one-time JWT good for one login.
+   ``user.is_superuser`` check identical to the forgot-password flow.
+   Same "always 202, no enumeration" pattern.
+2. **Consume endpoint** — GET ``/api/v1/auth/magic-link?token=…``
+   validates + sets the session (issues a standard JWT cookie + a
+   refresh-token row), then 302s to ``/``.
+3. **Co-existence with passwords** — both flows work for admin. The
+   user table gains an optional ``preferred_auth`` field for admin
+   accounts only.
+4. **Reuse the password-recovery email template chain.**
+
+### A.11.4 SSO / OIDC (deferred indefinitely)
+
+Already covered in §A.10. Re-stated here so the auth roadmap is
+contiguous: Google / Microsoft Entra / Okta / generic OIDC. Triggers
+when the first agency-customer asks for it.
+
+### A.11.5 Out of scope even for these themes
+
+- **Self-service signup** — explicitly out for v2.0 (§A.10) and for the
+  forseeable future. Admin creates every user.
+- **Forgot-password for non-admin users** — explicitly out per the
+  core principle above. Admin handles those resets in §A.11.2.
+- **Hardware token auth** (FIDO2 / WebAuthn) — too niche for the
+  agency-customer profile.
+- **TOTP 2FA** — defer to A.11.6 below.
+- **SMS-based recovery** — explicitly out (carrier surface area too
+  large, fraud risk too high; magic-link is the only alt-auth path).
+
+### A.11.6 2FA / TOTP (future, separate from A.11.1–4)
+
+Optional later: opt-in TOTP enrolment for the admin only, scratch
+codes. Out of scope for the email-auth roadmap; tracked separately
+when a customer asks.

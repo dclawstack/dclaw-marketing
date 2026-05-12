@@ -28,6 +28,7 @@ from app.models.ingestion import (
     IngestionStatus,
 )
 from app.models.connection import Connection, ConnectionStatus
+from app.models.email_event import EmailEvent, EmailEventKind, EmailEventProvider
 from app.models.sequence_membership import (
     SequenceMembership,
     SequenceMembershipStatus,
@@ -116,6 +117,9 @@ __all__ = [
     "DocumentChunk",
     "Connection",
     "ConnectionStatus",
+    "EmailEvent",
+    "EmailEventKind",
+    "EmailEventProvider",
     "SequenceMembership",
     "SequenceMembershipStatus",
     "SocialAccount",

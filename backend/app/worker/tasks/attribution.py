@@ -69,8 +69,38 @@ def _touchpoints_for(
     return list(result.scalars().all())
 
 
+# Time-decay half-life (days). 7d is the industry-default — a touch
+# 7 days before the conversion contributes 50%, 14d → 25%, etc.
+_TIME_DECAY_HALF_LIFE_DAYS = 7.0
+
+
+def _time_decay_weights(
+    journey: list[Touchpoint], *, conversion_at
+) -> dict[UUID, float]:
+    """Exponential decay normalised so the per-touchpoint weights sum
+    to 1.0. ``weight_raw = 0.5 ** (age_days / half_life)`` with
+    ``age_days`` measured from the conversion timestamp.
+    """
+    if not journey:
+        return {}
+    raw: dict[UUID, float] = {}
+    half = _TIME_DECAY_HALF_LIFE_DAYS
+    for tp in journey:
+        age = (conversion_at - tp.occurred_at).total_seconds() / 86400.0
+        raw[tp.id] = 0.5 ** (max(0.0, age) / half)
+    total = sum(raw.values())
+    if total <= 0:
+        # All weights are zero (edge case) — fall back to linear.
+        share = 1.0 / len(journey)
+        return {tp.id: share for tp in journey}
+    return {tp_id: w / total for tp_id, w in raw.items()}
+
+
 def _allocate(
-    model: AttributionModel, journey: list[Touchpoint]
+    model: AttributionModel,
+    journey: list[Touchpoint],
+    *,
+    conversion=None,
 ) -> dict[UUID, float]:
     """Returns a {touchpoint_id: weight} map summing to 1.0 (or 0.0
     if the journey is empty).
@@ -84,7 +114,19 @@ def _allocate(
     if model == AttributionModel.linear:
         share = 1.0 / len(journey)
         return {tp.id: share for tp in journey}
-    # Unsupported model — return empty so caller can skip
+    if model == AttributionModel.time_decay:
+        if conversion is None:
+            # Shouldn't happen in production — callers must pass conv;
+            # fall back to linear so we don't silently lose journeys.
+            share = 1.0 / len(journey)
+            return {tp.id: share for tp in journey}
+        return _time_decay_weights(
+            journey, conversion_at=conversion.occurred_at
+        )
+    # markov: per-conversion Markov isn't meaningful (you need many
+    # journeys to estimate transition probabilities). The population-
+    # level Markov writer ships in a follow-up; for now return empty
+    # so the beat task simply skips this model per row.
     return {}
 
 
@@ -92,6 +134,7 @@ _SUPPORTED_MODELS = (
     AttributionModel.first_touch,
     AttributionModel.last_touch,
     AttributionModel.linear,
+    AttributionModel.time_decay,
 )
 
 
@@ -111,7 +154,7 @@ def compute_for_conversion(session: Session, conv: Conversion) -> int:
                 AttributionResult.model == model,
             )
         )
-        weights = _allocate(model, journey)
+        weights = _allocate(model, journey, conversion=conv)
         for touchpoint_id, weight in weights.items():
             credited = (
                 (conv.amount_usd or 0.0) * weight

@@ -69,10 +69,22 @@ from app.services.publishers.threads import (
     ThreadsPublishError,
     publish_to_threads,
 )
+from app.services.publishers.tiktok import (
+    TikTokAuthError,
+    TikTokMissingMediaError,
+    TikTokPublishError,
+    publish_to_tiktok,
+)
 from app.services.publishers.x import (
     XAuthError,
     XPublishError,
     publish_to_x,
+)
+from app.services.publishers.youtube import (
+    YouTubeAuthError,
+    YouTubeMissingMediaError,
+    YouTubePublishError,
+    publish_to_youtube,
 )
 from app.worker.celery_app import celery_app
 from app.worker.helpers import SyncSession
@@ -217,6 +229,49 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             webhook_url=webhook_url,
             text=post.copy or "",
             username=account.display_name if account else None,
+        )
+
+    if post.channel == ScheduledPostChannel.tiktok:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.tiktok
+        )
+        token = account._interim_access_token if account else None
+        video_url = None
+        if isinstance(post.publisher_response, dict):
+            video_url = post.publisher_response.get("video_url")
+        privacy_level = (
+            (account.auth_metadata_json or {}).get("privacy_level", "SELF_ONLY")
+            if account
+            else "SELF_ONLY"
+        )
+        return publish_to_tiktok(
+            access_token=token,
+            video_url=video_url,
+            caption=post.copy or "",
+            privacy_level=privacy_level,
+        )
+
+    if post.channel == ScheduledPostChannel.youtube:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.youtube
+        )
+        token = account._interim_access_token if account else None
+        video_url = None
+        if isinstance(post.publisher_response, dict):
+            video_url = post.publisher_response.get("video_url")
+        first_line, *rest = (post.copy or "Untitled").split("\n", 1)
+        description = rest[0] if rest else ""
+        privacy_status = (
+            (account.auth_metadata_json or {}).get("privacy_status", "private")
+            if account
+            else "private"
+        )
+        return publish_to_youtube(
+            access_token=token,
+            title=first_line,
+            description=description,
+            privacy_status=privacy_status,
+            video_url=video_url,
         )
 
     if post.channel == ScheduledPostChannel.facebook:
@@ -401,6 +456,16 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (PinterestAuthError, PinterestPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"pinterest: {exc}"
+            session.commit()
+            raise
+        except (TikTokAuthError, TikTokPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"tiktok: {exc}"
+            session.commit()
+            raise
+        except (YouTubeAuthError, YouTubePublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"youtube: {exc}"
             session.commit()
             raise
         except (FacebookAuthError, FacebookPublishError) as exc:

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, UserPlus } from "lucide-react";
+import { Copy, Trash2, UserPlus } from "lucide-react";
+
+import { useAuth } from "@/contexts/auth-context";
 
 import {
   DkBadge,
@@ -29,12 +31,15 @@ import {
 import {
   AdminUser,
   adminCreateUser,
+  adminDeleteUser,
   adminListUsers,
   adminResetUserPassword,
-  adminRevokeUser,
 } from "@/lib/api";
 
+const BOOTSTRAP_ADMIN_EMAIL = "admin@dclaw.io";
+
 export default function AdminUsersPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +50,11 @@ export default function AdminUsersPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [creating, setCreating] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+
+  const [pendingDelete, setPendingDelete] = useState<AdminUser | null>(null);
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -92,19 +102,33 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function handleRevoke(userId: string) {
-    if (
-      !confirm(
-        "Revoke this user's access? They will no longer be able to log in.",
-      )
-    ) {
-      return;
-    }
+  function openDelete(u: AdminUser) {
+    setPendingDelete(u);
+    setConfirmEmail("");
+    setDeleteError(null);
+  }
+
+  function closeDelete() {
+    if (deleting) return;
+    setPendingDelete(null);
+    setConfirmEmail("");
+    setDeleteError(null);
+  }
+
+  async function submitDelete() {
+    if (!pendingDelete) return;
+    if (confirmEmail !== pendingDelete.email) return;
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      await adminRevokeUser(userId);
+      await adminDeleteUser(pendingDelete.id);
       await refresh();
+      setPendingDelete(null);
+      setConfirmEmail("");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Revoke failed.");
+      setDeleteError(err instanceof Error ? err.message : "Delete failed.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -183,15 +207,18 @@ export default function AdminUsersPage() {
                       >
                         Reset Password
                       </DkButton>
-                      {u.is_active && (
-                        <DkButton
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleRevoke(u.id)}
-                        >
-                          Revoke
-                        </DkButton>
-                      )}
+                      {u.email !== BOOTSTRAP_ADMIN_EMAIL &&
+                        u.id !== currentUser?.id && (
+                          <DkButton
+                            size="sm"
+                            variant="danger"
+                            onClick={() => openDelete(u)}
+                            aria-label={`Delete user ${u.email}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DkButton>
+                        )}
                     </div>
                   </DkTableCell>
                 </DkTableRow>
@@ -282,6 +309,63 @@ export default function AdminUsersPage() {
               Create User
             </DkButton>
           </DkDialogFooter>
+        )}
+      </DkDialog>
+
+      <DkDialog
+        open={pendingDelete !== null}
+        onClose={closeDelete}
+        size="md"
+      >
+        {pendingDelete && (
+          <>
+            <DkDialogHeader
+              title="Delete user?"
+              description={`This permanently removes ${pendingDelete.email} from the platform. They will no longer be able to log in. References to this user in audit history are kept (set to NULL). This cannot be undone.`}
+              onClose={closeDelete}
+            />
+            <DkDialogContent>
+              <DkLabel htmlFor="confirm-email">
+                Type the user's email{" "}
+                <span className="font-mono">{pendingDelete.email}</span> to
+                confirm.
+              </DkLabel>
+              <DkInput
+                id="confirm-email"
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+                placeholder={pendingDelete.email}
+                autoFocus
+                disabled={deleting}
+                className="mt-2"
+              />
+              {deleteError && (
+                <p
+                  role="alert"
+                  className="mt-3 rounded-md border border-[var(--dk-danger)] bg-[var(--dk-danger-bg)] px-3 py-2 text-sm text-[var(--dk-danger)]"
+                >
+                  {deleteError}
+                </p>
+              )}
+            </DkDialogContent>
+            <DkDialogFooter>
+              <DkButton
+                variant="secondary"
+                onClick={closeDelete}
+                disabled={deleting}
+              >
+                Cancel
+              </DkButton>
+              <DkButton
+                variant="danger"
+                onClick={submitDelete}
+                disabled={confirmEmail !== pendingDelete.email || deleting}
+                loading={deleting}
+              >
+                Delete forever
+              </DkButton>
+            </DkDialogFooter>
+          </>
         )}
       </DkDialog>
     </div>

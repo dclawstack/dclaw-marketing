@@ -44,25 +44,39 @@ async def init_db() -> None:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
 
-    # Bootstrap admin — only if no User rows exist yet
+    # Bootstrap admin — re-asserted on every startup so a lost or
+    # rotated password is recoverable by simply restarting the backend.
+    # This is a pre-launch convenience; a proper recovery flow lands
+    # later (see PLAN-v1.2 Phase-1 polish).
     from app.models.user import User  # late import to avoid cycle
+    from fastapi_users.password import PasswordHelper
+
+    helper = PasswordHelper()
+    hashed = helper.hash(settings.bootstrap_admin_temp_password)
 
     async with AsyncSession(engine, expire_on_commit=False) as session:
-        result = await session.execute(select(User).limit(1))
-        if result.scalar_one_or_none() is not None:
-            return  # already bootstrapped
-
-        from fastapi_users.password import PasswordHelper
-
-        helper = PasswordHelper()
-        admin = User(
-            email=settings.bootstrap_admin_email,
-            hashed_password=helper.hash(settings.bootstrap_admin_temp_password),
-            is_active=True,
-            is_superuser=True,
-            is_verified=True,
-            full_name="Bootstrap Admin",
-            password_reset_required=True,
+        existing = await session.execute(
+            select(User).where(User.email == settings.bootstrap_admin_email)
         )
-        session.add(admin)
+        admin = existing.scalar_one_or_none()
+        if admin is None:
+            admin = User(
+                email=settings.bootstrap_admin_email,
+                hashed_password=hashed,
+                is_active=True,
+                is_superuser=True,
+                is_verified=True,
+                full_name="Bootstrap Admin",
+                password_reset_required=False,
+            )
+            session.add(admin)
+        else:
+            # Re-assert the hardcoded credentials. Keeps the password in
+            # sync with whatever's currently in bootstrap_admin_temp_password
+            # so a config change + restart is a safe recovery path.
+            admin.hashed_password = hashed
+            admin.is_active = True
+            admin.is_superuser = True
+            admin.is_verified = True
+            admin.password_reset_required = False
         await session.commit()
