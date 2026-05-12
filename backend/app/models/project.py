@@ -46,6 +46,11 @@ class Project(Base):
     # Free-form structured goals: {"objective": "leads", "target": 500, ...}
     goals_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # SP3-20 — Kanban tasks live as a JSON blob on the project for v0.2.x.
+    # Shape: {"tasks": [{"id": str, "title": str, "status": "todo|in_progress|blocked|done",
+    #                   "assignee_user_id": str|null, "due_date": iso|null, "notes": str|null}]}
+    kanban_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     status: Mapped[ProjectStatus] = mapped_column(
         SQLEnum(ProjectStatus), nullable=False, default=ProjectStatus.active
     )
