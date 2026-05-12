@@ -112,7 +112,10 @@ async def compute_ranking_delta(
     means we moved *up* (better). UI should color accordingly.
     """
     now = datetime.now(timezone.utc)
-    window_start = now - timedelta(days=days + 1)
+    # Look back across a generous window — we want to *find* a previous
+    # snapshot if one exists, even if it's older than ``days``. The
+    # ``cutoff`` below still controls whether a row counts as "previous".
+    window_start = now - timedelta(days=max(days * 6, 30))
 
     stmt = (
         select(AuditEvent)
