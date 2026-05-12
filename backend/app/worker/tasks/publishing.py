@@ -28,6 +28,11 @@ from app.services.publishers.bluesky import (
     BlueskyPublishError,
     publish_to_bluesky,
 )
+from app.services.publishers.instagram import (
+    InstagramAuthError,
+    InstagramPublishError,
+    publish_to_instagram,
+)
 from app.services.publishers.linkedin import (
     LinkedInAuthError,
     LinkedInPublishError,
@@ -108,6 +113,27 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             access_token=token,
             handle=handle,
             text=post.copy or "",
+        )
+
+    if post.channel == ScheduledPostChannel.instagram:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.instagram
+        )
+        token = account._interim_access_token if account else None
+        ig_user_id = (
+            (account.auth_metadata_json or {}).get("ig_user_id")
+            if account
+            else None
+        ) or "stub_ig_user"
+        image_url = None
+        if isinstance(post.publisher_response, dict):
+            image_url = post.publisher_response.get("image_url")
+        return publish_to_instagram(
+            access_token=token,
+            ig_user_id=ig_user_id,
+            image_url=image_url,
+            caption=post.copy or "",
+            handle=account.handle if account else None,
         )
 
     # No adapter for this channel yet — fall back to the v0 stub so
@@ -207,6 +233,11 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (XAuthError, XPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"x: {exc}"
+            session.commit()
+            raise
+        except (InstagramAuthError, InstagramPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"instagram: {exc}"
             session.commit()
             raise
         except Exception as exc:  # pragma: no cover — defensive
