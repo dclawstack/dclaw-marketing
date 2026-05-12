@@ -754,3 +754,89 @@ These are common in mature platforms but explicitly OUT of v2.0 scope to keep th
 - Dark mode (forbidden by the brand system; explicitly out)
 - Mobile native apps (web responsive only)
 - Real-time collaborative editing of the same campaign (basic optimistic-lock for v2.0)
+
+
+## A.11 Future planning — Auth surface beyond v1.2
+
+These are NOT in scope for the current sprint. Listed here so the
+work isn't lost when the v1.2-rc1 release closes.
+
+### A.11.1 Admin password recovery flow
+
+**Current state (May 2026):** The bootstrap admin's password is hardcoded
+in ``backend/app/core/config.py`` (``bootstrap_admin_temp_password``)
+and re-asserted on every backend startup via ``init_db()``. This is the
+"lost password" recovery path today — operator edits the config and
+restarts the backend.
+
+**Future scope:**
+
+1. **Forgot-password endpoint** — POST ``/api/v1/auth/forgot-password``
+   takes an email. If a user exists, generates a single-use, time-
+   bound (15-min) reset token and sends an email containing
+   ``$ORIGIN/reset?token=…``. Always returns 202 regardless of whether
+   the email matched a user (no enumeration).
+2. **Reset-password endpoint** — POST ``/api/v1/auth/reset-password``
+   takes ``{token, new_password}``. Validates the token (signature,
+   expiry, single-use marker). Updates ``hashed_password`` + clears
+   ``password_reset_required``. Audit event written either way.
+3. **Frontend** — ``/forgot`` page (email form), ``/reset?token=…``
+   page (new password + confirmation). Both behind ``DkPageHeader``,
+   pure DKube tokens, light-mode only.
+4. **Email template** — short transactional email via the existing
+   send chain (SendGrid → Postmark → Resend). Subject:
+   "Reset your DClaw password". Body: greeting + 1 click-through CTA
+   + plain-text fallback URL + 15-min expiry notice.
+5. **Token shape** — JWT signed with ``settings.jwt_secret`` containing
+   ``{sub: user_id, purpose: "password_reset", jti: <uuid>, exp: ts}``.
+   ``jti`` recorded in a small ``password_reset_tokens`` table so
+   each token is single-use.
+6. **Rate-limit** — at most 3 forgot-password requests per email per
+   hour (uses the existing sliding-window QuotaCounter primitive).
+7. **Backwards compat** — the hardcoded re-assert path stays for
+   emergency recovery in case the email provider is down. Documented
+   as such.
+
+**Acceptance:** a user who has forgotten their password can recover
+it without any backend restart or operator intervention.
+
+### A.11.2 Email-based authentication / passwordless login (magic links)
+
+Optional follow-up after A.11.1.
+
+**Concept:** user types email → backend emails a magic-link → click
+through logs them in for the session. No password.
+
+**Future scope:**
+
+1. **Request endpoint** — POST ``/api/v1/auth/magic-link`` with
+   ``{email}`` → emails a one-time JWT good for one login. Same
+   "always 202, no enumeration" pattern as forgot-password.
+2. **Consume endpoint** — GET ``/api/v1/auth/magic-link?token=…``
+   validates + sets the session (issues a standard JWT cookie + a
+   refresh-token row), then 302s to ``/``.
+3. **Co-existence with passwords** — both flows work. The user table
+   gains an optional ``preferred_auth`` field. Magic-link is the
+   default for new users; existing password users keep their password.
+4. **Reuse the password-recovery email template chain.**
+
+### A.11.3 SSO / OIDC (deferred indefinitely)
+
+Already covered in §A.10. Re-stated here so the auth-roadmap roadmap is contiguous:
+Google / Microsoft Entra / Okta / generic OIDC. Triggers when the
+first agency-customer asks for it.
+
+### A.11.4 Out of scope even for these themes
+
+- **Hardware token auth** (FIDO2 / WebAuthn) — too niche for the
+  agency-customer profile.
+- **TOTP 2FA** — defer to A.11.5 below (separate item) only when
+  needed by a specific compliance demand.
+- **SMS-based recovery** — explicitly out (carrier surface area too
+  large, fraud risk too high; magic-link is the recovery path).
+
+### A.11.5 2FA / TOTP (future, separate from A.11.1–4)
+
+Optional later: opt-in TOTP enrolment per user, scratch codes.
+Out of scope for the email-auth roadmap; tracked separately when a
+customer asks.
