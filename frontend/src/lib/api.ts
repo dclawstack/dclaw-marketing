@@ -454,6 +454,130 @@ export async function kgStats(orgId: string): Promise<KGStats> {
   return fetchJson<KGStats>(`/api/v1/kg/stats?organization_id=${orgId}`);
 }
 
+// ============================================================
+// Brand Kits (Theme Q1 / B1)
+// ============================================================
+
+export interface BrandPalette {
+  primary?: string;
+  secondary?: string;
+  ink?: string;
+  surface?: string;
+  surface_muted?: string;
+}
+
+export interface BrandFonts {
+  display?: string;
+  body?: string;
+}
+
+export interface BrandVoice {
+  formal_casual?: number; // 0–100
+  technical_witty?: number; // 0–100
+  calm_energetic?: number; // 0–100
+  do_say?: string[];
+  dont_say?: string[];
+}
+
+export interface BrandPositioning {
+  what_we_do?: string;
+  who_we_serve?: string;
+  why_we_matter?: string;
+}
+
+export interface PersonaIn {
+  name: string;
+  description?: string;
+  demographics?: Record<string, unknown>;
+  jobs_to_be_done?: string[];
+  fears?: string[];
+  desires?: string[];
+  traits?: string[];
+}
+
+export interface PersonaRead extends PersonaIn {
+  id: string;
+}
+
+export interface BrandKit {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string | null;
+  version: number;
+  is_active: boolean;
+  logo_asset_id: string | null;
+  logo_dark_asset_id: string | null;
+  palette_json: BrandPalette | null;
+  fonts_json: BrandFonts | null;
+  voice_json: BrandVoice | null;
+  positioning_json: BrandPositioning | null;
+  personas: PersonaRead[];
+}
+
+export async function listBrandKits(orgId: string): Promise<BrandKit[]> {
+  return fetchJson<BrandKit[]>(`/api/v1/orgs/${orgId}/brand-kits`);
+}
+
+export async function getActiveBrandKit(orgId: string): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits/active`);
+}
+
+export async function getBrandKit(
+  orgId: string,
+  kitId: string,
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits/${kitId}`);
+}
+
+export async function createBrandKit(
+  orgId: string,
+  data: {
+    name: string;
+    description?: string;
+    palette?: BrandPalette;
+    fonts?: BrandFonts;
+    voice?: BrandVoice;
+    positioning?: BrandPositioning;
+    personas?: PersonaIn[];
+  },
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBrandKit(
+  orgId: string,
+  kitId: string,
+  data: {
+    name?: string;
+    description?: string;
+    palette?: BrandPalette;
+    fonts?: BrandFonts;
+    voice?: BrandVoice;
+    positioning?: BrandPositioning;
+  },
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits/${kitId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function activateBrandKit(
+  orgId: string,
+  kitId: string,
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(
+    `/api/v1/orgs/${orgId}/brand-kits/${kitId}/activate`,
+    { method: "POST" },
+  );
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }

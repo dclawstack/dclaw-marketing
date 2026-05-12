@@ -65,7 +65,6 @@ export default function OrgDetailPage() {
           description: "Palette, typography, voice, do-say / don't-say, personas.",
           href: `/orgs/${org.id}/brand`,
           icon: Palette,
-          soon: true,
         },
         {
           label: "Knowledge",
