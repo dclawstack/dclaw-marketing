@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     # CRM sync (Phase 8.6+) — HubSpot first.
     hubspot_access_token: str = ""
 
+    # CRM sync — Pipedrive (Phase 8.x). Pipedrive uses an api_token
+    # query-param rather than OAuth bearer.
+    pipedrive_api_token: str = ""
+
+    # CRM sync — Attio (Phase 8.x). Standard OAuth bearer token.
+    attio_access_token: str = ""
+
     # Billing — Stripe (Phase 10.6)
     stripe_secret_key: str = ""
 
