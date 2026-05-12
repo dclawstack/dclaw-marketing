@@ -144,16 +144,38 @@ async def admin_force_reset_password(
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def admin_revoke_user(
-    user_id: UUID, session: AsyncSession = Depends(get_db)
+async def admin_delete_user(
+    user_id: UUID,
+    actor: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
 ) -> None:
-    """Soft-revoke: set is_active=False. Hard-delete is not supported
-    via this endpoint to preserve audit trail; use a DB migration if
-    you really need to remove user rows.
+    """Hard-delete a user row. Two safety gates:
+
+    1. An admin can't delete themselves (would lock them out).
+    2. The bootstrap admin (email matching
+       ``settings.bootstrap_admin_email``) can't be deleted — it's the
+       recovery account.
+
+    Foreign keys to ``users`` are mostly ``ondelete=SET NULL`` (audit,
+    memberships, etc.) so the cascade is non-destructive to history.
     """
+    from app.core.config import settings as _settings
+
     user = await session.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
-    user.is_active = False
-    await session.flush()
+    if user.id == actor.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Admins cannot delete their own account.",
+        )
+    if user.email == _settings.bootstrap_admin_email:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "The bootstrap admin account is the recovery path and "
+                "cannot be deleted."
+            ),
+        )
+    await session.delete(user)
     await session.commit()
