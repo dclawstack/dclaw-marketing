@@ -20,6 +20,12 @@ from app.models.ingestion import (
     IngestionStatus,
 )
 from app.models.connection import Connection, ConnectionStatus
+from app.models.social_account import (
+    ProjectSocialAccount,
+    SocialAccount,
+    SocialAccountStatus,
+    SocialPlatform,
+)
 
 __all__ = [
     "User",
@@ -54,4 +60,8 @@ __all__ = [
     "DocumentChunk",
     "Connection",
     "ConnectionStatus",
+    "SocialAccount",
+    "SocialAccountStatus",
+    "SocialPlatform",
+    "ProjectSocialAccount",
 ]
