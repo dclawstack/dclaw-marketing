@@ -23,6 +23,7 @@ from app.models.approval_request import ApprovalRequest, ApprovalStatus
 from app.models.email_ads import EmailCampaign, EmailCampaignStatus, EmailTemplate
 from app.models.organization import OrganizationMembership, OrganizationRole
 from app.models.user import User
+from app.services.cost_logger import record_cost
 from app.services.email_send import send_email
 
 
@@ -90,6 +91,17 @@ async def email_test_send(
         text=body.text,
         from_email=body.from_email,
     )
+    await record_cost(
+        session,
+        organization_id=body.organization_id,
+        provider=result.provider.value,
+        kind="email",
+        units=float(len(result.to)),
+        units_kind="email",
+        provider_resource=result.message_id,
+        metadata={"subject": result.subject},
+    )
+    await session.commit()
     return TestSendResponse(
         message_id=result.message_id,
         provider=result.provider.value,
