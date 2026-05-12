@@ -2,6 +2,7 @@
 
 from app.api.v1 import (
     admin,
+    agents,
     approvals,
     assets,
     auth,
@@ -20,6 +21,7 @@ from app.api.v1.leads import router as leads_router
 
 __all__ = [
     "admin",
+    "agents",
     "approvals",
     "assets",
     "auth",
