@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, goals, ingest, integrations, jobs, kg, me, orgs, projects, scheduled_posts, social_accounts, time_entries, workflows
+from app.api.v1 import admin, agent_threads, agents, approvals, assets, auth, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, goals, ingest, integrations, jobs, kg, me, orgs, projects, scheduled_posts, social_accounts, time_entries, webhooks_generic, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -94,6 +94,9 @@ app.include_router(email_send.router, prefix="/api/v1")
 
 # Phase 11.1 — cost-ledger totals + drill-down
 app.include_router(costs.router, prefix="/api/v1")
+
+# Theme D4 — generic webhook receiver + Automation rules
+app.include_router(webhooks_generic.router, prefix="/api/v1")
 
 # Phase 10.4 — workflow execution (DAG runner + WorkflowRun persistence)
 app.include_router(workflows.router, prefix="/api/v1")

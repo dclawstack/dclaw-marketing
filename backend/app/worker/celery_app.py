@@ -70,5 +70,14 @@ celery_app.conf.update(
             "task": "app.worker.tasks.attribution.compute_attribution",
             "schedule": crontab(hour=6, minute=30),
         },
+        # Theme D4 / Phase 6 — automation runner. Polls every 30
+        # seconds for pending WebhookEvent rows and dispatches any
+        # matched Automation's actions. Short interval because the
+        # latency budget for "external system → DClaw response" is
+        # tight (CRM sync flows, Stripe webhooks, etc).
+        "process-pending-webhook-events": {
+            "task": "app.worker.tasks.automation.process_pending_events",
+            "schedule": 30.0,
+        },
     },
 )
