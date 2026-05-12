@@ -66,6 +66,15 @@ class Settings(BaseSettings):
     # Billing — Stripe (Phase 10.6)
     stripe_secret_key: str = ""
 
+    # Ads — Meta (Facebook + Instagram). Phase 7.x.
+    # The access_token is an ad-account-scoped token, not a user token.
+    meta_ads_access_token: str = ""
+    meta_ads_account_id: str = ""  # numeric id, no "act_" prefix
+
+    # Ads — LinkedIn Marketing Developer Platform. Phase 7.x.
+    linkedin_ads_access_token: str = ""
+    linkedin_ads_account_id: str = ""  # numeric sponsored-account id
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
