@@ -15,6 +15,7 @@ import asyncio
 from uuid import UUID
 
 from app.models.approval_request import ApprovalRequest
+from app.services.cost_logger import record_cost_sync
 from app.services.email_send import send_email
 from app.worker.celery_app import celery_app
 from app.worker.helpers import SyncSession
@@ -87,6 +88,17 @@ def deliver_approved_email(self, approval_id: str) -> dict:
             "subject": result.subject,
         }
         ar.payload_json = payload
+        if ar.organization_id is not None:
+            record_cost_sync(
+                session,
+                organization_id=ar.organization_id,
+                provider=result.provider.value,
+                kind="email",
+                units=float(len(result.to)),
+                units_kind="email",
+                provider_resource=result.message_id,
+                metadata={"approval_id": approval_id, "subject": result.subject},
+            )
         session.commit()
 
     return {

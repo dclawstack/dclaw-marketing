@@ -22,6 +22,7 @@ from app.models.scheduled_post import (
     ScheduledPostStatus,
 )
 from app.models.social_account import SocialAccount, SocialPlatform
+from app.services.cost_logger import record_cost_sync
 from app.services.publishers import PublishResult
 from app.services.publishers.bluesky import (
     BlueskyAuthError,
@@ -219,6 +220,20 @@ def publish_scheduled_post(self, post_id: str) -> dict:
                 post.status = ScheduledPostStatus.would_publish
             else:
                 post.status = ScheduledPostStatus.published
+            # Cost ledger — social publishers are free APIs today, but
+            # we still record the call so /costs/recent shows publish
+            # activity.
+            record_cost_sync(
+                session,
+                organization_id=post.organization_id,
+                provider=result.provider,
+                kind="publish",
+                amount_usd=0.0,
+                units=1.0,
+                units_kind="post",
+                provider_resource=result.remote_id or None,
+                metadata={"channel": post.channel.value, "stub": bool(result.raw.get("stub"))},
+            )
             session.commit()
         except (BlueskyAuthError, BlueskyPublishError) as exc:
             post.status = ScheduledPostStatus.failed
