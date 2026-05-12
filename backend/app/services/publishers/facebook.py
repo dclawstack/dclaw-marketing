@@ -8,7 +8,7 @@ Posts to a Facebook Page wall via the Graph API:
 The token must be a **Page access token**, not a user token — Page
 tokens have the ``pages_manage_posts`` scope and never expire (until
 the user revokes them). Stored on
-``SocialAccount._interim_access_token``; page id on
+``SocialAccount.access_token``; page id on
 ``auth_metadata_json["page_id"]``.
 
 Long copy is allowed (no per-post hard limit on Facebook), but we cap

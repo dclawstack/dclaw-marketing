@@ -6,7 +6,7 @@ Posts to X via the v2 API:
     Authorization: Bearer <user_oauth_2_access_token>
 
 The user identifier (account handle) is on SocialAccount.handle; the
-OAuth 2.0 user-context access token in SocialAccount._interim_access_token.
+OAuth 2.0 user-context access token in SocialAccount.access_token.
 
 X v2 limits a tweet to 280 chars (without paid Premium). Longer copy
 is truncated with an ellipsis. Stub fallback matches the Bluesky /

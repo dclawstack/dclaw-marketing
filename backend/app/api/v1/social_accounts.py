@@ -110,7 +110,7 @@ def _to_read(acc: SocialAccount) -> SocialAccountRead:
         last_health_at=acc.last_health_at,
         last_publish_at=acc.last_publish_at,
         last_error_message=acc.last_error_message,
-        has_token=bool(acc._interim_access_token),
+        has_token=bool(acc.access_token),
         created_at=acc.created_at,
         updated_at=acc.updated_at,
     )
@@ -192,7 +192,7 @@ async def create_social_account(
         handle=body.handle,
         display_name=body.display_name,
         avatar_url=body.avatar_url,
-        _interim_access_token=body.interim_access_token,
+        access_token=body.interim_access_token,
         auth_metadata_json=body.auth_metadata_json,
         scopes=body.scopes,
         is_default_for_platform=body.is_default_for_platform,
@@ -257,7 +257,7 @@ async def update_social_account(
 
     data = body.model_dump(exclude_unset=True)
     if "interim_access_token" in data:
-        a._interim_access_token = data.pop("interim_access_token")
+        a.access_token = data.pop("interim_access_token")
     for k, v in data.items():
         setattr(a, k, v)
     await session.commit()
@@ -325,7 +325,7 @@ async def revoke_social_account(
     await _require_member(session, user, org_id, write=True)
     a = await _get_or_404(session, org_id, account_id)
     a.status = SocialAccountStatus.revoked
-    a._interim_access_token = None
+    a.access_token = None
     await session.commit()
     await session.refresh(a)
     return _to_read(a)
