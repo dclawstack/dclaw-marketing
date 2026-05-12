@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = ""
     elevenlabs_default_voice: str = "21m00Tcm4TlvDq8ikWAM"  # "Rachel"
 
+    # Mastodon (Phase 5.5) — default instance URL. Each SocialAccount
+    # can override via auth_metadata_json["instance_url"].
+    mastodon_default_instance: str = "https://mastodon.social"
+
     # Admin bootstrap — created on first run if no admin user exists
     bootstrap_admin_email: str = "admin@dclaw.io"
     bootstrap_admin_temp_password: str = "ChangeMeOnFirstLogin!"
