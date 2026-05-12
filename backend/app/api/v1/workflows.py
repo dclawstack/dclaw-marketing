@@ -28,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import current_active_user
 from app.core.database import get_db
-from app.models.ops import Workflow, WorkflowRun, WorkflowRunStatus
+from app.models.ops import Workflow, WorkflowRun, WorkflowRunStatus, WorkflowStatus
 from app.models.organization import OrganizationMembership, OrganizationRole
 from app.models.user import User
 from app.services.workflow_runner import (
@@ -327,3 +327,132 @@ async def list_workflow_runs(
         .all()
     )
     return [WorkflowRunRead.model_validate(r) for r in rows]
+
+
+# ---------- §6.6 — workflow templates ---------------------------------------
+
+
+class WorkflowRead(BaseModel):
+    id: UUID
+    organization_id: UUID
+    slug: str
+    name: str
+    description: str | None = None
+    is_template: bool
+    cloned_from_workflow_id: UUID | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkflowCloneRequest(BaseModel):
+    target_organization_id: UUID
+    name: str = Field(min_length=1, max_length=255)
+    slug: str = Field(min_length=1, max_length=128)
+    description: str | None = None
+
+
+@router.get(
+    "/orgs/{org_id}/workflow-templates",
+    response_model=list[WorkflowRead],
+)
+async def list_workflow_templates(
+    org_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> list[WorkflowRead]:
+    """Return every ``is_template=True`` workflow in this Org. The UI
+    surfaces these as 'starter templates' on the workflow-create page."""
+    await _user_can_view(session, user, org_id)
+    rows = (
+        (
+            await session.execute(
+                select(Workflow)
+                .where(
+                    Workflow.organization_id == org_id,
+                    Workflow.is_template.is_(True),
+                )
+                .order_by(Workflow.updated_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return [WorkflowRead.model_validate(r) for r in rows]
+
+
+@router.patch(
+    "/orgs/{org_id}/workflows/{workflow_id}/template",
+    response_model=WorkflowRead,
+)
+async def set_workflow_template_flag(
+    org_id: UUID,
+    workflow_id: UUID,
+    is_template: bool,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> WorkflowRead:
+    await _user_can_run(session, user, org_id)
+    workflow = await session.get(Workflow, workflow_id)
+    if workflow is None or workflow.organization_id != org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workflow not found in this organization.",
+        )
+    workflow.is_template = bool(is_template)
+    await session.commit()
+    await session.refresh(workflow)
+    return WorkflowRead.model_validate(workflow)
+
+
+@router.post(
+    "/orgs/{org_id}/workflows/{workflow_id}/clone",
+    response_model=WorkflowRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def clone_workflow(
+    org_id: UUID,
+    workflow_id: UUID,
+    body: WorkflowCloneRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> WorkflowRead:
+    """Clone a workflow (typically a template) into ``target_organization_id``.
+
+    The caller must be a member of both the source Org (to read) and the
+    target Org (to write). The new workflow starts in ``draft`` status,
+    copies the source ``dsl_json`` byte-for-byte, and records the source
+    id on ``cloned_from_workflow_id`` for lineage.
+    """
+    await _user_can_view(session, user, org_id)
+    await _user_can_run(session, user, body.target_organization_id)
+
+    source = await session.get(Workflow, workflow_id)
+    if source is None or source.organization_id != org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source workflow not found in this organization.",
+        )
+
+    clone = Workflow(
+        organization_id=body.target_organization_id,
+        slug=body.slug,
+        name=body.name,
+        description=body.description or source.description,
+        dsl_json=dict(source.dsl_json or {}),
+        status=WorkflowStatus.draft,
+        is_template=False,
+        cloned_from_workflow_id=source.id,
+        created_by_user_id=user.id,
+    )
+    session.add(clone)
+    try:
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Workflow with this slug already exists in the target organization.",
+        )
+    await session.refresh(clone)
+    return WorkflowRead.model_validate(clone)

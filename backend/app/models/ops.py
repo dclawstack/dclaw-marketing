@@ -208,6 +208,16 @@ class Workflow(Base):
         default=WorkflowStatus.draft,
     )
 
+    # §6.6 — workflow templates. Org-scoped. Clone target chain links
+    # back via cloned_from_workflow_id for lineage / dashboards.
+    is_template: Mapped[bool] = mapped_column(
+        nullable=False, default=False, server_default="false"
+    )
+    cloned_from_workflow_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("workflows.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     created_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
