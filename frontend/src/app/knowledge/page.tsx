@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Brain,
   Database,
@@ -10,6 +10,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -29,6 +30,12 @@ import {
   DkTabsList,
   DkTabsTrigger,
 } from "@/components/dk";
+import {
+  confirmAssetUpload,
+  ingestAssetIntoKG,
+  inferAssetKind,
+  startAssetUpload,
+} from "@/lib/api";
 import { useOrg } from "@/contexts/org-context";
 import { getToken } from "@/lib/auth";
 
@@ -97,6 +104,12 @@ export default function KnowledgeConsolePage() {
   const [urlName, setUrlName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // File upload
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadStage, setUploadStage] = useState<
+    null | "presign" | "upload" | "confirm" | "ingest"
+  >(null);
+
   // Search
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -133,6 +146,55 @@ export default function KnowledgeConsolePage() {
     }, 4000);
     return () => window.clearInterval(id);
   }, [sources, currentOrg, refresh]);
+
+  async function uploadAndIngest(file: File) {
+    if (!currentOrg) return;
+    setError(null);
+    try {
+      setUploadStage("presign");
+      const kind = inferAssetKind(file.type, file.name);
+      const { asset, presigned_put_url } = await startAssetUpload({
+        filename: file.name,
+        mime_type: file.type || "application/octet-stream",
+        kind,
+        organization_id: currentOrg.id,
+      });
+
+      setUploadStage("upload");
+      const putRes = await fetch(presigned_put_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!putRes.ok) {
+        throw new Error(`Upload PUT failed (${putRes.status})`);
+      }
+
+      setUploadStage("confirm");
+      await confirmAssetUpload(asset.id);
+
+      setUploadStage("ingest");
+      await ingestAssetIntoKG(currentOrg.id, asset.id, file.name);
+
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploadStage(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function onFilePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) await uploadAndIngest(f);
+  }
+
+  async function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (f) await uploadAndIngest(f);
+  }
 
   async function addUrl() {
     if (!currentOrg || !urlInput.trim()) return;
@@ -224,6 +286,54 @@ export default function KnowledgeConsolePage() {
 
           {/* SOURCES TAB */}
           <DkTabsContent value="sources">
+            <DkCard>
+              <DkCardHeader>
+                <DkCardTitle>Upload a file</DkCardTitle>
+                <DkCardDescription>
+                  PDF / Markdown / text / CSV / JSON. The worker extracts text,
+                  chunks, and embeds it. Drop here or pick from your machine.
+                </DkCardDescription>
+              </DkCardHeader>
+              <DkCardContent>
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={onDrop}
+                  className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-[var(--dk-border-strong)] py-6 px-3 text-center"
+                >
+                  <Upload className="h-6 w-6 text-brand" />
+                  <div className="text-sm">
+                    {uploadStage
+                      ? {
+                          presign: "Requesting upload URL…",
+                          upload: "Uploading bytes…",
+                          confirm: "Confirming asset…",
+                          ingest: "Queueing ingestion…",
+                        }[uploadStage]
+                      : "Drag and drop a file here"}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={onFilePick}
+                    accept=".pdf,.md,.markdown,.txt,.csv,.json,.xml,.yaml,.yml"
+                  />
+                  <DkButton
+                    variant="ghost"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!!uploadStage}
+                  >
+                    {uploadStage ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    Choose file
+                  </DkButton>
+                </div>
+              </DkCardContent>
+            </DkCard>
+
             <DkCard>
               <DkCardHeader>
                 <DkCardTitle>Add a URL</DkCardTitle>
