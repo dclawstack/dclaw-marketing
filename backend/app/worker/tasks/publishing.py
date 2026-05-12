@@ -133,7 +133,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             session, post.organization_id, SocialPlatform.bluesky
         )
         handle = account.handle if account else "stub.bsky.social"
-        password = account._interim_access_token if account else None
+        password = account.access_token if account else None
         return publish_to_bluesky(
             handle=handle,
             app_password=password,
@@ -144,7 +144,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.linkedin
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         author_urn = (
             (account.auth_metadata_json or {}).get("author_urn")
             if account
@@ -161,7 +161,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             session, post.organization_id, SocialPlatform.x
         )
         handle = account.handle if account else "stub"
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         return publish_to_x(
             access_token=token,
             handle=handle,
@@ -172,7 +172,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.instagram
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         ig_user_id = (
             (account.auth_metadata_json or {}).get("ig_user_id")
             if account
@@ -193,7 +193,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.mastodon
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         instance_url = (
             (account.auth_metadata_json or {}).get("instance_url")
             if account
@@ -209,7 +209,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.reddit
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         subreddit = (
             (account.auth_metadata_json or {}).get("subreddit")
             if account
@@ -240,7 +240,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.substack
         )
-        api_key = account._interim_access_token if account else None
+        api_key = account.access_token if account else None
         publication = (
             (account.auth_metadata_json or {}).get("publication")
             if account
@@ -256,7 +256,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.tiktok
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         video_url = None
         if isinstance(post.publisher_response, dict):
             video_url = post.publisher_response.get("video_url")
@@ -276,7 +276,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.youtube
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         video_url = None
         if isinstance(post.publisher_response, dict):
             video_url = post.publisher_response.get("video_url")
@@ -299,7 +299,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.facebook
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         page_id = (
             (account.auth_metadata_json or {}).get("page_id")
             if account
@@ -315,7 +315,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.threads
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         threads_user_id = (
             (account.auth_metadata_json or {}).get("threads_user_id")
             if account
@@ -333,7 +333,7 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.pinterest
         )
-        token = account._interim_access_token if account else None
+        token = account.access_token if account else None
         board_id = (
             (account.auth_metadata_json or {}).get("board_id")
             if account

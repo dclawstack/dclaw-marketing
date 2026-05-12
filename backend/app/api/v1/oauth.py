@@ -158,8 +158,8 @@ async def oauth_callback(
             url=f"{fail_redirect}exchange_failed", status_code=302
         )
 
-    # Persist token on the existing _interim_access_token column.
-    account._interim_access_token = token_resp.access_token
+    # Persist token (Fernet-encrypted via SocialAccount.access_token setter).
+    account.access_token = token_resp.access_token
     meta["oauth_token_type"] = token_resp.token_type
     if token_resp.expires_in:
         meta["oauth_expires_in"] = token_resp.expires_in

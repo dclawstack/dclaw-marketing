@@ -100,13 +100,37 @@ class SocialAccount(Base):
     display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Auth material. In Phase 5 we keep plaintext access_token + a JSON
-    # blob for metadata (refresh_token, expires_at, etc). Phase 6 swaps
-    # this for an encrypted Connection row with per-Org Fernet keys.
-    # Renamed `_interim_access_token` so it's clear we'll migrate it.
+    # SP3-6: tokens are now Fernet-encrypted at rest. The column stores the
+    # Fernet ciphertext (str). Read via the `access_token` property; legacy
+    # plaintext rows are transparently re-wrapped on next write.
     _interim_access_token: Mapped[str | None] = mapped_column(
         "interim_access_token", Text, nullable=True
     )
+
+    @property
+    def access_token(self) -> str | None:
+        """Decrypted access token. Falls back to plaintext for legacy rows."""
+        raw = self._interim_access_token
+        if raw is None:
+            return None
+        from cryptography.fernet import InvalidToken
+        from app.services import secret_box
+
+        try:
+            return secret_box.unseal(raw)
+        except (InvalidToken, ValueError):
+            # Legacy plaintext (pre-SP3-6). Returned as-is; will be
+            # re-encrypted the next time the setter is invoked.
+            return raw
+
+    @access_token.setter
+    def access_token(self, value: str | None) -> None:
+        if value is None:
+            self._interim_access_token = None
+            return
+        from app.services import secret_box
+
+        self._interim_access_token = secret_box.seal(value).decode("utf-8")
     auth_metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     scopes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 

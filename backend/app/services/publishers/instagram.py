@@ -12,7 +12,7 @@ worker) resolve a hosted asset URL from the ScheduledPost's first
 asset and pass it in.
 
 Connection requirements (set at OAuth time):
-- ``SocialAccount._interim_access_token`` — long-lived user token
+- ``SocialAccount.access_token`` — long-lived user token
   with scopes ``instagram_basic``, ``instagram_content_publish``,
   ``pages_show_list``.
 - ``SocialAccount.auth_metadata_json["ig_user_id"]`` — the connected
