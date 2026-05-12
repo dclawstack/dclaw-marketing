@@ -47,6 +47,14 @@ celery_app.conf.update(
             "task": "app.worker.tasks.publishing.scan_due_scheduled_posts",
             "schedule": 60.0,
         },
+        # Phase 8.2 — identity resolution. Runs at 05:30 UTC, before
+        # the rollups so attribution + dashboard see the widest possible
+        # journey for each lead. Stamps lead_id on anonymous touchpoints
+        # that share a visitor_id with an identified touchpoint.
+        "resolve-visitor-identities": {
+            "task": "app.worker.tasks.identity.resolve_visitor_identities",
+            "schedule": crontab(hour=5, minute=30),
+        },
         # Phase 8.1 — daily analytics rollups. Runs at 06:00 UTC, just
         # after typical EU/US-east overnight data settles. Computes
         # yesterday's per-channel + org-wide rollups for every Org.
