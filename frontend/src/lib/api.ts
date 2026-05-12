@@ -1201,3 +1201,27 @@ export async function postAgentMessage(orgId: string, threadId: string, content:
     body: JSON.stringify({ content }),
   });
 }
+
+// ============================================================
+// Publisher OAuth (Phase 5.7) — Connect via OAuth flow
+// ============================================================
+
+/** Platforms covered by the unified OAuth scaffold (#186). */
+export const OAUTH_PROVIDERS = new Set([
+  "linkedin",
+  "x",
+  "instagram",
+  "reddit",
+  "pinterest",
+  "discord",
+  "mastodon",
+]);
+
+export async function oauthStart(
+  provider: string,
+  accountId: string,
+): Promise<{ authorize_url: string; state: string; code_verifier: string | null }> {
+  return fetchJson(
+    `/api/v1/oauth/${provider}/start?account_id=${encodeURIComponent(accountId)}`,
+  );
+}
