@@ -25,6 +25,12 @@ from app.models.social_account import (
     SocialAccountStatus,
     SocialPlatform,
 )
+from app.models.agent_thread import (
+    AgentKind,
+    AgentMessage,
+    AgentMessageRole,
+    AgentThread,
+)
 
 __all__ = [
     "User",
@@ -61,4 +67,8 @@ __all__ = [
     "SocialAccountStatus",
     "SocialPlatform",
     "ProjectSocialAccount",
+    "AgentThread",
+    "AgentMessage",
+    "AgentKind",
+    "AgentMessageRole",
 ]
