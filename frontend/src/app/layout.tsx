@@ -17,6 +17,13 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "DClaw Marketing",
   description: "Agent-driven marketing operating system",
+  icons: {
+    icon: [
+      { url: "/brand/logos/dclaw-icon-purple.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/brand/logos/dclaw-icon-purple.svg",
+    apple: "/brand/logos/dclaw-icon-purple.svg",
+  },
 };
 
 export default function RootLayout({
