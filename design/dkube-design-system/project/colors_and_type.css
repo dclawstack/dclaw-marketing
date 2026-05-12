@@ -1,0 +1,288 @@
+/* ============================================================
+   DKube Design System — Colors & Type Tokens
+   Source: dkube.io (Webflow site, brand mark SVG)
+   Brand mark colors confirmed from logo SVG fills.
+   ============================================================ */
+
+/* ---------- Webfonts ---------- */
+/* CONFIRMED brand font: Poppins (all weights). Used for both display
+   headlines and UI / body. Files are bundled locally in /fonts. */
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 300; font-display: swap; src: url('fonts/poppins-300.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/poppins-400.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/poppins-500.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/poppins-600.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/poppins-700.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 800; font-display: swap; src: url('fonts/poppins-800.woff2') format('woff2'); }
+
+:root {
+  /* ============================================================
+     COLORS — Brand
+     Sourced directly from the dkube.io trademark logo fills.
+     ============================================================ */
+  --dk-purple-900: #4A3878;       /* deepest, hover/press */
+  --dk-purple-800: #5C4A8E;
+  --dk-purple-700: #7660A8;       /* PRIMARY — logo dark face, all body links/buttons */
+  --dk-purple-600: #8773B5;
+  --dk-purple-500: #9384BD;       /* SECONDARY — logo light face */
+  --dk-purple-400: #B0A4CE;
+  --dk-purple-300: #C9C0DE;
+  --dk-purple-200: #E2DCEE;
+  --dk-purple-100: #F1EEF8;
+  --dk-purple-50:  #F8F6FB;       /* tinted page wash */
+
+  /* ============================================================
+     COLORS — Neutrals
+     The site uses near-black ink on warm-white, with a #D6D6D6
+     "shadow" gray pulled from the logo's plinth.
+     ============================================================ */
+  --dk-ink:        #0F0F12;       /* headlines */
+  --dk-gray-900:   #1A1A20;
+  --dk-gray-800:   #2B2B33;
+  --dk-gray-700:   #404049;       /* body copy */
+  --dk-gray-600:   #5A5A66;
+  --dk-gray-500:   #7A7A85;       /* secondary copy / metadata */
+  --dk-gray-400:   #A3A3AC;
+  --dk-gray-300:   #D6D6D6;       /* divider / logo plinth */
+  --dk-gray-200:   #E8E8EC;
+  --dk-gray-100:   #F2F2F4;
+  --dk-gray-50:    #F8F8FA;       /* page background */
+  --dk-white:      #FFFFFF;
+
+  /* ============================================================
+     COLORS — Semantic / Status
+     Conservative enterprise palette, tuned to coexist with purple.
+     ============================================================ */
+  --dk-success:    #2E8B57;
+  --dk-success-bg: #E6F4EC;
+  --dk-warning:    #C28A00;
+  --dk-warning-bg: #FBF1DC;
+  --dk-danger:     #B3261E;
+  --dk-danger-bg:  #FBE9E7;
+  --dk-info:       #2C6CB0;
+  --dk-info-bg:    #E5EFF9;
+
+  /* ============================================================
+     SEMANTIC TOKENS — surfaces & ink
+     Use these in components, not raw scale values.
+     ============================================================ */
+  --dk-bg:            var(--dk-white);
+  --dk-bg-muted:      var(--dk-gray-50);
+  --dk-bg-tint:       var(--dk-purple-50);
+  --dk-bg-inverse:    var(--dk-ink);
+
+  --dk-fg:            var(--dk-ink);
+  --dk-fg-1:          var(--dk-gray-700);   /* body */
+  --dk-fg-2:          var(--dk-gray-500);   /* meta */
+  --dk-fg-muted:      var(--dk-gray-400);
+  --dk-fg-on-brand:   var(--dk-white);
+  --dk-fg-inverse:    var(--dk-white);
+
+  --dk-brand:         var(--dk-purple-700);
+  --dk-brand-hover:   var(--dk-purple-800);
+  --dk-brand-press:   var(--dk-purple-900);
+  --dk-brand-soft:    var(--dk-purple-100);
+
+  --dk-border:        var(--dk-gray-200);
+  --dk-border-strong: var(--dk-gray-300);
+  --dk-border-brand:  var(--dk-purple-300);
+
+  /* ============================================================
+     TYPOGRAPHY — Families
+     ============================================================ */
+  --dk-font-sans: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --dk-font-display: 'Poppins', system-ui, -apple-system, sans-serif;
+  --dk-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Type scale — modular, tuned for marketing + product */
+  --dk-text-xs:  12px;
+  --dk-text-sm:  14px;
+  --dk-text-md:  16px;     /* body default */
+  --dk-text-lg:  18px;
+  --dk-text-xl:  20px;
+  --dk-text-2xl: 24px;
+  --dk-text-3xl: 32px;
+  --dk-text-4xl: 40px;
+  --dk-text-5xl: 56px;
+  --dk-text-6xl: 72px;
+  --dk-text-7xl: 96px;     /* hero "Private AI" */
+
+  /* Line heights */
+  --dk-lh-tight:    1.05;
+  --dk-lh-snug:     1.15;
+  --dk-lh-normal:   1.5;
+  --dk-lh-relaxed:  1.65;
+
+  /* Tracking */
+  --dk-tracking-tight: -0.025em;
+  --dk-tracking-snug:  -0.015em;
+  --dk-tracking-wide:   0.04em;     /* eyebrows / labels */
+
+  /* Weights */
+  --dk-weight-regular: 400;
+  --dk-weight-medium:  500;
+  --dk-weight-semibold: 600;
+  --dk-weight-bold:    700;
+  --dk-weight-black:   800;
+
+  /* ============================================================
+     SPACING SCALE — 4px base
+     ============================================================ */
+  --dk-space-0:  0;
+  --dk-space-1:  4px;
+  --dk-space-2:  8px;
+  --dk-space-3:  12px;
+  --dk-space-4:  16px;
+  --dk-space-5:  20px;
+  --dk-space-6:  24px;
+  --dk-space-8:  32px;
+  --dk-space-10: 40px;
+  --dk-space-12: 48px;
+  --dk-space-16: 64px;
+  --dk-space-20: 80px;
+  --dk-space-24: 96px;
+  --dk-space-32: 128px;
+
+  /* ============================================================
+     RADII
+     The site uses gentle rounding on buttons (pill capsules) and
+     medium rounding on cards (~16px).
+     ============================================================ */
+  --dk-radius-xs: 4px;
+  --dk-radius-sm: 8px;
+  --dk-radius-md: 12px;
+  --dk-radius-lg: 16px;     /* cards */
+  --dk-radius-xl: 24px;     /* large cards */
+  --dk-radius-2xl: 32px;
+  --dk-radius-pill: 999px;  /* CTA buttons */
+
+  /* ============================================================
+     ELEVATION
+     Soft, low-contrast shadows. The site is mostly flat with subtle
+     hover-lift on cards.
+     ============================================================ */
+  --dk-shadow-xs: 0 1px 2px rgba(15, 15, 18, 0.04);
+  --dk-shadow-sm: 0 2px 6px rgba(15, 15, 18, 0.06);
+  --dk-shadow-md: 0 8px 20px rgba(15, 15, 18, 0.08);
+  --dk-shadow-lg: 0 18px 40px rgba(15, 15, 18, 0.10);
+  --dk-shadow-brand: 0 12px 28px rgba(118, 96, 168, 0.28);
+
+  /* ============================================================
+     MOTION
+     ============================================================ */
+  --dk-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --dk-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dk-dur-fast:    150ms;
+  --dk-dur-base:    240ms;
+  --dk-dur-slow:    420ms;
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  --dk-container-max: 1280px;
+  --dk-container-pad: 24px;
+}
+
+/* ============================================================
+   SEMANTIC TYPE STYLES — drop-in classes for marketing surfaces
+   ============================================================ */
+
+.dk-eyebrow {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-sm);
+  font-weight: var(--dk-weight-semibold);
+  letter-spacing: var(--dk-tracking-wide);
+  text-transform: uppercase;
+  color: var(--dk-brand);
+}
+
+.dk-h1 {
+  font-family: var(--dk-font-display);
+  font-size: clamp(48px, 7vw, var(--dk-text-7xl));
+  font-weight: var(--dk-weight-bold);
+  line-height: var(--dk-lh-tight);
+  letter-spacing: var(--dk-tracking-tight);
+  color: var(--dk-fg);
+}
+
+.dk-h2 {
+  font-family: var(--dk-font-display);
+  font-size: clamp(32px, 4.4vw, var(--dk-text-5xl));
+  font-weight: var(--dk-weight-bold);
+  line-height: var(--dk-lh-snug);
+  letter-spacing: var(--dk-tracking-snug);
+  color: var(--dk-fg);
+}
+
+.dk-h3 {
+  font-family: var(--dk-font-display);
+  font-size: var(--dk-text-3xl);
+  font-weight: var(--dk-weight-bold);
+  line-height: var(--dk-lh-snug);
+  letter-spacing: var(--dk-tracking-snug);
+  color: var(--dk-fg);
+}
+
+.dk-h4 {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-2xl);
+  font-weight: var(--dk-weight-semibold);
+  line-height: var(--dk-lh-snug);
+  color: var(--dk-fg);
+}
+
+.dk-h5 {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-xl);
+  font-weight: var(--dk-weight-semibold);
+  line-height: var(--dk-lh-snug);
+  color: var(--dk-fg);
+}
+
+.dk-lead {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-xl);
+  font-weight: var(--dk-weight-regular);
+  line-height: var(--dk-lh-relaxed);
+  color: var(--dk-fg-1);
+}
+
+.dk-body {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-md);
+  font-weight: var(--dk-weight-regular);
+  line-height: var(--dk-lh-relaxed);
+  color: var(--dk-fg-1);
+}
+
+.dk-meta {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-sm);
+  font-weight: var(--dk-weight-medium);
+  line-height: var(--dk-lh-normal);
+  color: var(--dk-fg-2);
+}
+
+.dk-caption {
+  font-family: var(--dk-font-sans);
+  font-size: var(--dk-text-xs);
+  font-weight: var(--dk-weight-medium);
+  line-height: var(--dk-lh-normal);
+  color: var(--dk-fg-2);
+  letter-spacing: 0.02em;
+}
+
+.dk-code {
+  font-family: var(--dk-font-mono);
+  font-size: 0.92em;
+  background: var(--dk-bg-muted);
+  border: 1px solid var(--dk-border);
+  border-radius: var(--dk-radius-xs);
+  padding: 0.1em 0.35em;
+  color: var(--dk-fg);
+}
+
+/* ============================================================
+   BASE RESET BITS — only what most cards need
+   ============================================================ */
+.dk-reset, .dk-reset * { box-sizing: border-box; }
+.dk-reset { font-family: var(--dk-font-sans); color: var(--dk-fg-1); }

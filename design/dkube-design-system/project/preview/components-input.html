@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:20px;background:var(--dk-bg);font-family:var(--dk-font-sans)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-width:380px}
+.label{font-size:13px;font-weight:600;color:var(--dk-fg)}
+.input{padding:11px 14px;border:1px solid var(--dk-border-strong);border-radius:var(--dk-radius-sm);font-size:14px;font-family:inherit;background:var(--dk-white);color:var(--dk-fg);outline:none;transition:all 150ms}
+.input:focus{border-color:var(--dk-brand);box-shadow:0 0 0 3px var(--dk-purple-100)}
+.input::placeholder{color:var(--dk-fg-muted)}
+</style></head>
+<body class="dk-reset">
+  <div class="field">
+    <label class="label">Work email</label>
+    <input class="input" placeholder="you@enterprise.com" />
+  </div>
+  <div class="field">
+    <label class="label">Company</label>
+    <input class="input" value="One Convergence" />
+  </div>
+</body></html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:20px;background:var(--dk-bg);font-family:var(--dk-font-sans)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .item{border:1px solid var(--dk-border);border-radius:var(--dk-radius-sm);overflow:hidden;background:var(--dk-bg)}
+  .pair{display:flex;height:54px}
+  .a{flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .b{width:14px}
+  .meta{padding:6px 8px;border-top:1px solid var(--dk-border)}
+  .name{font-size:11px;font-weight:600;color:var(--dk-fg)}
+  .hex{font-size:10px;color:var(--dk-fg-2);font-family:var(--dk-font-mono)}
+</style></head>
+<body>
+  <div class="grid">
+    <div class="item">
+      <div class="pair"><div class="a" style="background:var(--dk-success-bg);color:var(--dk-success)">Success</div><div class="b" style="background:var(--dk-success)"></div></div>
+      <div class="meta"><div class="name">success</div><div class="hex">#2E8B57 · #E6F4EC</div></div>
+    </div>
+    <div class="item">
+      <div class="pair"><div class="a" style="background:var(--dk-warning-bg);color:var(--dk-warning)">Warning</div><div class="b" style="background:var(--dk-warning)"></div></div>
+      <div class="meta"><div class="name">warning</div><div class="hex">#C28A00 · #FBF1DC</div></div>
+    </div>
+    <div class="item">
+      <div class="pair"><div class="a" style="background:var(--dk-danger-bg);color:var(--dk-danger)">Danger</div><div class="b" style="background:var(--dk-danger)"></div></div>
+      <div class="meta"><div class="name">danger</div><div class="hex">#B3261E · #FBE9E7</div></div>
+    </div>
+    <div class="item">
+      <div class="pair"><div class="a" style="background:var(--dk-info-bg);color:var(--dk-info)">Info</div><div class="b" style="background:var(--dk-info)"></div></div>
+      <div class="meta"><div class="name">info</div><div class="hex">#2C6CB0 · #E5EFF9</div></div>
+    </div>
+  </div>
+</body></html>

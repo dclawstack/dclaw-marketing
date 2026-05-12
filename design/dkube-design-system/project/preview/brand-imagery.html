@@ -1,0 +1,15 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:0;background:var(--dk-bg);font-family:var(--dk-font-sans)}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;height:200px}
+.tile{position:relative;overflow:hidden}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.cap{position:absolute;left:8px;bottom:8px;background:rgba(15,15,18,.65);color:#fff;font-size:10px;font-weight:600;padding:3px 8px;border-radius:var(--dk-radius-pill);letter-spacing:.02em}
+</style></head>
+<body class="dk-reset">
+  <div class="grid">
+    <div class="tile"><img src="../assets/img-mortgage.jpg"><span class="cap">Finance · Mortgage</span></div>
+    <div class="tile"><img src="../assets/img-construction.avif"><span class="cap">Construction · Digital twin</span></div>
+    <div class="tile"><img src="../assets/img-vta.jpg"><span class="cap">Education · VTA</span></div>
+  </div>
+</body></html>
