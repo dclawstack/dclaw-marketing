@@ -30,12 +30,14 @@ import {
   DkSkeleton,
 } from "@/components/dk";
 import {
+  OAUTH_PROVIDERS,
   SocialAccount,
   SocialAccountStatus,
   SocialPlatform,
   createSocialAccount,
   healthCheckSocialAccount,
   listSocialAccounts,
+  oauthStart,
   revokeSocialAccount,
   setSocialAccountDefault,
 } from "@/lib/api";
@@ -87,6 +89,22 @@ export default function ChannelsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
+  // Surface ?oauth_error=... from the callback redirect so the user
+  // sees why the OAuth round-trip failed instead of a silent landing.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const oauthErr = params.get("oauth_error");
+    if (oauthErr) {
+      setError(`OAuth failed: ${oauthErr}`);
+      // Clean the URL so a refresh doesn't re-flash the banner.
+      params.delete("oauth_error");
+      const qs = params.toString();
+      const url = window.location.pathname + (qs ? `?${qs}` : "");
+      window.history.replaceState(null, "", url);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     if (!currentOrg) {
       setAccounts([]);
@@ -130,6 +148,21 @@ export default function ChannelsPage() {
     } catch (err) {
       alert(err instanceof Error ? err.message : "Health-check failed.");
     } finally {
+      setBusy(null);
+    }
+  }
+
+  async function authorize(a: SocialAccount) {
+    if (!OAUTH_PROVIDERS.has(a.platform)) return;
+    setBusy(a.id);
+    setError(null);
+    try {
+      const { authorize_url } = await oauthStart(a.platform, a.id);
+      if (typeof window !== "undefined") {
+        window.location.href = authorize_url;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "OAuth start failed.");
       setBusy(null);
     }
   }
@@ -272,6 +305,18 @@ export default function ChannelsPage() {
                         )}
                       </DkCardContent>
                       <div className="px-4 pb-4 flex items-center gap-1.5 flex-wrap">
+                        {OAUTH_PROVIDERS.has(a.platform) &&
+                          (a.status === "reauth_required" || !a.has_token) && (
+                            <DkButton
+                              size="sm"
+                              variant="primary"
+                              onClick={() => authorize(a)}
+                              loading={busy === a.id}
+                              aria-label={`Authorize ${a.platform} via OAuth`}
+                            >
+                              Authorize via OAuth
+                            </DkButton>
+                          )}
                         {!a.is_default_for_platform &&
                           a.status === "active" && (
                             <DkButton
