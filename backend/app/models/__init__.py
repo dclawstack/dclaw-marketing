@@ -31,6 +31,21 @@ from app.models.agent_thread import (
     AgentMessageRole,
     AgentThread,
 )
+from app.models.email_ads import (
+    AdAccount,
+    AdCampaign,
+    AdPlatform,
+    AdSet,
+    AdStatus,
+    EmailCampaign,
+    EmailCampaignStatus,
+    EmailSequence,
+    EmailSequenceStep,
+    EmailTemplate,
+    Segment,
+    SequenceStatus,
+    SequenceStepKind,
+)
 
 __all__ = [
     "User",
@@ -71,4 +86,17 @@ __all__ = [
     "AgentMessage",
     "AgentKind",
     "AgentMessageRole",
+    "EmailTemplate",
+    "EmailCampaign",
+    "EmailCampaignStatus",
+    "EmailSequence",
+    "EmailSequenceStep",
+    "SequenceStatus",
+    "SequenceStepKind",
+    "AdAccount",
+    "AdCampaign",
+    "AdSet",
+    "AdPlatform",
+    "AdStatus",
+    "Segment",
 ]
