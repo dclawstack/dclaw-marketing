@@ -38,7 +38,12 @@ class Settings(BaseSettings):
     s3_bucket: str = "dclaw-marketing"
     s3_use_ssl: bool = False
 
-    # Email — Resend
+    # Email — multi-provider (Phase 7.4)
+    # Send-priority order tries: SendGrid → Postmark → Resend → stub.
+    # First provider with a non-empty key wins; on transport error
+    # we fall through to the next, then to the stub.
+    sendgrid_api_key: str = ""
+    postmark_api_key: str = ""
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
