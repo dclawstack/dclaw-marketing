@@ -19,6 +19,11 @@ from app.models.ingestion import (
     IngestionSourceType,
     IngestionStatus,
 )
+from app.models.scheduled_post import (
+    ScheduledPost,
+    ScheduledPostChannel,
+    ScheduledPostStatus,
+)
 
 __all__ = [
     "User",
@@ -51,4 +56,7 @@ __all__ = [
     "IngestionSourceType",
     "IngestionStatus",
     "DocumentChunk",
+    "ScheduledPost",
+    "ScheduledPostChannel",
+    "ScheduledPostStatus",
 ]
