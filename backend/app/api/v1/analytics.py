@@ -173,3 +173,85 @@ async def org_totals(
             "revenue_usd": _pct(cur["revenue_usd"], prev["revenue_usd"]),
         },
     }
+
+
+@router.get("/sankey")
+async def channel_sankey(
+    organization_id: UUID,
+    days: int = 30,
+    model: str = "linear",
+    db: AsyncSession = Depends(get_db),
+):
+    """Channel → conversion Sankey-data endpoint (Phase 8.x).
+
+    Aggregates ``AttributionResult`` rows for the past ``days`` days
+    under the requested attribution ``model`` (default ``linear``).
+    Builds two arrays the frontend's Sankey chart consumes directly::
+
+        {
+          "nodes": [{"id": "channel:linkedin", "label": "linkedin"},
+                    {"id": "channel:x", ...},
+                    {"id": "conversion:converted", "label": "Converted"}],
+          "links": [{"source": "channel:linkedin",
+                     "target": "conversion:converted",
+                     "value": 12.50}]
+        }
+
+    Width of each link = sum of ``credited_amount_usd`` (or ``weight``
+    when amount is null) across all rows where the touchpoint's
+    ``channel`` matches the source node.
+    """
+    from collections import defaultdict
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.attribution import (
+        AttributionModel,
+        AttributionResult,
+        Conversion,
+        Touchpoint,
+    )
+
+    try:
+        model_enum = AttributionModel(model)
+    except ValueError:
+        raise HTTPException(
+            status_code=400, detail=f"Unknown attribution model: {model}"
+        )
+
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
+
+    # Pull rows + their touchpoint + their conversion in one go.
+    q = (
+        select(AttributionResult, Touchpoint, Conversion)
+        .join(Touchpoint, AttributionResult.touchpoint_id == Touchpoint.id)
+        .join(Conversion, AttributionResult.conversion_id == Conversion.id)
+        .where(
+            AttributionResult.organization_id == organization_id,
+            AttributionResult.model == model_enum,
+            Conversion.occurred_at >= cutoff,
+        )
+    )
+    rows = (await db.execute(q)).all()
+
+    by_channel: dict[str, float] = defaultdict(float)
+    for ar, tp, conv in rows:
+        amount = (
+            ar.credited_amount_usd
+            if ar.credited_amount_usd is not None
+            else (ar.weight or 0.0)
+        )
+        channel = (tp.channel or "(unknown)").strip().lower()
+        by_channel[channel] += float(amount or 0)
+
+    nodes = [
+        {"id": f"channel:{ch}", "label": ch} for ch in sorted(by_channel)
+    ] + [{"id": "conversion:converted", "label": "Converted"}]
+    links = [
+        {
+            "source": f"channel:{ch}",
+            "target": "conversion:converted",
+            "value": round(amount, 4),
+        }
+        for ch, amount in by_channel.items()
+    ]
+    return {"nodes": nodes, "links": links, "model": model, "days": days}
