@@ -38,6 +38,17 @@ from app.models.attribution import (
     Conversion,
     Touchpoint,
 )
+from app.models.ops import (
+    CostLedger,
+    DataExportRequest,
+    DataExportStatus,
+    Playbook,
+    PlaybookKind,
+    QuotaCounter,
+    TimeEntry,
+    Workflow,
+    WorkflowStatus,
+)
 
 __all__ = [
     "User",
@@ -83,4 +94,13 @@ __all__ = [
     "AttributionResult",
     "AttributionModel",
     "AnalyticsRollup",
+    "CostLedger",
+    "QuotaCounter",
+    "TimeEntry",
+    "Workflow",
+    "WorkflowStatus",
+    "Playbook",
+    "PlaybookKind",
+    "DataExportRequest",
+    "DataExportStatus",
 ]
