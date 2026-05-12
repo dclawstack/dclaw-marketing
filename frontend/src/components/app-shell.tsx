@@ -31,6 +31,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Channels", href: "/channels" },
   { label: "Integrations", href: "/integrations" },
   { label: "Creatives", href: "/agents/creatives" },
+  { label: "Email", href: "/email" },
+  { label: "Ads", href: "/ads" },
   { label: "Inbox", href: "/inbox" },
   { label: "Library", href: "/library" },
   { label: "Orgs", href: "/orgs" },
