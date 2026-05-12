@@ -28,6 +28,10 @@ from app.models.ingestion import (
     IngestionStatus,
 )
 from app.models.connection import Connection, ConnectionStatus
+from app.models.sequence_membership import (
+    SequenceMembership,
+    SequenceMembershipStatus,
+)
 from app.models.webhook import (
     Automation,
     AutomationAction,
@@ -119,6 +123,8 @@ __all__ = [
     "DocumentChunk",
     "Connection",
     "ConnectionStatus",
+    "SequenceMembership",
+    "SequenceMembershipStatus",
     "Webhook",
     "WebhookEvent",
     "WebhookEventStatus",

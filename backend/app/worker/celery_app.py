@@ -70,6 +70,34 @@ celery_app.conf.update(
             "task": "app.worker.tasks.attribution.compute_attribution",
             "schedule": crontab(hour=6, minute=30),
         },
+        # Phase 8.8 follow-up — daily lead rescore + auto stage
+        # promotion (new → mql → sql → customer based on the 0-100
+        # score crossing 25 / 60 / 90 thresholds). Runs at 04:30 UTC
+        # before the rollups so the lifecycle Kanban shows consistent
+        # stage counts.
+        "recompute-lead-scores": {
+            "task": "app.worker.tasks.lead_scoring.recompute_lead_scores",
+            "schedule": crontab(hour=4, minute=30),
+        },
+        # Phase 9 — Analyst Agent weekly report. Runs Monday at
+        # 07:00 UTC (after Sunday's rollups have settled). 3σ
+        # anomaly-detection over the past 21 days; Markdown
+        # narrative written into AuditEvent.payload_json.
+        "weekly-analyst-report": {
+            "task": "app.worker.tasks.analyst.weekly_analyst_report",
+            "schedule": crontab(day_of_week=1, hour=7, minute=0),
+        },
+        # Phase 7.x — sequence runner. Every 5 min advance any
+        # SequenceMembership whose next_run_at has elapsed.
+        "advance-sequence-memberships": {
+            "task": "app.worker.tasks.sequences.advance_due_memberships",
+            "schedule": 300.0,
+        },
+        # Phase 7.x — segment materializer. Nightly at 03:30 UTC.
+        "materialize-segments": {
+            "task": "app.worker.tasks.segments.materialize_all_segments",
+            "schedule": crontab(hour=3, minute=30),
+        },
         # Theme D4 / Phase 6 — automation runner. Polls every 30
         # seconds for pending WebhookEvent rows and dispatches any
         # matched Automation's actions. Short interval because the

@@ -54,9 +54,9 @@ def test_linear_single_touchpoint_is_100():
 
 
 def test_unsupported_model_returns_empty():
+    """Per-conversion Markov is intentionally a no-op — see _allocate."""
     journey = [_tp("a"), _tp("b")]
     assert _allocate(AttributionModel.markov, journey) == {}
-    assert _allocate(AttributionModel.time_decay, journey) == {}
 
 
 def test_weights_sum_to_one_for_supported():

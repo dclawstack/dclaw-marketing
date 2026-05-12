@@ -70,8 +70,22 @@ class Settings(BaseSettings):
     # CRM sync — Attio (Phase 8.x). Standard OAuth bearer token.
     attio_access_token: str = ""
 
+    # Ads — Google Ads. Phase 7.x.
+    # Developer-token is per-MCC, provisioned by Google. Customer-id is
+    # the (10-digit, no hyphens) ad-account id; login-customer-id is
+    # only needed when the token is on a manager account.
+    google_ads_access_token: str = ""
+    google_ads_developer_token: str = ""
+    google_ads_customer_id: str = ""
+    google_ads_login_customer_id: str = ""
+
     # Billing — Stripe (Phase 10.6)
     stripe_secret_key: str = ""
+
+    # Billing — QuickBooks Online (Phase 10.7). access_token rotates
+    # hourly; realm_id is the company id. Both required for real calls.
+    quickbooks_access_token: str = ""
+    quickbooks_realm_id: str = ""
 
     # Ads — Meta (Facebook + Instagram). Phase 7.x.
     # The access_token is an ad-account-scoped token, not a user token.
