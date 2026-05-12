@@ -1,9 +1,13 @@
-"""Phase 4 — ScheduledPost dispatcher.
+"""Phase 4 — ScheduledPost dispatcher (with Phase 5.1 Bluesky adapter).
 
 The Celery beat scheduler runs `scan_due_scheduled_posts` every minute.
 It finds queued posts whose `scheduled_at <= now()` and hands each off
-to `publish_scheduled_post`, which in v0 sets status to
-`would_publish` (the real per-channel adapters land in Phase 5).
+to `publish_scheduled_post`, which:
+
+  - dispatches to a real per-channel publisher when one exists (Phase
+    5 onward), and
+  - falls back to the v0 `would_publish` stub for channels that
+    don't have an adapter yet.
 """
 
 from __future__ import annotations
@@ -14,10 +18,75 @@ from sqlalchemy import select
 
 from app.models.scheduled_post import (
     ScheduledPost,
+    ScheduledPostChannel,
     ScheduledPostStatus,
+)
+from app.models.social_account import SocialAccount, SocialPlatform
+from app.services.publishers import PublishResult
+from app.services.publishers.bluesky import (
+    BlueskyAuthError,
+    BlueskyPublishError,
+    publish_to_bluesky,
 )
 from app.worker.celery_app import celery_app
 from app.worker.helpers import SyncSession
+
+
+def _find_active_account(
+    session, organization_id, platform: SocialPlatform
+) -> SocialAccount | None:
+    """Pick the default-or-first SocialAccount for the given platform."""
+    accounts = (
+        session.execute(
+            select(SocialAccount).where(
+                SocialAccount.organization_id == organization_id,
+                SocialAccount.platform == platform,
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not accounts:
+        return None
+    # Prefer the default-marked one; otherwise return the first.
+    for a in accounts:
+        if a.is_default_for_platform:
+            return a
+    return accounts[0]
+
+
+def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
+    """Pick the right per-channel publisher. Returns the publisher's
+    result on success; raises on failure (caller marks the post as
+    `failed`).
+    """
+    if post.channel == ScheduledPostChannel.bluesky:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.bluesky
+        )
+        handle = account.handle if account else "stub.bsky.social"
+        password = account._interim_access_token if account else None
+        return publish_to_bluesky(
+            handle=handle,
+            app_password=password,
+            text=post.copy or "",
+        )
+
+    # No adapter for this channel yet — fall back to the v0 stub so
+    # the rest of the loop still closes.
+    return PublishResult(
+        provider=post.channel.value,
+        remote_id="",
+        permalink=None,
+        raw={
+            "stub": True,
+            "channel": post.channel.value,
+            "note": (
+                "Phase 5 channel adapter not yet wired. Real publisher "
+                "lands when SocialAccount + OAuth flows ship."
+            ),
+        },
+    )
 
 
 @celery_app.task(name="app.worker.tasks.publishing.scan_due_scheduled_posts")
@@ -47,10 +116,10 @@ def scan_due_scheduled_posts() -> dict:
 def publish_scheduled_post(self, post_id: str) -> dict:
     """Per-post publisher.
 
-    v0: no real channel adapters exist yet. We flip the post to
-    `would_publish` and record the time so the UI can show the loop
-    closing. Phase 5 replaces the body with per-channel publisher
-    calls keyed off `post.channel`.
+    Dispatches to the right per-channel adapter via ``_dispatch_publish``.
+    Channels with no adapter fall back to a `would_publish` stub so the
+    rest of the pipeline still completes — this keeps the demo flow
+    moving even while OAuth onboarding is incomplete.
     """
     from uuid import UUID
 
@@ -72,24 +141,26 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         session.commit()
 
         try:
-            # ----- Real publisher would dispatch by channel here. -----
-            # adapter = ADAPTERS[post.channel]  # Phase 5
-            # adapter.publish(post)
-            # post.status = ScheduledPostStatus.published
-            #
-            # v0 stub:
-            result_payload = {
-                "stub": True,
-                "channel": post.channel.value,
-                "note": (
-                    "Phase 5 channel adapter not yet wired. Real publisher "
-                    "lands when SocialAccount + OAuth flows ship."
-                ),
+            result = _dispatch_publish(post, session)
+            post.publisher_response = {
+                "provider": result.provider,
+                "remote_id": result.remote_id,
+                "permalink": result.permalink,
+                "raw": result.raw,
             }
-            post.publisher_response = result_payload
             post.published_at = datetime.now(tz=timezone.utc)
-            post.status = ScheduledPostStatus.would_publish
+            # If the adapter returned a real provider response (no
+            # `stub: True`), mark the post as fully published.
+            if result.raw.get("stub"):
+                post.status = ScheduledPostStatus.would_publish
+            else:
+                post.status = ScheduledPostStatus.published
             session.commit()
+        except (BlueskyAuthError, BlueskyPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"bluesky: {exc}"
+            session.commit()
+            raise
         except Exception as exc:  # pragma: no cover — defensive
             post.status = ScheduledPostStatus.failed
             post.error_message = str(exc)
@@ -98,6 +169,7 @@ def publish_scheduled_post(self, post_id: str) -> dict:
 
     return {
         "post_id": post_id,
-        "result": "would_publish",
+        "result": post.status.value,
         "channel": post.channel.value,
+        "remote_id": (post.publisher_response or {}).get("remote_id"),
     }
