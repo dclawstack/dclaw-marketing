@@ -38,6 +38,11 @@ from app.services.publishers.linkedin import (
     LinkedInPublishError,
     publish_to_linkedin,
 )
+from app.services.publishers.x import (
+    XAuthError,
+    XPublishError,
+    publish_to_x,
+)
 from app.worker.celery_app import celery_app
 from app.worker.helpers import SyncSession
 
@@ -95,6 +100,18 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
         return publish_to_linkedin(
             access_token=token,
             author_urn=author_urn,
+            text=post.copy or "",
+        )
+
+    if post.channel == ScheduledPostChannel.x:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.x
+        )
+        handle = account.handle if account else "stub"
+        token = account._interim_access_token if account else None
+        return publish_to_x(
+            access_token=token,
+            handle=handle,
             text=post.copy or "",
         )
 
@@ -211,6 +228,11 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (LinkedInAuthError, LinkedInPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"linkedin: {exc}"
+            session.commit()
+            raise
+        except (XAuthError, XPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"x: {exc}"
             session.commit()
             raise
         except (InstagramAuthError, InstagramPublishError) as exc:
