@@ -3,33 +3,62 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { DkButton, DkAvatar } from "@/components/dk";
 import { useAuth } from "@/contexts/auth-context";
+import { cn } from "@/lib/utils";
 
 /**
- * Top-level shell with nav. Hides the nav on auth pages so login /
- * first-login render full-screen.
+ * Top-level app shell.
+ *
+ * Wraps every authenticated route in a sticky, brand-vocabulary top
+ * nav and a brand-locked content container (max-w 1280px, 24px
+ * gutters, 24px top padding).
+ *
+ * Auth pages (login / first-login / forgot-password) render edge-to-
+ * edge with no nav.
  */
 const AUTH_PATHS = new Set(["/login", "/first-login", "/forgot-password"]);
+
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/" },
+  { label: "Creatives", href: "/agents/creatives" },
+  { label: "Inbox", href: "/inbox" },
+  { label: "Campaigns", href: "/campaigns" },
+  { label: "Leads", href: "/leads" },
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
   if (AUTH_PATHS.has(pathname)) {
-    return <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>;
+    return (
+      <main className="mx-auto w-full max-w-container px-6 py-6">
+        {children}
+      </main>
+    );
   }
 
   return (
     <>
-      <nav className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
+      <header
+        className={cn(
+          // Sticky glass-blur header per BRAND_GUIDELINES §10 (transparency / blur).
+          "sticky top-0 z-40 border-b border-[var(--dk-border)]",
+          "bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/75",
+        )}
+      >
+        <nav className="mx-auto flex h-[72px] max-w-container items-center gap-8 px-6">
           <Link
             href="/"
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2.5 group shrink-0"
             aria-label="DClaw Marketing — home"
           >
-            {/* SVG logo served directly from /public; <img> avoids next/image SVG config. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/logos/dclaw-icon-purple.svg"
@@ -38,45 +67,82 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               height={28}
               className="h-7 w-7 transition-transform duration-fast ease-out-quart group-hover:scale-105"
             />
-            <span className="text-lg font-bold text-ink leading-none">
+            <span className="font-display text-lg font-bold tracking-snug text-ink leading-none">
               DClaw <span className="text-brand">Marketing</span>
             </span>
           </Link>
-          <div className="flex flex-1 gap-4 text-sm">
-            <Link href="/" className="text-muted-foreground hover:text-ink">
-              Dashboard
-            </Link>
-            <Link href="/agents/creatives" className="text-muted-foreground hover:text-ink">
-              Creatives
-            </Link>
-            <Link href="/inbox" className="text-muted-foreground hover:text-ink">
-              Inbox
-            </Link>
-            <Link href="/campaigns" className="text-muted-foreground hover:text-ink">
-              Campaigns
-            </Link>
-            <Link href="/leads" className="text-muted-foreground hover:text-ink">
-              Leads
-            </Link>
+
+          <div className="flex flex-1 items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} />
+            ))}
             {user?.is_superuser && (
-              <Link href="/admin/users" className="text-muted-foreground hover:text-ink">
-                Admin
-              </Link>
+              <NavLink
+                item={{ label: "Admin", href: "/admin/users" }}
+                pathname={pathname}
+                matchPrefix="/admin"
+              />
             )}
           </div>
+
           {user && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                {user.full_name ?? user.email}
-              </span>
-              <Button variant="outline" size="sm" onClick={() => logout()}>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="hidden sm:flex flex-col items-end leading-tight">
+                <span className="text-sm font-medium text-ink">
+                  {user.full_name ?? user.email}
+                </span>
+                {user.full_name && (
+                  <span className="text-xs text-[var(--dk-fg-2)]">
+                    {user.email}
+                  </span>
+                )}
+              </div>
+              <DkAvatar
+                size="sm"
+                name={user.full_name ?? user.email}
+              />
+              <DkButton
+                variant="secondary"
+                size="sm"
+                onClick={() => logout()}
+              >
                 Sign out
-              </Button>
+              </DkButton>
             </div>
           )}
-        </div>
-      </nav>
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+        </nav>
+      </header>
+      <main className="mx-auto w-full max-w-container px-6 py-8">
+        {children}
+      </main>
     </>
+  );
+}
+
+function NavLink({
+  item,
+  pathname,
+  matchPrefix,
+}: {
+  item: NavItem;
+  pathname: string;
+  matchPrefix?: string;
+}) {
+  const active = matchPrefix
+    ? pathname?.startsWith(matchPrefix)
+    : pathname === item.href ||
+      (item.href !== "/" && pathname?.startsWith(item.href));
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast ease-out-quart",
+        active
+          ? "text-brand bg-[var(--dk-purple-50)]"
+          : "text-[var(--dk-fg-1)] hover:text-ink hover:bg-[var(--dk-gray-50)]",
+      )}
+    >
+      {item.label}
+    </Link>
   );
 }
