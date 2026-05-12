@@ -21,6 +21,7 @@ from app.models.asset import Asset, AssetKind, AssetStatus
 from app.models.audit_event import AuditActorKind, AuditEvent, AuditResult
 from app.models.approval_request import ApprovalRequest, ApprovalStatus
 from app.models.brand_kit import BrandKit, Persona
+from app.models.brand_kit_insight import BrandKitInsight, BrandKitInsightKind
 from app.models.ingestion import (
     DocumentChunk,
     IngestionSource,
@@ -111,6 +112,8 @@ __all__ = [
     "ApprovalStatus",
     "BrandKit",
     "Persona",
+    "BrandKitInsight",
+    "BrandKitInsightKind",
     "IngestionSource",
     "IngestionSourceType",
     "IngestionStatus",
