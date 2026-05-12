@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,8 +50,7 @@ class ProjectRead(BaseModel):
     goals_json: dict[str, Any] | None
     status: ProjectStatus
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectMembershipCreate(BaseModel):
@@ -65,8 +64,7 @@ class ProjectMembershipRead(BaseModel):
     project_id: UUID
     role: OrganizationRole
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- helpers -----------------------------------------------------

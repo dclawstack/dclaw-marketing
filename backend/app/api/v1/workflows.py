@@ -22,7 +22,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -62,8 +62,7 @@ class WorkflowRunRead(BaseModel):
     started_at: datetime
     completed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- helpers ----------------------------------------------------
@@ -341,8 +340,7 @@ class WorkflowRead(BaseModel):
     is_template: bool
     cloned_from_workflow_id: UUID | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkflowCloneRequest(BaseModel):

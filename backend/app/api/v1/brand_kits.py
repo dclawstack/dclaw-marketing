@@ -9,7 +9,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,8 +45,7 @@ class PersonaRead(BaseModel):
     desires: list | None
     traits: list | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BrandKitCreate(BaseModel):
@@ -87,8 +86,7 @@ class BrandKitRead(BaseModel):
     positioning_json: dict | None
     personas: list[PersonaRead]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- helpers -----------------------------------------------------

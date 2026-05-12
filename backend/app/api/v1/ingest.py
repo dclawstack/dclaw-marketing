@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,8 +40,7 @@ class IngestResponse(BaseModel):
     job_id: UUID
     status: IngestionStatus
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IngestStatusResponse(BaseModel):
@@ -56,8 +55,7 @@ class IngestStatusResponse(BaseModel):
     metadata_json: dict | None
     job_id: UUID | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 async def _require_member(
@@ -258,8 +256,7 @@ class ChunkRead(BaseModel):
     estimated_tokens: int | None
     metadata_json: dict | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("/{source_id}/chunks", response_model=list[ChunkRead])

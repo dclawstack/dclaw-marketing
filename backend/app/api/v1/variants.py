@@ -13,7 +13,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,8 +43,7 @@ class VariantSetRead(BaseModel):
     status: VariantSetStatus
     auto_promote_winner: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VariantCreate(BaseModel):
@@ -65,8 +64,7 @@ class VariantRead(BaseModel):
     impressions: int
     conversions: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VariantUpdate(BaseModel):
