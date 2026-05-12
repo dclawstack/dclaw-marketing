@@ -63,6 +63,11 @@ class Organization(Base):
     # (see PLAN-v1.2 §v2.0 §5).
     autonomy_posture_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # Theme O white-label polish. Shape:
+    # {"logo_url": str|null, "favicon_url": str|null, "primary_color_hex": str|null,
+    #  "secondary_color_hex": str|null, "custom_domain": str|null}
+    branding_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
