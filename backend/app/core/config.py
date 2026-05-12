@@ -125,6 +125,11 @@ class Settings(BaseSettings):
     # can override via auth_metadata_json["instance_url"].
     mastodon_default_instance: str = "https://mastodon.social"
 
+    # Observability (§6.12). Both opt-in. Sentry DSN empty → no-op.
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.0
+    json_logging_enabled: bool = False
+
     # Admin bootstrap — hardcoded recovery credentials.
     # On every startup the lifespan hook re-asserts these on the admin
     # user record so a lost or rotated password is recoverable by a
