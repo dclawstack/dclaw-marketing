@@ -16,6 +16,10 @@ from app.models.lead import Lead, LeadStatus
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.core.observability import init_sentry, init_structured_logging
+
+    init_sentry()
+    init_structured_logging()
     await init_db()
     yield
 
