@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DkButton, DkAvatar } from "@/components/dk";
+import { DkButton, DkAvatar, DkOrgSwitcher } from "@/components/dk";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +71,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               DClaw <span className="text-brand">Marketing</span>
             </span>
           </Link>
+
+          {user && (
+            <div className="hidden md:block shrink-0">
+              <DkOrgSwitcher />
+            </div>
+          )}
 
           <div className="flex flex-1 items-center gap-1">
             {NAV_ITEMS.map((item) => (
