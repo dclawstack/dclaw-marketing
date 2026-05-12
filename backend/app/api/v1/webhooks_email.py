@@ -19,12 +19,12 @@ import json
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import engine
+from app.core.database import get_db
 from app.models.email_event import EmailEvent, EmailEventKind, EmailEventProvider
 from app.models.lead import Lead, LeadActivity, LeadActivityKind
 from app.services.email_events import (
@@ -104,7 +104,10 @@ async def _persist_event(
 
 
 @router.post("/resend", status_code=status.HTTP_202_ACCEPTED)
-async def resend_webhook(request: Request) -> dict:
+async def resend_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
     body = await request.body()
     headers = {k.lower(): v for k, v in request.headers.items()}
     secret = settings.resend_webhook_secret
@@ -118,19 +121,21 @@ async def resend_webhook(request: Request) -> dict:
 
     payload = json.loads(body.decode("utf-8") or "{}")
     normalised = normalise_resend_event(payload)
-    async with AsyncSession(engine, expire_on_commit=False) as session:
-        await _persist_event(
-            session,
-            provider=EmailEventProvider.resend,
-            normalised=normalised,
-            payload=payload,
-        )
-        await session.commit()
+    await _persist_event(
+        session,
+        provider=EmailEventProvider.resend,
+        normalised=normalised,
+        payload=payload,
+    )
+    await session.commit()
     return {"received": True, "kind": normalised["kind"].value}
 
 
 @router.post("/postmark", status_code=status.HTTP_202_ACCEPTED)
-async def postmark_webhook(request: Request) -> dict:
+async def postmark_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
     body = await request.body()
     headers = {k.lower(): v for k, v in request.headers.items()}
     secret = settings.postmark_webhook_secret
@@ -144,19 +149,21 @@ async def postmark_webhook(request: Request) -> dict:
 
     payload = json.loads(body.decode("utf-8") or "{}")
     normalised = normalise_postmark_event(payload)
-    async with AsyncSession(engine, expire_on_commit=False) as session:
-        await _persist_event(
-            session,
-            provider=EmailEventProvider.postmark,
-            normalised=normalised,
-            payload=payload,
-        )
-        await session.commit()
+    await _persist_event(
+        session,
+        provider=EmailEventProvider.postmark,
+        normalised=normalised,
+        payload=payload,
+    )
+    await session.commit()
     return {"received": True, "kind": normalised["kind"].value}
 
 
 @router.post("/sendgrid", status_code=status.HTTP_202_ACCEPTED)
-async def sendgrid_webhook(request: Request) -> dict:
+async def sendgrid_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
     body = await request.body()
     headers = {k.lower(): v for k, v in request.headers.items()}
     # Structural check only — full ECDSA verify follows with the
@@ -174,17 +181,16 @@ async def sendgrid_webhook(request: Request) -> dict:
         )
 
     received = 0
-    async with AsyncSession(engine, expire_on_commit=False) as session:
-        for evt in payload_list:
-            normalised = normalise_sendgrid_event(evt)
-            await _persist_event(
-                session,
-                provider=EmailEventProvider.sendgrid,
-                normalised=normalised,
-                payload=evt,
-            )
-            received += 1
-        await session.commit()
+    for evt in payload_list:
+        normalised = normalise_sendgrid_event(evt)
+        await _persist_event(
+            session,
+            provider=EmailEventProvider.sendgrid,
+            normalised=normalised,
+            payload=evt,
+        )
+        received += 1
+    await session.commit()
     return {"received": True, "events": received}
 
 
