@@ -40,9 +40,11 @@ celery_app.conf.update(
     # platform grows (Q4 freshness re-crawls, F1 daily analytics rollups,
     # etc.).
     beat_schedule={
-        # "freshness-recrawl-urls": {
-        #     "task": "app.worker.tasks.ingestion.recrawl_subscribed_urls",
-        #     "schedule": timedelta(hours=6),
-        # },
+        # Phase 4 — calendar dispatcher: every minute, scan for due
+        # scheduled posts and hand each one to the per-post publisher.
+        "scan-due-scheduled-posts": {
+            "task": "app.worker.tasks.publishing.scan_due_scheduled_posts",
+            "schedule": 60.0,
+        },
     },
 )

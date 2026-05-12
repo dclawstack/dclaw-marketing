@@ -26,6 +26,11 @@ from app.models.social_account import (
     SocialAccountStatus,
     SocialPlatform,
 )
+from app.models.scheduled_post import (
+    ScheduledPost,
+    ScheduledPostChannel,
+    ScheduledPostStatus,
+)
 from app.models.agent_thread import (
     AgentKind,
     AgentMessage,
@@ -103,6 +108,9 @@ __all__ = [
     "SocialAccountStatus",
     "SocialPlatform",
     "ProjectSocialAccount",
+    "ScheduledPost",
+    "ScheduledPostChannel",
+    "ScheduledPostStatus",
     "AgentThread",
     "AgentMessage",
     "AgentKind",

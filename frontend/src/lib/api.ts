@@ -993,6 +993,108 @@ export async function revokeConnection(orgId: string, connectionId: string): Pro
 }
 
 // ============================================================
+
+// ============================================================
+// Scheduled posts (Theme C1, Phase 4)
+// ============================================================
+
+export type ScheduledPostChannel =
+  | "linkedin"
+  | "x"
+  | "instagram"
+  | "threads"
+  | "bluesky"
+  | "facebook"
+  | "youtube"
+  | "tiktok"
+  | "newsletter"
+  | "blog";
+
+export type ScheduledPostStatus =
+  | "queued"
+  | "publishing"
+  | "published"
+  | "failed"
+  | "cancelled"
+  | "would_publish";
+
+export interface ScheduledPost {
+  id: string;
+  organization_id: string;
+  project_id: string | null;
+  parent_campaign_id: string | null;
+  channel: ScheduledPostChannel;
+  asset_ids: string[] | null;
+  copy: string | null;
+  tags: string[] | null;
+  scheduled_at: string;
+  published_at: string | null;
+  error_message: string | null;
+  publisher_response: Record<string, unknown> | null;
+  status: ScheduledPostStatus;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listScheduledPosts(
+  orgId: string,
+  opts: {
+    from?: string;
+    to?: string;
+    channel?: ScheduledPostChannel;
+    status?: ScheduledPostStatus;
+    project_id?: string;
+  } = {},
+): Promise<ScheduledPost[]> {
+  const q = new URLSearchParams();
+  if (opts.from) q.set("from", opts.from);
+  if (opts.to) q.set("to", opts.to);
+  if (opts.channel) q.set("channel", opts.channel);
+  if (opts.status) q.set("status", opts.status);
+  if (opts.project_id) q.set("project_id", opts.project_id);
+  const qs = q.toString();
+  return fetchJson<ScheduledPost[]>(`/api/v1/orgs/${orgId}/scheduled-posts${qs ? `?${qs}` : ""}`);
+}
+
+export async function createScheduledPost(
+  orgId: string,
+  data: {
+    channel: ScheduledPostChannel;
+    scheduled_at: string;
+    copy?: string;
+    asset_ids?: string[];
+    tags?: string[];
+    project_id?: string;
+    parent_campaign_id?: string;
+  },
+): Promise<ScheduledPost> {
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateScheduledPost(
+  orgId: string,
+  postId: string,
+  data: { channel?: ScheduledPostChannel; scheduled_at?: string; copy?: string; asset_ids?: string[]; tags?: string[] },
+): Promise<ScheduledPost> {
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts/${postId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function cancelScheduledPost(orgId: string, postId: string): Promise<ScheduledPost> {
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts/${postId}`, { method: "DELETE" });
+}
+
+export async function publishScheduledPostNow(orgId: string, postId: string): Promise<ScheduledPost> {
+  return fetchJson<ScheduledPost>(`/api/v1/orgs/${orgId}/scheduled-posts/${postId}/publish-now`, { method: "POST" });
+}
+
+// ============================================================
 // Agent threads (Conductor + role-agents — Phase 9)
 // ============================================================
 
@@ -1033,9 +1135,7 @@ export interface AgentMessage {
   created_at: string;
 }
 
-export async function listAgentThreads(
-  orgId: string,
-): Promise<AgentThread[]> {
+export async function listAgentThreads(orgId: string): Promise<AgentThread[]> {
   return fetchJson<AgentThread[]>(`/api/v1/orgs/${orgId}/agent-threads`);
 }
 
@@ -1049,22 +1149,13 @@ export async function createAgentThread(
   });
 }
 
-export async function listAgentMessages(
-  orgId: string,
-  threadId: string,
-): Promise<AgentMessage[]> {
-  return fetchJson<AgentMessage[]>(
-    `/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`,
-  );
+export async function listAgentMessages(orgId: string, threadId: string): Promise<AgentMessage[]> {
+  return fetchJson<AgentMessage[]>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`);
 }
 
-export async function postAgentMessage(
-  orgId: string,
-  threadId: string,
-  content: string,
-): Promise<AgentMessage[]> {
-  return fetchJson<AgentMessage[]>(
-    `/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`,
-    { method: "POST", body: JSON.stringify({ content }) },
-  );
+export async function postAgentMessage(orgId: string, threadId: string, content: string): Promise<AgentMessage[]> {
+  return fetchJson<AgentMessage[]>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
 }
