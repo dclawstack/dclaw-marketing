@@ -129,7 +129,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8102
+        # 127.0.0.1 (not localhost) so the browser uses IPv4 directly.
+        # Colima forwards ports via an SSH tunnel that listens on IPv4 only,
+        # and Chromium-based fetch() on macOS may resolve `localhost` to ::1
+        # first and fail with "Failed to fetch" without falling back to v4.
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:8102
     environment:
       PORT: 3015
     ports:
