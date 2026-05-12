@@ -399,30 +399,34 @@ export default function KnowledgeConsolePage() {
             ) : (
               <div className="grid gap-2">
                 {sources.map((s) => (
-                  <DkCard key={s.id}>
-                    <DkCardContent className="flex flex-wrap items-center gap-3 py-3">
-                      {iconFor(s.source_type)}
-                      <div className="grow min-w-0">
-                        <div className="font-medium truncate">
-                          {s.name || s.source_reference}
-                        </div>
-                        <div className="text-xs font-mono opacity-60 truncate">
-                          {s.source_type}: {s.source_reference}
-                        </div>
-                        {s.error_message ? (
-                          <div className="text-xs text-[var(--dk-danger)] mt-1">
-                            {s.error_message}
+                  <a
+                    key={s.id}
+                    href={`/knowledge/sources/${s.id}`}
+                    className="block hover:opacity-90 transition-opacity"
+                  >
+                    <DkCard>
+                      <DkCardContent className="flex flex-wrap items-center gap-3 py-3">
+                        {iconFor(s.source_type)}
+                        <div className="grow min-w-0">
+                          <div className="font-medium truncate">
+                            {s.name || s.source_reference}
                           </div>
-                        ) : null}
-                      </div>
-                      <DkBadge tone={STATUS_TONE[s.status]}>
-                        {s.status}
-                      </DkBadge>
-                      <span className="text-sm opacity-70">
-                        {s.document_chunks_created} chunks
-                      </span>
-                    </DkCardContent>
-                  </DkCard>
+                          <div className="text-xs font-mono opacity-60 truncate">
+                            {s.source_type}: {s.source_reference}
+                          </div>
+                          {s.error_message ? (
+                            <div className="text-xs text-[var(--dk-danger)] mt-1">
+                              {s.error_message}
+                            </div>
+                          ) : null}
+                        </div>
+                        <DkBadge tone={STATUS_TONE[s.status]}>{s.status}</DkBadge>
+                        <span className="text-sm opacity-70">
+                          {s.document_chunks_created} chunks
+                        </span>
+                      </DkCardContent>
+                    </DkCard>
+                  </a>
                 ))}
               </div>
             )}
