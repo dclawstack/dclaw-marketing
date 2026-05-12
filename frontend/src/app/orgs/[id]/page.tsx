@@ -86,7 +86,6 @@ export default function OrgDetailPage() {
           description: "Time-boxed initiatives within this organization.",
           href: `/orgs/${org.id}/projects`,
           icon: FolderKanban,
-          soon: true,
         },
       ]
     : [];
