@@ -29,6 +29,10 @@ from app.models.ingestion import (
 )
 from app.models.connection import Connection, ConnectionStatus
 from app.models.email_event import EmailEvent, EmailEventKind, EmailEventProvider
+from app.models.sequence_membership import (
+    SequenceMembership,
+    SequenceMembershipStatus,
+)
 from app.models.social_account import (
     ProjectSocialAccount,
     SocialAccount,
@@ -116,6 +120,8 @@ __all__ = [
     "EmailEvent",
     "EmailEventKind",
     "EmailEventProvider",
+    "SequenceMembership",
+    "SequenceMembershipStatus",
     "SocialAccount",
     "SocialAccountStatus",
     "SocialPlatform",
