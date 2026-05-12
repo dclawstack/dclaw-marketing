@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
@@ -253,8 +254,8 @@ export default function KnowledgePage() {
                       const Icon = SOURCE_ICON[s.source_type];
                       const open = expanded === s.id;
                       return (
-                        <>
-                          <DkTableRow key={s.id}>
+                        <React.Fragment key={s.id}>
+                          <DkTableRow>
                             <DkTableCell>
                               <div className="flex items-center gap-2.5">
                                 <Icon className="h-4 w-4 text-[var(--dk-fg-2)] shrink-0" />
@@ -336,7 +337,7 @@ export default function KnowledgePage() {
                               </DkTableCell>
                             </DkTableRow>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </DkTableBody>
