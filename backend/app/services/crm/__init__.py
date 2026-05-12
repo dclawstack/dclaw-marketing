@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 class CRMSyncResult:
     provider: str
     external_id: str
-    """Provider's id for the contact (e.g. HubSpot contact id)."""
+    """Provider's id for the contact (HubSpot id, Salesforce Id, etc.)."""
     email: str | None
     properties: dict = field(default_factory=dict)
     """Normalised key-value map of the contact's CRM fields."""

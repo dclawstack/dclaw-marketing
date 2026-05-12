@@ -7,14 +7,12 @@ lists + design campaigns + handle unsubscribes per CAN-SPAM.
 Adapters in this package:
 
   • mailchimp  (Phase 7.5)   — Mailchimp Marketing API v3
-  • convertkit (planned)      — ConvertKit v3
-  • beehiiv    (planned)      — Beehiiv v2
-  • substack   (planned)      — Substack admin endpoints (no public API,
-                                  uses RSS + webhooks for now)
+  • convertkit (Phase 7.6)   — ConvertKit v3
+  • beehiiv    (Phase 7.6)   — Beehiiv v2
 
 All follow the same shape:
 
-  • Single async ``send_campaign(api_key, list_id, subject, html, ...)``
+  • Single async ``send_campaign(...)``
   • Returns a normalised ``NewsletterResult`` dataclass
   • Stub fallback when no key — emits a synthetic id so the rest of
     the pipeline (campaign status, cost ledger, audit) still works.
@@ -29,9 +27,7 @@ from dataclasses import dataclass
 class NewsletterResult:
     provider: str
     campaign_id: str
-    """Provider-issued id for the sent campaign."""
     recipient_count: int | None
-    """Number of subscribers the campaign was sent to (None if unknown)."""
     raw: dict
 
 
