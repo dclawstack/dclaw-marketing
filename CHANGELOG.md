@@ -6,7 +6,20 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ## [Unreleased]
 
-—
+### Added — backend
+- **§6.2 KG write-back loop** — `BrandKitInsight` model + CRUD (`#194`); composer that injects top-K insights into the Creatives Agent system prompt (`#197`).
+- **§6.6 Workflow templates** — `Workflow.is_template` + clone endpoint (`#196`).
+- **Theme H — SEO depth** — site audit / internal-link suggester / ranking-delta tracker + daily Celery beat tasks + 4 API endpoints, backed by the Ahrefs MCP adapter (`#195`).
+- **§6.7 MCP batch 4** — Salesforce / Mixpanel / PostHog adapters (`#202`).
+- **A4 follow-up** — read-only audit-event browser API + pagination + filters (`#204`).
+- **Phase 11 / I1 dashboard** — live `QuotaCounter` browse endpoint with pct-used + is-breaker pre-computed (`#207`).
+- **Theme Q2 follow-up — URL ingestion** — pure-Python HTML→text stripper + new `ingest_url` Celery task + `POST /api/v1/ingest/urls` + `process_ingestion_source` dispatcher (`#205`).
+
+### Added — frontend
+- New top-level pages: `/agents/seo` (`#198`), `/brand-insights` (`#199`), `/workflows` templates section + clone + toggle (`#201`), `/admin/health` (`#203`), `/admin/audit` (`#204`), `/admin/costs` (real, wired) + `/admin/quotas` (real, wired) (`#207`), `/knowledge` Knowledge Console (`#206`) with drag-drop file upload (`#208`).
+- "Authorize via OAuth" button + `?oauth_error=` surface on `/channels` (`#200`).
+- "Ingest into KG" button on `/library` asset cards (part of `#206`).
+- Top-nav surfaces Knowledge / SEO / Workflows / Analytics (`#209`).
 
 ---
 
