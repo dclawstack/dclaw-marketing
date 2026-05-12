@@ -18,6 +18,7 @@ from app.worker.tasks.analytics import compute_daily_rollups  # noqa: F401
 from app.worker.tasks.attribution import compute_attribution  # noqa: F401
 from app.worker.tasks.email_send import deliver_approved_email  # noqa: F401
 from app.worker.tasks.example import sleep_and_progress  # noqa: F401
+from app.worker.tasks.gdpr import export_organization_data  # noqa: F401
 from app.worker.tasks.identity import resolve_visitor_identities  # noqa: F401
 from app.worker.tasks.ingestion import ingest_asset  # noqa: F401
 from app.worker.tasks.publishing import (  # noqa: F401
@@ -29,6 +30,7 @@ __all__ = [
     "compute_daily_rollups",
     "compute_attribution",
     "deliver_approved_email",
+    "export_organization_data",
     "resolve_visitor_identities",
     "sleep_and_progress",
     "ingest_asset",
