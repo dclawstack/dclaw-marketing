@@ -193,7 +193,7 @@ async def test_creatives_viewer_blocked(client):
 
     res = await client.post(
         "/api/v1/agents/creatives/generate",
-        json={"organization_id": str(org.id), "brief": "hi"},
+        json={"organization_id": str(org.id), "brief": "a real brief"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 403
@@ -208,7 +208,7 @@ async def test_creatives_non_member_403(client):
     token = await _login(client, "intruder@example.com", "IntPwd1234567!")
     res = await client.post(
         "/api/v1/agents/creatives/generate",
-        json={"organization_id": str(org.id), "brief": "hi"},
+        json={"organization_id": str(org.id), "brief": "a real brief"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 403
