@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>DKube · Master Slide Templates</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<link rel="stylesheet" href="arch-diagrams.css"/>
+<style>
+  /* ============= Slide stage ============= */
+  deck-stage { --bg: var(--dk-white); }
+  body { margin: 0; background: var(--dk-ink); font-family: var(--dk-font-sans); }
+
+  /* Each <section> is one slide @ 1920x1080 */
+  deck-stage > section {
+    width: 1920px; height: 1080px;
+    background: var(--dk-white);
+    color: var(--dk-fg);
+    position: relative; overflow: hidden;
+    padding: 180px 120px 180px;
+    box-sizing: border-box;
+    font-family: var(--dk-font-sans);
+  }
+
+  /* Persistent chrome on every slide */
+  .chrome-logo {
+    position: absolute; top: 56px; left: 120px; height: 64px;
+  }
+  .chrome-logo img { height: 100%; display: block; }
+  .chrome-page {
+    position: absolute; bottom: 64px; right: 120px;
+    font-size: 18px; font-weight: 500; color: var(--dk-fg-2);
+    letter-spacing: 0.04em;
+    z-index: 5;
+  }
+  .chrome-url {
+    position: absolute; bottom: 64px; left: 120px;
+    font-size: 18px; font-weight: 500; color: var(--dk-fg-2);
+    letter-spacing: 0.04em;
+    z-index: 5;
+  }
+
+  /* ============= Type for slides ============= */
+  .s-eyebrow {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--dk-brand);
+    margin: 0 0 28px;
+  }
+  .s-title {
+    font-size: 76px; font-weight: 600; line-height: 1.05;
+    letter-spacing: -0.02em; color: var(--dk-fg);
+    margin: 0 0 24px;
+  }
+  .s-subtitle {
+    font-size: 36px; font-weight: 500; line-height: 1.25;
+    color: var(--dk-fg-1);
+  }
+  .s-lede {
+    font-size: 28px; font-weight: 400; line-height: 1.5;
+    color: var(--dk-fg-1);
+  }
+  .s-body {
+    font-size: 22px; font-weight: 400; line-height: 1.55;
+    color: var(--dk-fg-1);
+  }
+
+  /* ============= Layout 1 — Cover ============= */
+  .l-cover {
+    background:
+      radial-gradient(1200px 800px at 85% 20%, var(--dk-purple-100), transparent 60%),
+      var(--dk-white) !important;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 160px 160px !important;
+  }
+  .l-cover .cube {
+    position: absolute; right: 160px; top: 50%; transform: translateY(-50%);
+    width: 520px; height: 520px;
+  }
+  .l-cover .product {
+    font-size: 200px; font-weight: 800; line-height: 0.95;
+    letter-spacing: -0.04em; color: var(--dk-brand);
+    margin: 0 0 32px;
+  }
+  .l-cover .tagline {
+    font-size: 36px; font-weight: 500; color: var(--dk-fg);
+    max-width: 900px; line-height: 1.3;
+  }
+  .l-cover .stamp {
+    position: absolute; bottom: 96px; left: 160px;
+    display: flex; gap: 32px; align-items: center;
+  }
+  .l-cover .stamp .url {
+    font-size: 22px; font-weight: 600; color: var(--dk-brand);
+    letter-spacing: 0.02em;
+  }
+
+  /* ============= Layout 2 — Section Divider / About hero ============= */
+  .l-divider {
+    background: var(--dk-purple-50) !important;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+    align-items: center;
+  }
+  .l-divider .body { display: flex; flex-direction: column; gap: 32px; }
+  .l-divider .body .s-title { font-size: 96px; }
+  .l-divider .pillars { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  .l-divider .pillar {
+    background: var(--dk-white); border-radius: var(--dk-radius-lg);
+    padding: 32px 36px; border: 1px solid var(--dk-border);
+    display: flex; gap: 24px; align-items: flex-start;
+  }
+  .l-divider .pillar .num {
+    font-size: 32px; font-weight: 700; color: var(--dk-brand);
+    width: 48px; flex-shrink: 0;
+  }
+  .l-divider .pillar h4 {
+    font-size: 28px; font-weight: 700; margin: 0 0 6px; color: var(--dk-fg);
+  }
+  .l-divider .pillar p {
+    font-size: 20px; color: var(--dk-fg-1); margin: 0; line-height: 1.5;
+  }
+
+  /* ============= Layout 3 — Content (eyebrow + title + lede + bullets) ============= */
+  .l-content { display: flex; flex-direction: column; gap: 40px; }
+  .l-content header { display: block; max-width: 1400px; }
+  .l-content header .s-title { font-size: 72px; }
+  .l-content .bullets {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    margin-top: 24px;
+  }
+  .l-content .bullet {
+    display: flex; gap: 24px; align-items: flex-start;
+    padding: 28px 32px;
+    background: var(--dk-purple-50);
+    border-left: 4px solid var(--dk-brand);
+    border-radius: 0 var(--dk-radius-md) var(--dk-radius-md) 0;
+  }
+  .l-content .bullet .glyph {
+    font-size: 32px; font-weight: 700; color: var(--dk-brand);
+    flex-shrink: 0; line-height: 1;
+  }
+  .l-content .bullet h4 {
+    font-size: 24px; font-weight: 700; margin: 0 0 4px; color: var(--dk-fg);
+  }
+  .l-content .bullet p {
+    font-size: 18px; color: var(--dk-fg-1); margin: 0; line-height: 1.5;
+  }
+
+  /* ============= Layout 4 — Quadrant ============= */
+  .l-quad { display: flex; flex-direction: column; gap: 40px; }
+  .l-quad header { max-width: 1400px; }
+  .l-quad .s-title { font-size: 64px; }
+  .l-quad .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .l-quad .card {
+    background: var(--dk-white); border: 1px solid var(--dk-border);
+    border-radius: var(--dk-radius-lg); padding: 32px 36px;
+    display: flex; flex-direction: column; gap: 14px;
+    box-shadow: var(--dk-shadow-sm);
+  }
+  .l-quad .card .icon {
+    width: 56px; height: 56px;
+    background: var(--dk-purple-50); border-radius: var(--dk-radius-md);
+    display: grid; place-items: center;
+    color: var(--dk-brand); font-size: 24px; font-weight: 700;
+  }
+  .l-quad .card h4 {
+    font-size: 28px; font-weight: 700; margin: 0; color: var(--dk-fg);
+  }
+  .l-quad .card p {
+    font-size: 19px; color: var(--dk-fg-1); margin: 0; line-height: 1.5;
+  }
+
+  /* ============= Layout 5 — Process / pipeline ============= */
+  .l-process { display: flex; flex-direction: column; gap: 64px; }
+  .l-process header { max-width: 1400px; }
+  .l-process .pipe {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 0;
+    position: relative;
+  }
+  .l-process .step {
+    text-align: center; padding: 0 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    position: relative;
+  }
+  .l-process .step::after {
+    content: ""; position: absolute; top: 32px; right: -12px;
+    width: 24px; height: 2px; background: var(--dk-purple-300);
+  }
+  .l-process .step:last-child::after { display: none; }
+  .l-process .step .pill {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--dk-brand); color: #fff;
+    display: grid; place-items: center;
+    font-size: 24px; font-weight: 700;
+  }
+  .l-process .step h4 {
+    font-size: 22px; font-weight: 700; color: var(--dk-fg); margin: 0;
+  }
+  .l-process .step p {
+    font-size: 16px; color: var(--dk-fg-1); margin: 0; line-height: 1.45;
+  }
+
+  /* ============= Layout 6 — Team / People grid ============= */
+  .l-team { display: flex; flex-direction: column; gap: 40px; }
+  .l-team header { max-width: 1400px; }
+  .l-team .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+  .l-team .person {
+    display: flex; flex-direction: column; gap: 16px; align-items: flex-start;
+  }
+  .l-team .person .photo {
+    width: 100%; aspect-ratio: 1.1; border-radius: var(--dk-radius-lg);
+    background: var(--dk-purple-100);
+    display: grid; place-items: center;
+    color: var(--dk-brand); font-size: 80px; font-weight: 700;
+    max-height: 320px;
+  }
+  .l-team .person h4 {
+    font-size: 24px; font-weight: 700; margin: 0; color: var(--dk-fg);
+  }
+  .l-team .person p {
+    font-size: 18px; margin: 0; color: var(--dk-fg-1); line-height: 1.4;
+  }
+  .l-team .person .role { color: var(--dk-brand); font-weight: 600; font-size: 16px; }
+
+  /* ============= Layout 7 — Architecture / Diagram ============= */
+  .l-arch { display: flex; flex-direction: column; gap: 32px; }
+  .l-arch header { max-width: 1400px; }
+  .l-arch .stack {
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--dk-purple-50); border: 1px solid var(--dk-border-brand);
+    border-radius: var(--dk-radius-lg); padding: 24px;
+  }
+  .l-arch .layer {
+    background: var(--dk-white); border: 1px solid var(--dk-border);
+    border-radius: var(--dk-radius-md); padding: 16px 24px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .l-arch .layer.brand {
+    background: var(--dk-brand); color: #fff; border-color: transparent;
+  }
+  .l-arch .layer .label {
+    font-size: 18px; font-weight: 600;
+    width: 220px; flex-shrink: 0;
+    color: inherit;
+  }
+  .l-arch .layer .blocks {
+    display: flex; gap: 12px; flex-wrap: wrap; flex: 1;
+  }
+  .l-arch .layer .block {
+    background: var(--dk-purple-50); color: var(--dk-fg);
+    padding: 10px 18px; border-radius: var(--dk-radius-sm);
+    font-size: 16px; font-weight: 500;
+  }
+  .l-arch .layer.brand .block {
+    background: rgba(255,255,255,0.18); color: #fff;
+  }
+
+  /* ============= Layout 8 — Two-column compare ============= */
+  .l-compare { display: flex; flex-direction: column; gap: 56px; }
+  .l-compare header { max-width: 1400px; }
+  .l-compare .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .l-compare .col {
+    border-radius: var(--dk-radius-lg); padding: 48px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .l-compare .col.left { background: var(--dk-gray-100); border: 1px solid var(--dk-border); }
+  .l-compare .col.right { background: var(--dk-brand); color: #fff; }
+  .l-compare .col h3 {
+    font-size: 36px; font-weight: 700; margin: 0;
+    color: inherit;
+  }
+  .l-compare .col ul {
+    margin: 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .l-compare .col li {
+    font-size: 22px; line-height: 1.45;
+    padding-left: 32px; position: relative;
+    color: inherit;
+  }
+  .l-compare .col li::before {
+    content: ""; position: absolute; left: 0; top: 11px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--dk-fg-muted);
+  }
+  .l-compare .col.right li::before { background: rgba(255,255,255,0.45); }
+
+  /* ============= Layout 9 — Solutions / Tile grid ============= */
+  .l-solutions { display: flex; flex-direction: column; gap: 56px; }
+  .l-solutions header { max-width: 1400px; }
+  .l-solutions .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .l-solutions .tile {
+    background: var(--dk-white); border: 1px solid var(--dk-border);
+    border-radius: var(--dk-radius-lg); overflow: hidden;
+    box-shadow: var(--dk-shadow-sm);
+    display: flex; flex-direction: column;
+  }
+  .l-solutions .tile .hero {
+    height: 180px;
+    background: linear-gradient(135deg, var(--dk-purple-500), var(--dk-brand));
+  }
+  .l-solutions .tile .body { padding: 28px 32px; display: flex; flex-direction: column; gap: 12px; }
+  .l-solutions .tile .tag {
+    align-self: flex-start;
+    font-size: 14px; font-weight: 600; color: var(--dk-brand);
+    background: var(--dk-purple-100); padding: 4px 12px;
+    border-radius: var(--dk-radius-pill);
+  }
+  .l-solutions .tile h4 {
+    font-size: 28px; font-weight: 700; margin: 0; color: var(--dk-fg);
+  }
+  .l-solutions .tile p {
+    font-size: 18px; color: var(--dk-fg-1); margin: 0; line-height: 1.5;
+  }
+
+  /* ============= Layout 10 — Logo wall ============= */
+  .l-logos { display: flex; flex-direction: column; gap: 64px; }
+  .l-logos header { max-width: 1400px; }
+  .l-logos .grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 32px;
+  }
+  .l-logos .cell {
+    aspect-ratio: 16/9; border: 1px solid var(--dk-border);
+    border-radius: var(--dk-radius-md);
+    display: grid; place-items: center;
+    padding: 24px; background: var(--dk-white);
+    font-size: 28px; font-weight: 700; color: var(--dk-fg-2);
+    letter-spacing: -0.01em;
+  }
+
+  /* ============= Layout 11 — Closing / Thank You ============= */
+  .l-closing {
+    background: var(--dk-ink) !important;
+    color: #fff;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 160px !important;
+  }
+  .l-closing .title {
+    font-size: 200px; font-weight: 700; line-height: 1;
+    letter-spacing: -0.04em; color: #fff;
+    margin: 0 0 48px;
+  }
+  .l-closing .cta-row {
+    display: flex; gap: 48px; align-items: center; margin-top: 32px;
+  }
+  .l-closing .cta-row .label {
+    font-size: 24px; font-weight: 500; color: rgba(255,255,255,0.7);
+  }
+  .l-closing .cta-row .value {
+    font-size: 28px; font-weight: 600; color: #fff;
+  }
+  .l-closing .chrome-logo img { filter: brightness(0) invert(1); }
+  .l-closing .chrome-url, .l-closing .chrome-page { color: rgba(255,255,255,0.6); }
+</style>
+</head>
+<body>
+<deck-stage>
+
+  <!-- ===== 01 · Cover ===== -->
+  <section data-screen-label="01 Cover" class="l-cover">
+    <div>
+      <div class="s-eyebrow" style="margin-bottom:32px">Private AI for Enterprise</div>
+      <h1 class="product">DKubeX</h1>
+      <p class="tagline">Designing and delivering secure Private AI solutions for enterprises.</p>
+    </div>
+    <img class="cube" src="../assets/dkube-icon-purple.svg" alt=""/>
+    <div class="stamp">
+      <img src="../assets/dkube-logo-purple.svg" alt="DKube" style="height:48px"/>
+      <span class="url">dkube.io</span>
+    </div>
+  </section>
+
+  <!-- ===== 02 · Section divider / About hero ===== -->
+  <section data-screen-label="02 Section Divider" class="l-divider">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <div class="body">
+      <div class="s-eyebrow">About Us</div>
+      <h2 class="s-title">Building Enterprise AI You Can Trust.</h2>
+      <p class="s-subtitle">A subsidiary of One Convergence — fifteen years operationalizing AI for the world's most demanding enterprises.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar"><span class="num">01</span><div><h4>Integrity</h4><p>Privacy first. Data, governance, and ownership stay with the customer by default.</p></div></div>
+      <div class="pillar"><span class="num">02</span><div><h4>Diversity</h4><p>Enterprise-forward solutions that account for every stakeholder.</p></div></div>
+      <div class="pillar"><span class="num">03</span><div><h4>Innovation</h4><p>Open-source first, integrated into enterprise-ready solutions.</p></div></div>
+    </div>
+    <span class="chrome-page">02</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 03 · Content (eyebrow + title + lede + 4 bullets) ===== -->
+  <section data-screen-label="03 Content + Bullets" class="l-content">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">Why DKubeX</div>
+      <h2 class="s-title">From experimentation to production-ready AI in weeks.</h2>
+      <p class="s-lede">A unified Private AI platform that brings the best of open-source — securely deployed, governed, and operated inside your environment.</p>
+    </header>
+    <div class="bullets">
+      <div class="bullet"><span class="glyph">→</span><div><h4>Sovereign by default</h4><p>Run on-prem, private cloud, or hybrid. Your data, your infrastructure, your keys.</p></div></div>
+      <div class="bullet"><span class="glyph">→</span><div><h4>Audit & compliance ready</h4><p>Full lineage, policy controls, and access governance built in.</p></div></div>
+      <div class="bullet"><span class="glyph">→</span><div><h4>12-week delivery</h4><p>Structured engagement from discovery to production with weekly checkpoints.</p></div></div>
+      <div class="bullet"><span class="glyph">→</span><div><h4>Open-source first</h4><p>No vendor lock-in. Best-in-class OSS components, integrated and supported.</p></div></div>
+    </div>
+    <span class="chrome-page">03</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 04 · Quadrant ===== -->
+  <section data-screen-label="04 Quadrant" class="l-quad">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">Our Approach</div>
+      <h2 class="s-title">Four guarantees every DKube engagement ships with.</h2>
+    </header>
+    <div class="grid">
+      <div class="card"><div class="icon">P</div><h4>Privacy</h4><p>All data stays inside the customer's environment. No phoning home, no shadow telemetry.</p></div>
+      <div class="card"><div class="icon">S</div><h4>Scalability</h4><p>From single-node to multi-region deployments without re-architecting.</p></div>
+      <div class="card"><div class="icon">$</div><h4>Cost</h4><p>Govern AI expense with workload-level metering and capacity planning.</p></div>
+      <div class="card"><div class="icon">O</div><h4>Observability</h4><p>End-to-end visibility into models, data lineage, and operational health.</p></div>
+    </div>
+    <span class="chrome-page">04</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 05 · Process / Pipeline ===== -->
+  <section data-screen-label="05 Process" class="l-process">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">12-Week Delivery</div>
+      <h2 class="s-title">A structured path from discovery to production.</h2>
+    </header>
+    <div class="pipe">
+      <div class="step"><div class="pill">1</div><h4>Discovery</h4><p>Use-case, data, constraints</p></div>
+      <div class="step"><div class="pill">2</div><h4>Design</h4><p>Architecture & solution shape</p></div>
+      <div class="step"><div class="pill">3</div><h4>MVP</h4><p>Working prototype in 4 weeks</p></div>
+      <div class="step"><div class="pill">4</div><h4>Pilot</h4><p>Stakeholder validation</p></div>
+      <div class="step"><div class="pill">5</div><h4>Refine</h4><p>Tune and harden</p></div>
+      <div class="step"><div class="pill">6</div><h4>Deploy</h4><p>Production rollout</p></div>
+      <div class="step"><div class="pill">7</div><h4>Operate</h4><p>Continuous support</p></div>
+    </div>
+    <span class="chrome-page">05</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 06 · Team / People grid ===== -->
+  <section data-screen-label="06 Team" class="l-team">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">Leadership</div>
+      <h2 class="s-title">Built by engineers who've shipped enterprise AI.</h2>
+    </header>
+    <div class="grid">
+      <div class="person"><div class="photo">PN</div><h4>Person Name</h4><p class="role">Title · Co-Founder</p><p>Brief one-line credential or prior company.</p></div>
+      <div class="person"><div class="photo">PN</div><h4>Person Name</h4><p class="role">Title · Co-Founder</p><p>Brief one-line credential or prior company.</p></div>
+      <div class="person"><div class="photo">PN</div><h4>Person Name</h4><p class="role">VP, Engineering</p><p>Brief one-line credential or prior company.</p></div>
+      <div class="person"><div class="photo">PN</div><h4>Person Name</h4><p class="role">VP, AI Solutions</p><p>Brief one-line credential or prior company.</p></div>
+    </div>
+    <span class="chrome-page">06</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 07 · Architecture stack ===== -->
+  <section data-screen-label="07 Architecture" class="l-arch">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">DKubeX Building Blocks</div>
+      <h2 class="s-title">Everything required to ship Private AI, in one platform.</h2>
+    </header>
+    <div class="stack">
+      <div class="layer brand"><div class="label">AI Applications</div><div class="blocks"><span class="block">QueriLynx</span><span class="block">DocMind</span><span class="block">Virtual TA</span><span class="block">Custom Agents</span></div></div>
+      <div class="layer"><div class="label">GenAI Services</div><div class="blocks"><span class="block">RAG</span><span class="block">Agents</span><span class="block">Guardrails</span><span class="block">Eval</span><span class="block">Vector DB</span></div></div>
+      <div class="layer"><div class="label">MLOps</div><div class="blocks"><span class="block">Pipelines</span><span class="block">Notebooks</span><span class="block">Training</span><span class="block">Serving</span><span class="block">Monitoring</span></div></div>
+      <div class="layer"><div class="label">Platform</div><div class="blocks"><span class="block">Identity</span><span class="block">Policy</span><span class="block">Audit</span><span class="block">Metering</span><span class="block">Multi-tenant</span></div></div>
+      <div class="layer"><div class="label">Infrastructure</div><div class="blocks"><span class="block">Kubernetes</span><span class="block">GPU</span><span class="block">Storage</span><span class="block">Network</span></div></div>
+    </div>
+    <span class="chrome-page">07</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 08 · Two-column compare ===== -->
+  <section data-screen-label="08 Compare" class="l-compare">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">What DKube Adds</div>
+      <h2 class="s-title">Your stack, made enterprise-ready.</h2>
+    </header>
+    <div class="cols">
+      <div class="col left">
+        <h3>What you have</h3>
+        <ul>
+          <li>Open-source LLMs and frameworks</li>
+          <li>Cloud or on-prem GPU infrastructure</li>
+          <li>Data spread across systems and silos</li>
+          <li>Internal teams experimenting in notebooks</li>
+        </ul>
+      </div>
+      <div class="col right">
+        <h3>What we add</h3>
+        <ul>
+          <li>Governed, multi-tenant Private AI platform</li>
+          <li>Production-grade RAG, agents, and observability</li>
+          <li>12-week delivery model with a named team</li>
+          <li>Continuous operate-mode support</li>
+        </ul>
+      </div>
+    </div>
+    <span class="chrome-page">08</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 09 · Solutions / Tile grid ===== -->
+  <section data-screen-label="09 Solutions" class="l-solutions">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">Enterprise AI Blueprints</div>
+      <h2 class="s-title">Solutions ready for production.</h2>
+    </header>
+    <div class="grid">
+      <div class="tile"><div class="hero"></div><div class="body"><span class="tag">Finance · Construction</span><h4>QueriLynx</h4><p>Multi-agent platform for no-code data exploration across enterprise sources.</p></div></div>
+      <div class="tile"><div class="hero"></div><div class="body"><span class="tag">Education</span><h4>Virtual Teaching Assistant</h4><p>RAG-native AI copilot that personalizes learning at scale.</p></div></div>
+      <div class="tile"><div class="hero"></div><div class="body"><span class="tag">Finance · Insurance</span><h4>DocMind</h4><p>AI document assistant for sorting, extraction, and cross-document comparison.</p></div></div>
+    </div>
+    <span class="chrome-page">09</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 10 · Logo wall ===== -->
+  <section data-screen-label="10 Logo Wall" class="l-logos">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <header>
+      <div class="s-eyebrow">Trusted By</div>
+      <h2 class="s-title">Enterprises and innovators worldwide.</h2>
+    </header>
+    <div class="grid">
+      <div class="cell">VMware</div>
+      <div class="cell">Cisco</div>
+      <div class="cell">Fungible</div>
+      <div class="cell">Altos Labs</div>
+      <div class="cell">StackPath</div>
+      <div class="cell">Apollo</div>
+      <div class="cell">TIAA</div>
+      <div class="cell">Nutanix</div>
+      <div class="cell">AWS</div>
+      <div class="cell">Boston Ltd.</div>
+    </div>
+    <span class="chrome-page">10</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 11 · Architecture: DKubeX 2.0 platform overview ===== -->
+  <section data-screen-label="11 Arch · DKubeX 2.0" class="l-arch-diagram">
+    <img class="chrome-logo" src="../assets/dkube-icon-purple.svg" alt=""/>
+    <h1 class="arch-title">DKubeX 2.0 Architecture</h1>
+
+    <div class="diagram">
+      <div class="dstage">
+      <!-- Connector wires -->
+      <svg class="dwires" viewBox="0 0 1740 800" preserveAspectRatio="none">
+        <defs>
+          <marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4D4D4D"/></marker>
+          <marker id="ah1s" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4D4D4D"/></marker>
+        </defs>
+        <!-- User <-> Traefik <-> Auth <-> AppStore (top row) -->
+        <line x1="170" y1="100" x2="320" y2="100" stroke="#4D4D4D" stroke-width="2" marker-start="url(#ah1s)" marker-end="url(#ah1)"/>
+        <line x1="430" y1="100" x2="540" y2="100" stroke="#4D4D4D" stroke-width="2" marker-start="url(#ah1s)" marker-end="url(#ah1)"/>
+        <line x1="650" y1="100" x2="800" y2="100" stroke="#4D4D4D" stroke-width="2" marker-start="url(#ah1s)" marker-end="url(#ah1)"/>
+        <!-- Traefik down to Core -->
+        <line x1="375" y1="180" x2="375" y2="220" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah1)"/>
+        <!-- Auth down to App Store column -->
+        <line x1="595" y1="180" x2="595" y2="220" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah1)"/>
+        <!-- Core down to Data -->
+        <line x1="375" y1="430" x2="375" y2="475" stroke="#4D4D4D" stroke-width="2" marker-start="url(#ah1s)" marker-end="url(#ah1)"/>
+        <!-- AppStore down to Data -->
+        <line x1="1180" y1="430" x2="1180" y2="475" stroke="#4D4D4D" stroke-width="2" marker-start="url(#ah1s)" marker-end="url(#ah1)"/>
+      </svg>
+
+      <!-- User Interface node -->
+      <div class="dnode" style="left:30px; top:60px; width:140px; height:120px;">
+        <div class="nicon">&gt;_</div>
+        <div class="nlabel tworow">User Interface</div>
+      </div>
+
+      <!-- Traefik node -->
+      <div class="dnode" style="left:320px; top:60px; width:110px; height:120px;">
+        <div class="nicon" style="border-color:#3CC1D8; color:#3CC1D8; font-family:var(--dk-font-sans); font-size:24px;">◇</div>
+        <div class="nlabel" style="bottom:auto; top:-32px;">Traefik</div>
+      </div>
+
+      <!-- Auth node -->
+      <div class="dnode" style="left:540px; top:60px; width:110px; height:120px;">
+        <div class="nicon" style="border-radius:50%; background:#000; color:#fff;">A</div>
+        <div class="nlabel" style="bottom:auto; top:-32px;">Auth</div>
+      </div>
+
+      <!-- Top label "Kubernetes Cluster" -->
+      <div class="dlabel-top" style="left:1100px; top:0; width:200px; line-height:1.1;">Kubernetes<br/>Cluster</div>
+
+      <!-- Outer cluster dashed group -->
+      <div class="dgrp" style="left:280px; top:40px; right:30px; bottom:0;"></div>
+
+      <!-- Core group -->
+      <div class="dgrp" style="left:300px; top:200px; width:580px; height:240px;">
+        <div class="gtitle">Core</div>
+        <div class="dcard" style="left:30px; top:60px; width:155px; height:75px;">Frontend</div>
+        <div class="dsub" style="left:30px; top:155px; width:155px;">React + NGINX</div>
+        <div class="dcard" style="left:212px; top:60px; width:155px; height:75px;">Backend</div>
+        <div class="dsub" style="left:212px; top:155px; width:155px;">FastAPI</div>
+        <div class="dcard" style="left:394px; top:60px; width:155px; height:75px;">Kopf Operator</div>
+        <div class="dsub" style="left:394px; top:155px; width:155px;">Controller</div>
+      </div>
+
+      <!-- App Store group -->
+      <div class="dgrp" style="left:920px; top:200px; width:780px; height:240px;">
+        <div class="gtitle">DKubeX App Store</div>
+        <div class="dcard" style="left:40px;  top:30px;  width:300px; height:50px;">MLFlow</div>
+        <div class="dcard" style="left:40px;  top:90px;  width:300px; height:50px;">Model Studio</div>
+        <div class="dcard" style="left:40px;  top:150px; width:300px; height:50px;">LangFlow</div>
+        <div class="dcard" style="left:40px;  top:210px; width:300px; height:14px; padding:0; align-items:center; font-size:0;"></div>
+        <div class="dcard" style="left:380px; top:30px;  width:300px; height:50px;">RAGFlow</div>
+        <div class="dcard" style="left:380px; top:90px;  width:300px; height:50px;">SecureLLM</div>
+        <div class="dcard" style="left:380px; top:150px; width:300px; height:50px;">AgentX</div>
+        <div class="dcard" style="left:380px; top:210px; width:300px; height:14px; padding:0; align-items:center; font-size:0;"></div>
+      </div>
+      <!-- Mortgage-Lite + Law-Lite (bottom row of app store, fitted) -->
+      <div class="dcard" style="left:960px;  top:430px; width:300px; height:50px;">Mortgage-Lite</div>
+      <div class="dcard" style="left:1300px; top:430px; width:300px; height:50px;">Law-Lite</div>
+
+      <!-- Data & Storage row -->
+      <div class="dgrp" style="left:300px; top:485px; width:1400px; height:90px;">
+        <div class="gtitle gray left" style="font-size:18px; line-height:1.2;">Data &amp;<br/>Storage</div>
+        <div class="dcard" style="left:160px; top:18px; width:280px; height:54px;">PostgreSQL</div>
+        <div class="dcard" style="left:460px; top:18px; width:280px; height:54px;">Redis</div>
+        <div class="dcard" style="left:760px; top:18px; width:280px; height:54px;">MinIO</div>
+        <div class="dcard" style="left:1060px;top:18px; width:280px; height:54px;">NFS Server</div>
+      </div>
+
+      <!-- Observability group -->
+      <div class="dgrp" style="left:300px; top:600px; width:740px; height:170px;">
+        <div class="gtitle gray left" style="font-size:18px;">Observability</div>
+        <div class="dcard" style="left:170px; top:25px; width:230px; height:50px;">OTel Daemonset</div>
+        <div class="dsub" style="left:170px; top:80px; width:230px;">Node + Pod Data</div>
+        <div class="dcard" style="left:420px; top:25px; width:280px; height:50px;">ClickStack / HyperDX</div>
+        <div class="dsub" style="left:420px; top:80px; width:280px;">Telemetry Backend</div>
+        <div class="dcard" style="left:170px; top:115px; width:230px; height:40px; font-size:17px;">OTel Deployment</div>
+      </div>
+
+      <!-- Tools & Admin UIs -->
+      <div class="dgrp" style="left:1060px; top:600px; width:640px; height:170px;">
+        <div class="gtitle">Tools &amp; Admin UIs</div>
+        <div class="dcard" style="left:30px;  top:25px;  width:280px; height:36px; font-size:16px;">HeadLamp</div>
+        <div class="dcard" style="left:30px;  top:67px;  width:280px; height:36px; font-size:16px;">MinIO Console</div>
+        <div class="dcard" style="left:30px;  top:109px; width:280px; height:36px; font-size:16px;">File Browser</div>
+        <div class="dcard" style="left:328px; top:25px;  width:280px; height:36px; font-size:16px;">Traefik Dashboard</div>
+        <div class="dcard" style="left:328px; top:67px;  width:280px; height:36px; font-size:16px;">HyperDX UI</div>
+        <div class="dcard" style="left:328px; top:109px; width:280px; height:36px; font-size:16px;">PGAdmin</div>
+      </div>
+      </div>
+    </div>
+
+    <span class="arch-tagline">Empowering Enterprise AI on Kubernetes</span>
+    <span class="chrome-page">11</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 12 · Architecture: Application Lifecycle ===== -->
+  <section data-screen-label="12 Arch · App Lifecycle" class="l-arch-diagram">
+    <img class="chrome-logo" src="../assets/dkube-icon-purple.svg" alt=""/>
+    <h1 class="arch-title">Application Management and Lifecycle</h1>
+
+    <div class="diagram">
+      <div class="dstage">
+      <svg class="dwires" viewBox="0 0 1740 820" preserveAspectRatio="none">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4D4D4D"/></marker>
+        </defs>
+        <line x1="245" y1="430" x2="290" y2="430" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="495" y1="430" x2="540" y2="430" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="745" y1="430" x2="790" y2="430" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="990" y1="430" x2="1035" y2="430" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="1245" y1="280" x2="1290" y2="280" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="1245" y1="560" x2="1290" y2="560" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="1490" y1="280" x2="1530" y2="280" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+        <line x1="1490" y1="560" x2="1530" y2="560" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah2)"/>
+      </svg>
+
+      <!-- 7 columns -->
+      <!-- Col 1: User Intent -->
+      <div class="dgrp" style="left:0; top:80px; width:240px; height:680px;">
+        <div class="gtitle" style="line-height:1.15; font-size:20px; padding:0 14px; top:-30px;">User Intent</div>
+        <div class="dcard" style="left:30px; top:90px;  width:180px; height:90px;">Install From<br/>Catalog</div>
+        <div class="dcard" style="left:30px; top:295px; width:180px; height:90px;">Upgrade<br/>Existing App</div>
+        <div class="dcard" style="left:30px; top:500px; width:180px; height:90px;">Uninstall App</div>
+      </div>
+
+      <!-- Col 2: Frontend -> Backend -->
+      <div class="dgrp" style="left:255px; top:80px; width:240px; height:680px;">
+        <div class="gtitle" style="line-height:1.15; font-size:18px; padding:0 14px; white-space:normal; width:200px; text-align:center; top:-44px;">Frontend &rarr; Backend (REST/api/v1)</div>
+        <div class="dcard" style="left:30px; top:75px;  width:180px; height:80px;">POST/applications</div>
+        <div class="dsub"  style="left:30px; top:160px; width:180px;">Install + role assign</div>
+        <div class="dcard" style="left:30px; top:280px; width:180px; height:80px;">PUT/applications/{id}</div>
+        <div class="dsub"  style="left:30px; top:365px; width:180px;">Upgrade chart version</div>
+        <div class="dcard" style="left:30px; top:485px; width:180px; height:80px;">DELETE/applications/{id}</div>
+        <div class="dsub"  style="left:30px; top:570px; width:180px;">Remove release</div>
+      </div>
+
+      <!-- Col 3: Backend Translates -->
+      <div class="dgrp" style="left:505px; top:80px; width:240px; height:680px;">
+        <div class="gtitle" style="line-height:1.15; font-size:17px; padding:0 14px; white-space:normal; width:220px; text-align:center; top:-58px;">Backend Translates Intent into a Kubernetes Resource</div>
+        <div class="dcard" style="left:30px; top:75px;  width:180px; height:80px;">FastAPI Handler</div>
+        <div class="dsub"  style="left:30px; top:160px; width:180px;">RBAC check, validate</div>
+        <div class="dcard" style="left:30px; top:280px; width:180px; height:80px;">Persist Metadata</div>
+        <div class="dsub"  style="left:30px; top:365px; width:180px;">Postgres: app + roles</div>
+        <div class="dcard" style="left:30px; top:485px; width:180px; height:80px;">Apply Application CR</div>
+        <div class="dsub"  style="left:30px; top:570px; width:180px;">Create / patch / release</div>
+      </div>
+
+      <!-- Col 4: Application CR (single tall card) -->
+      <div class="dgrp" style="left:755px; top:80px; width:240px; height:680px;">
+        <div class="gtitle" style="line-height:1.15; font-size:18px; padding:0 14px; white-space:normal; width:200px; text-align:center; top:-44px;">Application Custom Resource (Source of Truth)</div>
+        <div class="dcard code" style="left:30px; top:90px; width:180px; height:530px;">
+          <span style="font-weight:700;">dkubex.io/v1alpha1<br/>·<br/>namespace<br/>dkubex-apps</span><br/><br/>
+          .spec = chart, version, values<br/><br/>
+          .status.phase = lifecycle state
+        </div>
+      </div>
+
+      <!-- Col 5: Kopf Operator -->
+      <div class="dgrp" style="left:1005px; top:80px; width:240px; height:680px;">
+        <div class="gtitle" style="line-height:1.15; font-size:17px; padding:0 14px; white-space:normal; width:220px; text-align:center; top:-58px;">Kopf Operator Reconcile Loop (Watches CR Events)</div>
+        <div class="dcard" style="left:20px;  top:90px;  width:90px; height:80px; font-size:18px;">on.<br/>create</div>
+        <div class="dcard" style="left:120px; top:90px;  width:100px; height:230px; font-size:16px; line-height:1.25; padding:14px;">Provision deps before chart runs</div>
+        <div class="dcard" style="left:20px;  top:200px; width:90px; height:80px; font-size:18px;">on.<br/>update</div>
+        <div class="dcard" style="left:20px;  top:340px; width:90px; height:80px; font-size:18px;">on.<br/>delete</div>
+        <div class="dcard" style="left:120px; top:340px; width:100px; height:230px; font-size:16px; line-height:1.25; padding:14px;">Patch .status.phase + conditions</div>
+        <div class="dcard" style="left:20px;  top:450px; width:90px; height:80px; font-size:18px;">on.<br/>timer</div>
+      </div>
+
+      <!-- Col 6a: Dependency Provisioning (top) -->
+      <div class="dgrp" style="left:1255px; top:0; width:240px; height:380px;">
+        <div class="gtitle" style="line-height:1.15; font-size:18px; padding:0 14px; white-space:normal; width:220px; text-align:center; top:-44px;">Dependency Provisioning</div>
+        <div class="dcard" style="left:30px; top:55px;  width:180px; height:62px; font-size:16px;">Create Postgres DB + credentials</div>
+        <div class="dcard" style="left:30px; top:130px; width:180px; height:62px; font-size:16px;">Create MinIO bucket + access keys</div>
+        <div class="dcard" style="left:30px; top:205px; width:180px; height:62px; font-size:16px;">Label namespace dkubex.io/managed-by</div>
+        <div class="dcard" style="left:30px; top:280px; width:180px; height:62px; font-size:16px;">Kyverno auto-generates PV + PVC (NFS)</div>
+      </div>
+
+      <!-- Col 6b: Helm Execution (bottom) -->
+      <div class="dgrp" style="left:1255px; top:420px; width:240px; height:340px;">
+        <div class="gtitle" style="line-height:1.15; font-size:20px; padding:0 14px; top:-30px;">Helm Execution</div>
+        <div class="dcard" style="left:30px; top:35px;  width:180px; height:55px; font-size:16px;">Install · helm install (new release)</div>
+        <div class="dcard" style="left:30px; top:100px; width:180px; height:55px; font-size:16px;">Upgrade · helm upgrade (new values)</div>
+        <div class="dcard" style="left:30px; top:165px; width:180px; height:55px; font-size:16px;">Uninstall · helm uninstall + cleanup</div>
+        <div class="dcard" style="left:30px; top:230px; width:180px; height:55px; font-size:16px;">Release pods scheduled in app namespace</div>
+      </div>
+
+      <!-- Col 7: Status Feedback -->
+      <div class="dgrp" style="left:1505px; top:80px; width:235px; height:680px;">
+        <div class="gtitle" style="line-height:1.15; font-size:18px; padding:0 14px; white-space:normal; width:200px; text-align:center; top:-44px;">Status Feedback to the UI</div>
+        <div class="dcard" style="left:25px; top:75px;  width:185px; height:80px; font-size:18px;">Phase Transitions</div>
+        <div class="dsub"  style="left:25px; top:160px; width:185px;">Pending &rarr; Installing &rarr; Ready</div>
+        <div class="dcard" style="left:25px; top:280px; width:185px; height:80px; font-size:18px;">Live Install Logs</div>
+        <div class="dsub"  style="left:25px; top:365px; width:185px;">CR conditions + pod logs</div>
+        <div class="dcard" style="left:25px; top:485px; width:185px; height:80px; font-size:18px;">UI Poll / Stream</div>
+        <div class="dsub"  style="left:25px; top:570px; width:185px;">GET install logs · admin</div>
+      </div>
+      </div>
+    </div>
+
+    <span class="arch-tagline">Empowering Enterprise AI on Kubernetes</span>
+    <span class="chrome-page">12</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 13 · Architecture: SecureLLM ===== -->
+  <section data-screen-label="13 Arch · SecureLLM" class="l-arch-diagram">
+    <img class="chrome-logo" src="../assets/dkube-icon-purple.svg" alt=""/>
+    <h1 class="arch-title">SecureLLM Architecture</h1>
+
+    <div class="diagram">
+      <div class="dstage">
+      <svg class="dwires" viewBox="0 0 1740 800" preserveAspectRatio="none">
+        <defs>
+          <marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4D4D4D"/></marker>
+        </defs>
+        <line x1="170" y1="100" x2="220" y2="100" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)"/>
+        <line x1="370" y1="100" x2="420" y2="100" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)"/>
+        <line x1="1500" y1="280" x2="1545" y2="280" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)"/>
+        <!-- Core engine arrows -->
+        <line x1="850" y1="380" x2="700" y2="380" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)"/>
+        <line x1="1000" y1="380" x2="1150" y2="380" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)" marker-start="url(#ah3)"/>
+        <!-- Down arrows API->Core -->
+        <line x1="900" y1="240" x2="900" y2="320" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)"/>
+        <line x1="900" y1="450" x2="900" y2="510" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah3)"/>
+      </svg>
+
+      <!-- AI Client -->
+      <div class="dnode" style="left:30px; top:30px; width:140px; height:140px;">
+        <div class="nicon">&gt;_</div>
+        <div class="nlabel tworow">AI Client/UI</div>
+      </div>
+
+      <!-- SSO Proxy -->
+      <div class="dnode" style="left:230px; top:30px; width:140px; height:140px;">
+        <div class="nicon" style="border-radius:50%; background:#000; color:#fff;">A</div>
+        <div class="nlabel tworow">SSO Proxy<br/><span style="font-weight:500;">oauth2-proxy</span></div>
+      </div>
+
+      <!-- SecureLLM big container -->
+      <div class="dlabel-top" style="left:430px; top:0; width:1100px; text-align:center;">SecureLLM</div>
+      <div class="dgrp" style="left:430px; top:30px; right:160px; bottom:0;"></div>
+
+      <!-- API Layer (top) -->
+      <div class="dgrp" style="left:455px; top:60px; width:1050px; height:200px;">
+        <div class="gtitle">API Layer</div>
+        <div class="dcard" style="left:30px;  top:50px; width:300px; height:60px;">Gateway API /v1/*</div>
+        <div class="dsub"  style="left:30px;  top:118px; width:300px;">Chat, Embeddings, Models</div>
+        <div class="dcard" style="left:370px; top:50px; width:300px; height:60px;">Admin API /admin/api/*</div>
+        <div class="dsub"  style="left:370px; top:118px; width:300px;">Keys, Providers, Usage</div>
+        <div class="dcard" style="left:710px; top:50px; width:310px; height:60px;">User UI (SPA)</div>
+        <div class="dsub"  style="left:710px; top:118px; width:310px;">Vite + React 18</div>
+      </div>
+
+      <!-- Core Engine -->
+      <div class="dgrp" style="left:455px; top:300px; width:1050px; height:170px;">
+        <div class="gtitle">Core Engine</div>
+        <div class="dcard" style="left:60px;  top:50px; width:280px; height:60px;">Provider Router</div>
+        <div class="dsub"  style="left:60px;  top:118px; width:280px;">Routing Strategy</div>
+        <div class="dcard" style="left:380px; top:50px; width:280px; height:60px;">Provider Registry</div>
+        <div class="dsub"  style="left:380px; top:118px; width:280px;">Circuit Breaker</div>
+        <div class="dcard" style="left:710px; top:50px; width:280px; height:60px;">Guardrail Pipeline</div>
+        <div class="dsub"  style="left:710px; top:118px; width:280px;">Pre-call, Post-call</div>
+      </div>
+
+      <!-- Lower left: Health/Audit/Usage -->
+      <div class="dgrp" style="left:455px; top:495px; width:495px; height:265px;">
+        <div class="gtitle">API Layer</div>
+        <div class="dcard" style="left:30px; top:35px; width:430px; height:65px;">Health Checker &amp; Model Synchronizer</div>
+        <div class="dcard" style="left:30px;  top:130px; width:200px; height:55px;">Usage Tracker</div>
+        <div class="dcard" style="left:255px; top:130px; width:200px; height:55px;">Audit Logger</div>
+      </div>
+
+      <!-- Lower right: Cache/Rate/Metrics/SSE -->
+      <div class="dgrp" style="left:970px; top:495px; width:535px; height:265px;">
+        <div class="gtitle">API Layer</div>
+        <div class="dcard" style="left:30px;  top:35px;  width:220px; height:55px;">API Key Cache</div>
+        <div class="dsub"  style="left:30px;  top:96px;  width:220px;">5 Min TTL</div>
+        <div class="dcard" style="left:280px; top:35px;  width:220px; height:55px;">Rate Limiter</div>
+        <div class="dsub"  style="left:280px; top:96px;  width:220px;">Token Bucket</div>
+        <div class="dcard" style="left:30px;  top:155px; width:220px; height:55px;">Metrics</div>
+        <div class="dsub"  style="left:30px;  top:215px; width:220px;">p50 p95 p99</div>
+        <div class="dcard" style="left:280px; top:155px; width:220px; height:55px;">SSE Broadcaster</div>
+        <div class="dsub"  style="left:280px; top:215px; width:220px;">Providers, Routes</div>
+      </div>
+
+      <!-- Providers column -->
+      <div class="dlabel-top" style="left:1545px; top:0; width:165px; text-align:center;">Providers</div>
+      <div class="dgrp" style="left:1545px; top:30px; width:175px; height:730px;">
+        <div class="dcard" style="left:15px; top:25px;  width:145px; height:60px;">DKubeX</div>
+        <div class="dcard" style="left:15px; top:115px; width:145px; height:60px;">OpenAI</div>
+        <div class="dcard" style="left:15px; top:205px; width:145px; height:60px;">Anthropic</div>
+        <div class="dcard" style="left:15px; top:295px; width:145px; height:60px; font-size:18px;">OpenAI-Compatible</div>
+        <div class="dcard" style="left:15px; top:385px; width:145px; height:60px;">Ollama / Custom</div>
+      </div>
+
+      <!-- DB strip across bottom of SecureLLM -->
+      <div class="dgrp" style="left:455px; top:780px; width:1050px; height:0px; border:none;"></div>
+      </div>
+    </div>
+
+    <span class="arch-tagline">Empowering Enterprise AI on Kubernetes</span>
+    <span class="chrome-page">13</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 14 · Architecture: ModelStudio ===== -->
+  <section data-screen-label="14 Arch · ModelStudio" class="l-arch-diagram">
+    <img class="chrome-logo" src="../assets/dkube-icon-purple.svg" alt=""/>
+    <h1 class="arch-title">ModelStudio Architecture</h1>
+
+    <div class="diagram">
+      <div class="dstage">
+      <svg class="dwires" viewBox="0 0 1740 820" preserveAspectRatio="none">
+        <defs>
+          <marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4D4D4D"/></marker>
+        </defs>
+        <line x1="170" y1="120" x2="220" y2="120" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah4)"/>
+        <line x1="430" y1="120" x2="490" y2="120" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah4)"/>
+        <line x1="1230" y1="120" x2="1280" y2="120" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah4)"/>
+        <line x1="430" y1="640" x2="490" y2="640" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah4)"/>
+        <!-- Core down arrow -->
+        <line x1="860" y1="245" x2="860" y2="290" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah4)"/>
+        <line x1="860" y1="500" x2="860" y2="545" stroke="#4D4D4D" stroke-width="2" marker-end="url(#ah4)"/>
+      </svg>
+
+      <!-- User Browser -->
+      <div class="dnode" style="left:30px; top:50px; width:140px; height:140px;">
+        <div class="nicon">&gt;_</div>
+        <div class="nlabel tworow">User Browser</div>
+      </div>
+
+      <!-- Edge / Auth -->
+      <div class="dgrp" style="left:230px; top:30px; width:200px; height:340px;">
+        <div class="gtitle">Edge / Auth</div>
+        <div class="dcard" style="left:20px; top:35px;  width:160px; height:60px;">Traefik</div>
+        <div class="dsub"  style="left:20px; top:103px; width:160px; line-height:1.2;">Gateway /<br/>Ingress</div>
+        <div class="dcard" style="left:20px; top:175px; width:160px; height:60px;">OAuth2-Proxy</div>
+        <div class="dsub"  style="left:20px; top:243px; width:160px; line-height:1.2;">Auth<br/>Middleware</div>
+      </div>
+
+      <!-- External / Off-Cluster -->
+      <div class="dgrp" style="left:30px; top:520px; width:400px; height:240px;">
+        <div class="gtitle gray">External (Off-Cluster)</div>
+        <div class="dcard" style="left:30px; top:30px;  width:340px; height:65px;">nvcr.io</div>
+        <div class="dsub"  style="left:30px; top:103px; width:340px;">NIM Registry</div>
+        <div class="dcard" style="left:30px; top:140px; width:340px; height:65px;">HuggingFace Hub</div>
+        <div class="dsub"  style="left:30px; top:213px; width:340px;">Model Weights</div>
+      </div>
+
+      <!-- ModelStudio center container -->
+      <div class="dlabel-top" style="left:490px; top:0; width:740px; text-align:center;">ModelStudio</div>
+      <div class="dgrp" style="left:490px; top:30px; width:740px; height:730px;"></div>
+
+      <!-- Core sub -->
+      <div class="dgrp" style="left:510px; top:60px; width:700px; height:185px;">
+        <div class="gtitle">Core</div>
+        <div class="dcard" style="left:25px;  top:35px; width:300px; height:65px;">Frontend</div>
+        <div class="dsub"  style="left:15px;  top:108px; width:320px; line-height:1.25;">Pages: Dashboard, Catalog, Deployed, Playground, Settings, MLFlow, ML Registry</div>
+        <div class="dcard" style="left:355px; top:35px; width:320px; height:65px;">Backend (FastAPI)</div>
+        <div class="dsub"  style="left:355px; top:108px; width:320px;">Managers: NIM, KServe, Tokens, Models</div>
+      </div>
+
+      <!-- Data & Secrets -->
+      <div class="dgrp" style="left:510px; top:285px; width:700px; height:215px;">
+        <div class="gtitle">Data &amp; Secrets</div>
+        <div class="dcard" style="left:20px;  top:35px;  width:215px; height:55px; font-size:17px;">ModelStudio DB (Postgres 16)</div>
+        <div class="dsub"  style="left:20px;  top:100px; width:215px; font-size:14px; line-height:1.3;">HFTokenVault, NimApiKeyVault, NimModelRegistration, ResourceProfile, Activity, ML deploy records</div>
+        <div class="dcard" style="left:243px; top:35px;  width:215px; height:55px;">Kubernetes Secrets</div>
+        <div class="dsub"  style="left:243px; top:100px; width:215px; font-size:14px; line-height:1.3;">hf-token-{id}, nim-api-key-{id} (NGC_API_KEY + NGC_CLI_API_KEY), Modelstudio-nim-pull-secret, kserve-s3-secret · mlflow-secret</div>
+        <div class="dcard" style="left:466px; top:35px;  width:215px; height:55px;">PVCs</div>
+        <div class="dsub"  style="left:466px; top:100px; width:215px; font-size:14px; line-height:1.3;">NIMCache Storage RWO · NIM_DEFAULT_PVC_SIZE (storageClass configurable)</div>
+      </div>
+
+      <!-- ML / Inference Runtimes -->
+      <div class="dgrp" style="left:510px; top:540px; width:700px; height:215px;">
+        <div class="gtitle">ML / Inference Runtimes</div>
+        <div class="dcard" style="left:20px;  top:35px;  width:215px; height:55px;">KubeAI</div>
+        <div class="dsub"  style="left:20px;  top:100px; width:215px; font-size:14px; line-height:1.3;">KubeAI Operator · CRD: kubeai.org/v1 · Engines: Ollama · vLLM · Infinity · FastWhisper</div>
+        <div class="dcard" style="left:243px; top:35px;  width:215px; height:55px;">KServe + MLFlow</div>
+        <div class="dsub"  style="left:243px; top:100px; width:215px; font-size:14px; line-height:1.3;">KServe Controller · GRD: serving.kserve.io/v1beta1 · Predictors: Sklearn, xgb, mlflow, huggingface · MLFlow Server + UI</div>
+        <div class="dcard" style="left:466px; top:35px;  width:215px; height:55px;">NIM – Self-Hosted</div>
+        <div class="dsub"  style="left:466px; top:100px; width:215px; font-size:14px; line-height:1.3;">k8s-nim-operator · CRDs: apps.nvidia.com/v1alpha1 · NIMCache + NIMService · NIM pods on GPU · GPU Operator + NGC key</div>
+      </div>
+
+      <!-- DKubeX Platform right column -->
+      <div class="dgrp" style="left:1280px; top:30px; width:430px; height:730px;">
+        <div class="gtitle gray">DKubeX Platform</div>
+        <!-- Services -->
+        <div class="dgrp" style="left:15px; top:30px; width:400px; height:240px;">
+          <div class="gtitle">Services</div>
+          <div class="dcard" style="left:25px; top:30px;  width:350px; height:38px; font-size:17px;">Kubernetes API</div>
+          <div class="dcard" style="left:25px; top:78px;  width:350px; height:38px; font-size:17px;">Postgres 16 (Platform)</div>
+          <div class="dcard" style="left:25px; top:126px; width:350px; height:38px; font-size:17px;">MinIO / S3 · MLFlow Artifacts</div>
+          <div class="dcard" style="left:25px; top:174px; width:350px; height:38px; font-size:17px;">NVIDIA GPU Operator</div>
+        </div>
+        <!-- Observability -->
+        <div class="dgrp" style="left:15px; top:295px; width:400px; height:200px;">
+          <div class="gtitle">Observability</div>
+          <div class="dcard" style="left:25px; top:30px;  width:350px; height:38px; font-size:17px;">OTel Daemonset</div>
+          <div class="dcard" style="left:25px; top:78px;  width:350px; height:38px; font-size:17px;">OTel Deployment</div>
+          <div class="dcard" style="left:25px; top:126px; width:350px; height:38px; font-size:17px;">ClickStack / HyperDX</div>
+        </div>
+        <!-- Tools & Admin UI -->
+        <div class="dgrp" style="left:15px; top:520px; width:400px; height:185px;">
+          <div class="gtitle">Tools &amp; Admin UI</div>
+          <div class="dcard" style="left:25px; top:30px; width:350px; height:120px; font-size:17px; line-height:1.35;">Cert-Manager, Headlamp, Traefik Dashboard, PGAdmin, MinIO Console, HyperDX UI, File Browser</div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <span class="arch-tagline">Empowering Enterprise AI on Kubernetes</span>
+    <span class="chrome-page">14</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+  <!-- ===== 15 · Closing / Thank You ===== -->
+  <section data-screen-label="15 Closing" class="l-closing">
+    <img class="chrome-logo" src="../assets/dkube-logo-purple.svg" alt=""/>
+    <h1 class="title">Talk to us.</h1>
+    <p class="s-subtitle" style="color:rgba(255,255,255,0.75);max-width:1100px;margin:0">Build AI you can deploy, operate, and trust — with a partner that's done it before.</p>
+    <div class="cta-row">
+      <div><div class="label">Web</div><div class="value">dkube.io</div></div>
+      <div><div class="label">Email</div><div class="value">info@dkube.io</div></div>
+      <div><div class="label">San Jose</div><div class="value">+1 408 430 2503</div></div>
+    </div>
+    <span class="chrome-page">15</span>
+    <span class="chrome-url">dkube.io</span>
+  </section>
+
+</deck-stage>
+
+<script src="deck-stage.js"></script>
+</body>
+</html>

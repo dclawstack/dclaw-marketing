@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:20px;background:var(--dk-bg);font-family:var(--dk-font-sans)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--dk-radius-pill);font-size:12px;font-weight:600;border:1px solid var(--dk-border)}
+.chip-brand{background:var(--dk-purple-100);color:var(--dk-brand);border-color:var(--dk-purple-200)}
+.chip-neutral{background:var(--dk-gray-100);color:var(--dk-fg);border-color:var(--dk-border)}
+.chip-success{background:var(--dk-success-bg);color:var(--dk-success);border-color:#C9E5D4}
+.chip-warning{background:var(--dk-warning-bg);color:var(--dk-warning);border-color:#EFD8A0}
+.chip-danger{background:var(--dk-danger-bg);color:var(--dk-danger);border-color:#F4C8C3}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+</style></head>
+<body class="dk-reset">
+  <div class="row">
+    <span class="chip chip-brand">Private AI</span>
+    <span class="chip chip-brand">RAG</span>
+    <span class="chip chip-neutral">Finance</span>
+    <span class="chip chip-neutral">Education</span>
+    <span class="chip chip-neutral">Insurance</span>
+    <span class="chip chip-success"><i class="dot"></i>Production</span>
+    <span class="chip chip-warning"><i class="dot"></i>Pilot</span>
+    <span class="chip chip-danger"><i class="dot"></i>Blocked</span>
+  </div>
+</body></html>
