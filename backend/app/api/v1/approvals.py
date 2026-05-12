@@ -26,6 +26,7 @@ from app.models.audit_event import AuditActorKind
 from app.models.organization import OrganizationMembership, OrganizationRole
 from app.models.user import User
 from app.services.audit import write_audit_event
+from app.services.quota_guard import check_quota
 
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
@@ -233,6 +234,21 @@ async def approve(
         )
 
     await _user_can_decide(session, user, approval)
+
+    # Phase 11.2 — quota guard. Block approval if it would breach the
+    # org's daily cap (sends/posts/ads spend).
+    if approval.organization_id is not None:
+        check = await check_quota(
+            session,
+            approval.organization_id,
+            approval.action_type,
+            approval.payload_json,
+        )
+        if not check.ok:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=check.reason or "Quota exceeded.",
+            )
 
     approval.status = ApprovalStatus.approved
     approval.decided_by_user_id = user.id
