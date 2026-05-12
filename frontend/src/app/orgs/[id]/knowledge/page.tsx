@@ -3,12 +3,14 @@
 import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
   BookOpen,
   FileText,
   Globe,
   GitBranch,
   Archive,
+  Plus,
   RefreshCw,
   Search,
 } from "lucide-react";
@@ -180,10 +182,18 @@ export default function KnowledgePage() {
         title="Knowledge Graph"
         description="Every file, URL, repo, and zip ingested into this org. Agents read from this graph at run time; the more grounded context here, the better their output."
         actions={
-          <DkButton variant="secondary" onClick={() => void refresh()}>
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </DkButton>
+          <>
+            <DkButton variant="secondary" onClick={() => void refresh()}>
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </DkButton>
+            <Link href={`/orgs/${orgId}/knowledge/sources/new`}>
+              <DkButton>
+                <Plus className="h-4 w-4" />
+                Add Source
+              </DkButton>
+            </Link>
+          </>
         }
       />
 
@@ -231,9 +241,9 @@ export default function KnowledgePage() {
               title="Nothing ingested yet"
               description="Upload files, paste URLs, point at a git repo. Sources are extracted, chunked, embedded into pgvector — and become memory the agents pull from."
               actions={
-                <DkButton withArrow disabled>
-                  Add Sources — Coming with Input Channel Hub (Q2)
-                </DkButton>
+                <Link href={`/orgs/${orgId}/knowledge/sources/new`}>
+                  <DkButton withArrow>Add the First Source</DkButton>
+                </Link>
               }
             />
           ) : (

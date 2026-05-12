@@ -578,6 +578,77 @@ export async function activateBrandKit(
   );
 }
 
+// ============================================================
+// Assets (Theme A3) — presigned PUT upload flow
+// ============================================================
+
+export type AssetKind =
+  | "image"
+  | "video"
+  | "audio"
+  | "document"
+  | "data"
+  | "archive"
+  | "other";
+
+export interface Asset {
+  id: string;
+  organization_id: string | null;
+  created_by_user_id: string | null;
+  kind: AssetKind;
+  mime_type: string;
+  original_filename: string | null;
+  size_bytes: number | null;
+  bucket: string;
+  storage_key: string;
+}
+
+export interface AssetUploadResponse {
+  asset: Asset;
+  presigned_put_url: string;
+  expires_in: number;
+}
+
+export async function startAssetUpload(data: {
+  filename: string;
+  mime_type: string;
+  kind: AssetKind;
+  organization_id?: string;
+}): Promise<AssetUploadResponse> {
+  return fetchJson<AssetUploadResponse>(`/api/v1/assets/upload`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function confirmAssetUpload(assetId: string): Promise<Asset> {
+  return fetchJson<Asset>(`/api/v1/assets/${assetId}/confirm`, {
+    method: "POST",
+  });
+}
+
+export function inferAssetKind(mimeType: string, filename: string): AssetKind {
+  const m = mimeType.toLowerCase();
+  if (m.startsWith("image/")) return "image";
+  if (m.startsWith("video/")) return "video";
+  if (m.startsWith("audio/")) return "audio";
+  if (
+    m === "application/pdf" ||
+    m === "application/msword" ||
+    m === "text/plain" ||
+    m === "text/markdown" ||
+    m.includes("officedocument") ||
+    /\.(md|txt|pdf|docx?|pptx?)$/i.test(filename)
+  )
+    return "document";
+  if (m === "application/zip" || /\.(zip|tar|gz)$/i.test(filename))
+    return "archive";
+  if (m === "text/csv" || m === "application/json" || m === "image/svg+xml")
+    return "data";
+  return "other";
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }
