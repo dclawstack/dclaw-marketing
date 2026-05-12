@@ -320,3 +320,65 @@ class DataExportRequest(Base):
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+
+# ---------- Phase 10.4 — Workflow run state ---------------------------
+
+
+class WorkflowRunStatus(str, enum.Enum):
+    pending = "pending"
+    running = "running"
+    paused = "paused"          # node deferred (approval, branch, wait)
+    completed = "completed"
+    failed = "failed"
+
+
+class WorkflowRun(Base):
+    """One execution of a Workflow's DSL.
+
+    Records inputs, the per-node trace, the final context, and the
+    terminal status. Future: a separate WorkflowRunStep child table for
+    finer-grained audit when individual node history matters for
+    debugging.
+    """
+
+    __tablename__ = "workflow_runs"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    workflow_id: Mapped[UUID] = mapped_column(
+        ForeignKey("workflows.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    initial_context: Mapped[dict] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
+    final_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    node_results: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
+    status: Mapped[WorkflowRunStatus] = mapped_column(
+        SQLEnum(WorkflowRunStatus),
+        nullable=False,
+        default=WorkflowRunStatus.pending,
+    )
+    deferred_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    started_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
