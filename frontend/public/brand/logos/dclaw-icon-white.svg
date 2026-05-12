@@ -1,0 +1,7 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DClaw Marketing">
+  <title>DClaw Marketing</title>
+  <rect width="64" height="64" rx="14" fill="#FFFFFF"/>
+  <path d="M22 14 L54 22" stroke="#7660A8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M14 28 L50 38" stroke="#7660A8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M10 44 L42 56" stroke="#7660A8" stroke-width="6" stroke-linecap="round"/>
+</svg>

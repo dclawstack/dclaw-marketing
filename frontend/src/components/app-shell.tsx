@@ -24,8 +24,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       <nav className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
-          <Link href="/" className="text-lg font-bold text-ink">
-            DClaw Marketing
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 group"
+            aria-label="DClaw Marketing — home"
+          >
+            {/* SVG logo served directly from /public; <img> avoids next/image SVG config. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/logos/dclaw-icon-purple.svg"
+              alt=""
+              width={28}
+              height={28}
+              className="h-7 w-7 transition-transform duration-fast ease-out-quart group-hover:scale-105"
+            />
+            <span className="text-lg font-bold text-ink leading-none">
+              DClaw <span className="text-brand">Marketing</span>
+            </span>
           </Link>
           <div className="flex flex-1 gap-4 text-sm">
             <Link href="/" className="text-muted-foreground hover:text-ink">
