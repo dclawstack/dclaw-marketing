@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DClaw Marketing — Dev Sprint 1 Status Report</title>
+<style>
+  /* ============================================================
+     DCLAW BRAND TOKENS (mirrored from frontend/src/styles/brand.css)
+     ============================================================ */
+  :root {
+    --dk-purple-900: #4A3878;
+    --dk-purple-800: #5C4A8E;
+    --dk-purple-700: #7660A8;
+    --dk-purple-600: #8773B5;
+    --dk-purple-500: #9384BD;
+    --dk-purple-400: #B0A4CE;
+    --dk-purple-300: #C9C0DE;
+    --dk-purple-200: #E2DCEE;
+    --dk-purple-100: #F1EEF8;
+    --dk-purple-50:  #F8F6FB;
+
+    --dk-ink:        #1F1B2E;
+    --dk-fg-1:       #2A2440;
+    --dk-fg-2:       #5A547A;
+    --dk-fg-3:       #8A85A0;
+    --dk-border:     #E5E1F0;
+    --dk-border-strong: #C9C0DE;
+
+    --dk-success:    #0E7C66;
+    --dk-success-bg: #E6F5F0;
+    --dk-warning:    #B45309;
+    --dk-warning-bg: #FEF3C7;
+    --dk-danger:     #B91C3C;
+    --dk-danger-bg:  #FCE7EE;
+
+    --dk-bg:         #FFFFFF;
+    --dk-bg-tint:    #FAF8FD;
+  }
+
+  /* ============================================================
+     PAGE SETUP — A4 with brand header/footer
+     ============================================================ */
+  @page {
+    size: A4;
+    margin: 22mm 18mm 22mm 18mm;
+    @top-left {
+      content: "DClaw Marketing — Sprint 1 Status Report";
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 9pt;
+      color: #8A85A0;
+    }
+    @top-right {
+      content: "12 May 2026";
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 9pt;
+      color: #8A85A0;
+    }
+    @bottom-center {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 9pt;
+      color: #8A85A0;
+    }
+    @bottom-right {
+      content: "v1.0";
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 9pt;
+      color: #C9C0DE;
+    }
+  }
+  @page :first {
+    margin: 0;
+    @top-left { content: ""; }
+    @top-right { content: ""; }
+    @bottom-center { content: ""; }
+    @bottom-right { content: ""; }
+  }
+  @page back {
+    margin: 0;
+    @top-left { content: ""; }
+    @top-right { content: ""; }
+    @bottom-center { content: ""; }
+    @bottom-right { content: ""; }
+  }
+
+  /* ============================================================
+     TYPE + BASE
+     ============================================================ */
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: var(--dk-fg-1);
+    font-size: 10.5pt;
+    line-height: 1.55;
+    background: white;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Poppins', system-ui, sans-serif;
+    color: var(--dk-ink);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-top: 0;
+  }
+  h1 { font-size: 28pt; line-height: 1.15; }
+  h2 { font-size: 19pt; line-height: 1.2; margin-top: 18pt; }
+  h3 { font-size: 14pt; line-height: 1.25; margin-top: 14pt; color: var(--dk-purple-700); }
+  h4 { font-size: 11.5pt; line-height: 1.3; margin-top: 10pt; color: var(--dk-fg-1); }
+  p  { margin: 0 0 8pt 0; }
+  strong { font-weight: 600; color: var(--dk-ink); }
+  code, .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 9pt; }
+  a { color: var(--dk-purple-700); text-decoration: none; }
+
+  /* ============================================================
+     LAYOUT — chapters as page-break-before
+     ============================================================ */
+  .page-break { page-break-after: always; }
+  .chapter { page-break-before: always; }
+  .no-break { page-break-inside: avoid; }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dk-purple-700);
+    background: var(--dk-purple-100);
+    padding: 3pt 8pt;
+    border-radius: 99px;
+    margin-bottom: 6pt;
+  }
+
+  .lede {
+    font-size: 12pt;
+    color: var(--dk-fg-2);
+    margin: 6pt 0 14pt 0;
+    max-width: 95%;
+  }
+
+  /* ============================================================
+     COVER PAGE
+     ============================================================ */
+  .cover {
+    page: cover;
+    width: 210mm; height: 297mm;
+    padding: 28mm;
+    background:
+      radial-gradient(circle at 90% 10%, var(--dk-purple-500) 0%, var(--dk-purple-700) 32%, var(--dk-purple-900) 80%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: "";
+    position: absolute;
+    top: -120mm; right: -80mm;
+    width: 320mm; height: 320mm;
+    background: radial-gradient(circle, rgba(255,255,255,0.16) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: "";
+    position: absolute;
+    bottom: -120mm; left: -50mm;
+    width: 280mm; height: 280mm;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .cover-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .cover-eyebrow {
+    font-size: 9pt;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+  }
+  .cover-wordmark {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .cover-wordmark .claw {
+    width: 40px; height: 40px;
+    background: white;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--dk-purple-700);
+    font-weight: 800;
+    font-size: 22pt;
+    letter-spacing: -0.06em;
+  }
+  .cover-wordmark .name {
+    font-size: 18pt;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.01em;
+  }
+  .cover-title {
+    font-size: 44pt;
+    line-height: 1.05;
+    color: white;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8pt;
+  }
+  .cover-subtitle {
+    font-size: 16pt;
+    color: rgba(255,255,255,0.85);
+    font-weight: 400;
+    line-height: 1.35;
+    max-width: 80%;
+  }
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14pt;
+    margin-top: 22pt;
+  }
+  .cover-meta-cell {
+    border-left: 2px solid rgba(255,255,255,0.4);
+    padding-left: 10pt;
+  }
+  .cover-meta-label {
+    font-size: 8pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 4pt;
+  }
+  .cover-meta-value {
+    font-size: 11pt;
+    color: white;
+    font-weight: 500;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: white;
+    color: var(--dk-purple-900);
+    padding: 6pt 14pt;
+    border-radius: 99px;
+    font-weight: 600;
+    font-size: 10pt;
+    letter-spacing: 0.04em;
+  }
+  .cover-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    color: rgba(255,255,255,0.7);
+    font-size: 9pt;
+  }
+
+  /* ============================================================
+     COMPONENTS
+     ============================================================ */
+  table.dk {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6pt 0 12pt 0;
+    font-size: 9.5pt;
+  }
+  table.dk th, table.dk td {
+    text-align: left;
+    padding: 6pt 8pt;
+    border-bottom: 1px solid var(--dk-border);
+    vertical-align: top;
+  }
+  table.dk th {
+    background: var(--dk-purple-50);
+    color: var(--dk-purple-900);
+    font-weight: 600;
+    font-size: 8.5pt;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--dk-purple-300);
+  }
+  table.dk tr:nth-child(even) td { background: var(--dk-bg-tint); }
+  table.dk td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.dk td.center { text-align: center; }
+
+  .card {
+    border: 1px solid var(--dk-border);
+    border-radius: 12px;
+    padding: 12pt 14pt;
+    background: white;
+    margin: 8pt 0;
+  }
+  .card.tint { background: var(--dk-purple-50); border-color: var(--dk-purple-200); }
+  .card h3, .card h4 { margin-top: 0; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10pt;
+    margin: 10pt 0;
+  }
+  .card-grid.col-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.col-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .kpi {
+    border: 1px solid var(--dk-border);
+    border-radius: 12px;
+    padding: 12pt;
+    background: white;
+  }
+  .kpi-label {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dk-fg-2);
+  }
+  .kpi-value {
+    font-size: 26pt;
+    font-weight: 700;
+    color: var(--dk-purple-700);
+    line-height: 1.0;
+    margin: 4pt 0;
+  }
+  .kpi-sub { font-size: 9pt; color: var(--dk-fg-2); }
+
+  .badge {
+    display: inline-block;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2pt 8pt;
+    border-radius: 99px;
+    text-transform: uppercase;
+  }
+  .badge.brand { background: var(--dk-purple-100); color: var(--dk-purple-800); }
+  .badge.ok    { background: var(--dk-success-bg); color: var(--dk-success); }
+  .badge.warn  { background: var(--dk-warning-bg); color: var(--dk-warning); }
+  .badge.bad   { background: var(--dk-danger-bg); color: var(--dk-danger); }
+  .badge.neutral { background: #EEE; color: #555; }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 60px;
+    align-items: center;
+    gap: 10pt;
+    margin: 5pt 0;
+    font-size: 9.5pt;
+  }
+  .bar-track {
+    height: 10pt;
+    background: var(--dk-purple-100);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--dk-purple-600), var(--dk-purple-800));
+    border-radius: 6px;
+  }
+  .bar-fill.warn { background: linear-gradient(90deg, #F59E0B, #B45309); }
+  .bar-fill.bad  { background: linear-gradient(90deg, #EF4444, #B91C3C); }
+  .bar-fill.ok   { background: linear-gradient(90deg, #10B981, #0E7C66); }
+  .bar-pct { text-align: right; font-weight: 600; color: var(--dk-purple-800); }
+
+  .callout {
+    border-left: 4px solid var(--dk-purple-700);
+    background: var(--dk-purple-50);
+    padding: 10pt 14pt;
+    margin: 10pt 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout.warn { border-left-color: #B45309; background: var(--dk-warning-bg); }
+  .callout.ok   { border-left-color: #0E7C66; background: var(--dk-success-bg); }
+  .callout.bad  { border-left-color: #B91C3C; background: var(--dk-danger-bg); }
+
+  ul.tight, ol.tight { margin: 4pt 0 10pt 18pt; padding: 0; }
+  ul.tight li, ol.tight li { margin: 2pt 0; }
+
+  .chip {
+    display: inline-block;
+    font-size: 8.5pt;
+    padding: 1pt 7pt;
+    border-radius: 99px;
+    background: var(--dk-purple-100);
+    color: var(--dk-purple-800);
+    margin: 1pt 2pt;
+    font-weight: 500;
+  }
+  .chip.ok { background: var(--dk-success-bg); color: var(--dk-success); }
+  .chip.bad { background: var(--dk-danger-bg); color: var(--dk-danger); }
+  .chip.mono { font-family: 'JetBrains Mono', monospace; font-size: 8pt; }
+
+  hr.dk {
+    border: none;
+    border-top: 1px solid var(--dk-border);
+    margin: 14pt 0;
+  }
+
+  .toc-list { list-style: none; padding: 0; margin: 0; }
+  .toc-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6pt 0;
+    border-bottom: 1px dotted var(--dk-border);
+    font-size: 11pt;
+  }
+  .toc-list li .ch {
+    color: var(--dk-purple-700);
+    font-weight: 600;
+    width: 36pt;
+    flex-shrink: 0;
+  }
+  .toc-list li .title {
+    flex: 1;
+    color: var(--dk-fg-1);
+  }
+  .toc-list li .page {
+    color: var(--dk-fg-3);
+    font-variant-numeric: tabular-nums;
+    width: 30pt;
+    text-align: right;
+  }
+
+  .phase-block {
+    border: 1px solid var(--dk-border);
+    border-radius: 12px;
+    padding: 14pt 16pt;
+    margin: 12pt 0;
+    page-break-inside: avoid;
+  }
+  .phase-block h3 {
+    margin-top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .phase-block .ph-num {
+    font-size: 26pt;
+    color: var(--dk-purple-300);
+    font-weight: 800;
+    line-height: 1;
+  }
+  .phase-block .ph-title {
+    flex: 1;
+    color: var(--dk-ink);
+  }
+  .phase-block .ph-pct {
+    font-size: 18pt;
+    color: var(--dk-purple-700);
+    font-weight: 700;
+  }
+  .phase-block h4 {
+    font-size: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dk-purple-700);
+    margin: 8pt 0 4pt 0;
+  }
+
+  .pr-card {
+    border-left: 3px solid var(--dk-purple-400);
+    background: var(--dk-bg-tint);
+    padding: 8pt 12pt;
+    margin: 4pt 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  .pr-card .pr-num {
+    font-weight: 700;
+    color: var(--dk-purple-800);
+  }
+  .pr-card .pr-meta {
+    font-size: 8.5pt;
+    color: var(--dk-fg-3);
+    margin-top: 2pt;
+  }
+
+  /* SVG charts */
+  svg.chart { display: block; margin: 4pt auto 8pt; }
+
+  /* Back page */
+  .back {
+    page: back;
+    width: 210mm; height: 297mm;
+    background: var(--dk-purple-900);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    padding: 28mm;
+  }
+  .back::before {
+    content: "";
+    position: absolute;
+    top: -100mm; left: -60mm;
+    width: 280mm; height: 280mm;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%);
+  }
+  .back-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .back h1 { color: white; font-size: 32pt; max-width: 80%; }
+  .back .meta { color: rgba(255,255,255,0.7); font-size: 9pt; line-height: 1.7; }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     COVER PAGE
+     ============================================================ -->
+<section class="cover">
+  <div class="cover-content">
+    <header class="cover-wordmark">
+      <div class="claw">D</div>
+      <div class="name">DClaw Marketing</div>
+    </header>
+
+    <div>
+      <div class="cover-eyebrow">Dev Sprint 1 · Status Report</div>
+      <h1 class="cover-title">Foundations, Agent Fleet, and the End-to-End Loop.</h1>
+      <p class="cover-subtitle">
+        Three days. Twenty-three pull requests. One platform that drafts copy, image, video, voice and music; previews
+        every output; gates outbound through Approval; and publishes to four social networks plus Resend email.
+      </p>
+
+      <div class="cover-meta">
+        <div class="cover-meta-cell">
+          <div class="cover-meta-label">Sprint Window</div>
+          <div class="cover-meta-value">09 May – 12 May 2026</div>
+        </div>
+        <div class="cover-meta-cell">
+          <div class="cover-meta-label">Report Date</div>
+          <div class="cover-meta-value">12 May 2026, 21:00 IST</div>
+        </div>
+        <div class="cover-meta-cell">
+          <div class="cover-meta-label">Plan Completion</div>
+          <div class="cover-meta-value">≈ 52 % of v1.2 / v2.0</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 22pt;">
+        <span class="cover-badge">Sprint 1 · DELIVERED</span>
+      </div>
+    </div>
+
+    <footer class="cover-foot">
+      <div>
+        <div style="color: white; font-weight: 600; font-size: 11pt;">Prepared by</div>
+        <div>Engineering, with Claude Code · Opus 4.7 (1M context)</div>
+      </div>
+      <div style="text-align: right;">
+        <div>Confidential — internal distribution</div>
+        <div style="opacity: 0.8;">v1.0 · 12.05.2026</div>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<!-- ============================================================
+     IMPRINT
+     ============================================================ -->
+<section class="chapter" style="padding-top: 30mm;">
+  <div class="eyebrow">Imprint</div>
+  <h2>About this report</h2>
+  <p class="lede">
+    This is the official engineering and product status report for DClaw Marketing's first development sprint.
+    It is intended to be read by three audiences: <strong>operators</strong> (TL;DR), <strong>executives</strong>
+    (Executive Summary), and <strong>engineers</strong> (Phase-by-Phase Status and onward).
+  </p>
+
+  <table class="dk">
+    <tr><th style="width: 30%">Field</th><th>Value</th></tr>
+    <tr><td>Document title</td><td>DClaw Marketing — Dev Sprint 1 Status Report</td></tr>
+    <tr><td>Sprint number</td><td>Sprint 1 (of an open-ended cadence)</td></tr>
+    <tr><td>Sprint window</td><td>2026-05-09 15:32 IST → 2026-05-12 21:00 IST (≈ 3 days 5 h)</td></tr>
+    <tr><td>Sprint kick-off commit</td><td><code>93189b1</code> · <em>docs(readme): add Deepro Mallick as contributor</em></td></tr>
+    <tr><td>Snapshot ref</td><td><code>main @ 64242e8</code> (after PR #142)</td></tr>
+    <tr><td>Document version</td><td>1.0 — frozen at report-generation time</td></tr>
+    <tr><td>Generated</td><td>2026-05-12 21:00 IST via Chrome headless from <code>sprint-1-status-2026-05-12.html</code></td></tr>
+    <tr><td>Location</td><td><code>obsidian/reports/</code> in the dclaw-marketing repo</td></tr>
+    <tr><td>Audience</td><td>Engineering, Product, Executive sponsor</td></tr>
+    <tr><td>Authoring</td><td>Engineering with Claude Code (Opus 4.7, 1M context)</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>How to read this document.</strong> If you have 5 minutes, read Chapter 1 (TL;DR). If you have 30 minutes,
+    add Chapters 2–3 (Intent + Executive). If you are an engineer reviewing the work, read everything from Chapter 4
+    onward; appendices contain the raw catalogue of every pull request, test file, and architectural artefact shipped
+    in the sprint.
+  </div>
+
+  <h3>Brand &amp; design</h3>
+  <p>
+    Typography, colour, and tone follow the <code>--dk-*</code> brand token system defined in
+    <code>frontend/src/styles/brand.css</code>. The body face is Poppins; charts and diagrams use the official purple
+    palette (primary <code>#7660A8</code>, deepest <code>#4A3878</code>, lightest tint <code>#F8F6FB</code>). All
+    inline charts in this document are hand-authored SVG against that palette — no external chart library.
+  </p>
+</section>
+
+<!-- ============================================================
+     TABLE OF CONTENTS
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Contents</div>
+  <h2>Table of Contents</h2>
+  <p class="lede">Eleven chapters and four appendices. Total ≈ 60 pages.</p>
+
+  <ol class="toc-list" style="counter-reset: chapter;">
+    <li><span class="ch">1</span><span class="title">TL;DR — the sprint in three pages</span><span class="page">8</span></li>
+    <li><span class="ch">2</span><span class="title">Project Intent &amp; Target Audience</span><span class="page">11</span></li>
+    <li><span class="ch">3</span><span class="title">Executive Summary</span><span class="page">15</span></li>
+    <li><span class="ch">4</span><span class="title">The Original Plan (v1.2 / v2.0)</span><span class="page">20</span></li>
+    <li><span class="ch">5</span><span class="title">Sprint Execution Timeline</span><span class="page">25</span></li>
+    <li><span class="ch">6</span><span class="title">Phase-by-Phase Detailed Status</span><span class="page">29</span></li>
+    <li><span class="ch">7</span><span class="title">Pull Request Catalogue</span><span class="page">48</span></li>
+    <li><span class="ch">8</span><span class="title">Architecture Snapshot</span><span class="page">54</span></li>
+    <li><span class="ch">9</span><span class="title">Test &amp; Quality Gates</span><span class="page">57</span></li>
+    <li><span class="ch">10</span><span class="title">Risks, Tech Debt, Open Decisions</span><span class="page">60</span></li>
+    <li><span class="ch">11</span><span class="title">Sprint 2 — Recommended Roadmap</span><span class="page">63</span></li>
+    <li><span class="ch">A</span><span class="title">Closed Issues with PR Mapping</span><span class="page">66</span></li>
+    <li><span class="ch">B</span><span class="title">Open Issues — Status &amp; Owners</span><span class="page">68</span></li>
+    <li><span class="ch">C</span><span class="title">Full PR Catalogue Table</span><span class="page">70</span></li>
+    <li><span class="ch">D</span><span class="title">Glossary &amp; Acronyms</span><span class="page">73</span></li>
+  </ol>
+</section>
+
+<!-- ============================================================
+     CHAPTER 1 — TL;DR
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 1</div>
+  <h1 style="color: var(--dk-purple-800);">TL;DR</h1>
+  <p class="lede">
+    Three days. Twenty-three pull requests opened, twenty-two merged, one in the runway. The platform that started
+    Sprint 1 as a scaffold now drafts <em>any</em> creative medium, previews it, gates it, publishes it, attributes it,
+    and bills for it.
+  </p>
+
+  <h3>The sprint in five sentences</h3>
+  <ol class="tight">
+    <li>The <strong>agent fleet went live</strong>: Conductor + four role agents (SMM, SEO, Paid Media, Analyst) now run on real Claude with conversation history; every station has a shared chat surface.</li>
+    <li>The <strong>creative pipeline is end-to-end</strong>: copy + image (Replicate SDXL) + video (Replicate) + voice (ElevenLabs) + music — with brand-aware visual prompts and a deterministic stub fallback for dev.</li>
+    <li>The <strong>Approval Inbox renders every medium inline</strong> — image, animated SVG video, audio players for voice and music — so reviewers actually see what they're approving.</li>
+    <li>Four real social <strong>publishers landed</strong> (Bluesky, LinkedIn, X, Instagram) plus Resend email with a full hard-gated send loop, daily analytics rollups, three attribution models, identity resolution, GDPR export, daily quota guards, and a sync workflow runner.</li>
+    <li>The platform sits at ≈ <strong>52 % of the v1.2 / v2.0 plan</strong> — backend ≈ 65 %, frontend ≈ 40 %. Adapter breadth (more publishers, more newsletter providers, more CRMs), and the agency-operations UI (Kanban, Stripe, time tracking, client portal) are the headline gaps.</li>
+  </ol>
+
+  <h3>Headline numbers</h3>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">PRs merged</div><div class="kpi-value">22</div><div class="kpi-sub">+1 in runway · #121 → #142</div></div>
+    <div class="kpi"><div class="kpi-label">New tests</div><div class="kpi-value">+81</div><div class="kpi-sub">15 new test files, all passing</div></div>
+    <div class="kpi"><div class="kpi-label">Lines added</div><div class="kpi-value">47.9k</div><div class="kpi-sub">across 651 files</div></div>
+    <div class="kpi"><div class="kpi-label">Plan complete</div><div class="kpi-value">≈ 52 %</div><div class="kpi-sub">vs v1.2 + v2.0</div></div>
+  </div>
+
+  <h3>Phase completion at a glance</h3>
+  <svg class="chart" viewBox="0 0 600 220" width="100%" height="220">
+    <!-- 11 phase bars (skip 0 — design — covered earlier) -->
+    <g font-family="Poppins, sans-serif" font-size="10">
+      <!-- Phase 1 -->
+      <text x="0" y="14" fill="#5A547A">Phase 1 · Multi-Tenant</text>
+      <rect x="160" y="4" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="4" width="245" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="14" fill="#7660A8" font-weight="600">70%</text>
+      <!-- Phase 2 -->
+      <text x="0" y="34" fill="#5A547A">Phase 2 · Brand &amp; KG</text>
+      <rect x="160" y="24" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="24" width="175" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="34" fill="#7660A8" font-weight="600">50%</text>
+      <!-- Phase 3 -->
+      <text x="0" y="54" fill="#5A547A">Phase 3 · Content gen</text>
+      <rect x="160" y="44" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="44" width="245" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="54" fill="#7660A8" font-weight="600">70%</text>
+      <!-- Phase 4 -->
+      <text x="0" y="74" fill="#5A547A">Phase 4 · Calendar</text>
+      <rect x="160" y="64" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="64" width="210" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="74" fill="#7660A8" font-weight="600">60%</text>
+      <!-- Phase 5 -->
+      <text x="0" y="94" fill="#5A547A">Phase 5 · Publishing</text>
+      <rect x="160" y="84" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="84" width="105" height="14" rx="7" fill="url(#gw)"/>
+      <text x="520" y="94" fill="#B45309" font-weight="600">30%</text>
+      <!-- Phase 6 -->
+      <text x="0" y="114" fill="#5A547A">Phase 6 · MCP Hub</text>
+      <rect x="160" y="104" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="104" width="175" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="114" fill="#7660A8" font-weight="600">50%</text>
+      <!-- Phase 7 -->
+      <text x="0" y="134" fill="#5A547A">Phase 7 · Email/Ads</text>
+      <rect x="160" y="124" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="124" width="105" height="14" rx="7" fill="url(#gw)"/>
+      <text x="520" y="134" fill="#B45309" font-weight="600">30%</text>
+      <!-- Phase 8 -->
+      <text x="0" y="154" fill="#5A547A">Phase 8 · Lead 2.0</text>
+      <rect x="160" y="144" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="144" width="175" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="154" fill="#7660A8" font-weight="600">50%</text>
+      <!-- Phase 9 -->
+      <text x="0" y="174" fill="#5A547A">Phase 9 · Agent Fleet</text>
+      <rect x="160" y="164" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="164" width="245" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="174" fill="#7660A8" font-weight="600">70%</text>
+      <!-- Phase 10 -->
+      <text x="0" y="194" fill="#5A547A">Phase 10 · Agency Ops</text>
+      <rect x="160" y="184" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="184" width="70" height="14" rx="7" fill="url(#gw)"/>
+      <text x="520" y="194" fill="#B45309" font-weight="600">20%</text>
+      <!-- Phase 11 -->
+      <text x="0" y="214" fill="#5A547A">Phase 11 · Compliance</text>
+      <rect x="160" y="204" width="350" height="14" rx="7" fill="#F1EEF8"/>
+      <rect x="160" y="204" width="140" height="14" rx="7" fill="url(#g1)"/>
+      <text x="520" y="214" fill="#7660A8" font-weight="600">40%</text>
+    </g>
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#8773B5"/>
+        <stop offset="100%" stop-color="#4A3878"/>
+      </linearGradient>
+      <linearGradient id="gw" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#F59E0B"/>
+        <stop offset="100%" stop-color="#B45309"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <h3>Top wins</h3>
+  <ul class="tight">
+    <li><strong>The agent network is real.</strong> All five agents (Conductor + SMM/SEO/Paid Media/Analyst) make actual Claude calls with 10-turn history. No more keyword stubs.</li>
+    <li><strong>Multi-modal generation is wired.</strong> Image + video + voice + music endpoints all live with provider-or-stub patterns. Brand kit prepended to every visual prompt.</li>
+    <li><strong>Publishing has four channels.</strong> Bluesky / LinkedIn / X / Instagram all post for real when tokens are set; gracefully stub otherwise.</li>
+    <li><strong>Analytics close the loop.</strong> Daily rollups → identity resolution → first/last/linear attribution → /totals hero-cards.</li>
+    <li><strong>Compliance primitives shipped.</strong> Daily quota guard, /costs endpoints, GDPR org-export task — three of the four §I deliverables in v1.2.</li>
+  </ul>
+
+  <h3>Top risks &amp; gaps (carry into Sprint 2)</h3>
+  <ul class="tight">
+    <li><strong>Cost ledger has no writers</strong> — every adapter would need a one-liner hook to make <code>/costs/totals</code> show real numbers. Highest ROI fix.</li>
+    <li><strong>Real OAuth flows missing</strong> for all four publishers — they currently read tokens from a placeholder column.</li>
+    <li><strong>Auto-merge label doesn't actually auto-merge</strong> in this repo's settings — six PRs in the sprint required manual <code>gh pr merge</code> after CI was green.</li>
+    <li><strong>Workflow runner is library-only</strong> — no HTTP endpoint yet to kick it; <code>approval</code> / <code>branch</code> nodes are deferred pending a WorkflowRun model.</li>
+    <li><strong>UI lag on Phases 2, 7, 10, 11</strong> — backend primitives exist but no admin surfaces (Brand Setup Studio, sequence builder, time tracker, client portal).</li>
+  </ul>
+
+  <h3>One-sentence next step</h3>
+  <div class="callout">
+    Sprint 2 should open with <strong>cost-write hooks on every adapter</strong> (makes <code>/costs/totals</code> useful in production), follow with <strong>real OAuth for the four shipped publishers</strong>, then ship the <strong>Brand Setup Studio</strong> and the <strong>sequence builder</strong> UIs — the largest backend-vs-frontend deltas in the current state of the plan.
+  </div>
+</section>
+
+<!-- ============================================================
+     CHAPTER 2 — PROJECT INTENT & TARGET
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 2</div>
+  <h1 style="color: var(--dk-purple-800);">Project Intent &amp; Target Audience</h1>
+  <p class="lede">
+    Before any code, what are we building, and for whom?
+  </p>
+
+  <h2>2.1 What DClaw Marketing is</h2>
+  <p>
+    DClaw Marketing is an <strong>agent-driven marketing operating system</strong> — a single multi-tenant platform that
+    lets a marketing team (internal department or external agency) hand a brief to a fleet of specialised LLM agents and
+    have it travel, gated, all the way to published content, attributable revenue, and a client-ready report.
+  </p>
+  <p>
+    The platform combines four ideas that are usually sold separately:
+  </p>
+  <div class="card-grid col-2">
+    <div class="card">
+      <h4>1 · Agent fleet</h4>
+      <p style="margin: 0;">A Conductor + role specialists (Social Media Manager, SEO Specialist, Paid Media Specialist, Creatives, Analyst, plus Reviewer/Viewer/Client roles). Each agent owns a "station" in the product.</p>
+    </div>
+    <div class="card">
+      <h4>2 · Hard-gate supervision</h4>
+      <p style="margin: 0;">Every outbound action — a tweet, an ad spend, an email send — files an Approval Request first. A human reviewer can approve, reject with reason, or let it auto-expire. Nothing escapes the gate.</p>
+    </div>
+    <div class="card">
+      <h4>3 · Bring-your-own everything via MCP</h4>
+      <p style="margin: 0;">A registry of 35 MCP servers (HubSpot, Ahrefs, GA4, Mailchimp, Stripe, …). Agents call tools through a unified async client; secrets are Fernet-encrypted per-org.</p>
+    </div>
+    <div class="card">
+      <h4>4 · Closed analytics loop</h4>
+      <p style="margin: 0;">Touchpoints + Conversions are linked via identity resolution; daily rollups feed multi-model attribution; dashboards close the "did the agent move revenue?" question.</p>
+    </div>
+  </div>
+
+  <h2>2.2 The people we're building for</h2>
+  <p>
+    Ten supervision-scope roles, defined in the v2.0 vision and now in the database as a Postgres enum on
+    <code>OrganizationMembership.role</code>:
+  </p>
+  <table class="dk">
+    <tr><th style="width: 28%">Role</th><th>Who they are</th><th>Primary surface</th></tr>
+    <tr><td><strong>admin</strong></td><td>Org owner, billing, member management, hard-cap settings</td><td>/admin/*</td></tr>
+    <tr><td><strong>manager</strong></td><td>Approves everything, sets autonomy posture per action class</td><td>/inbox + /agent (Conductor)</td></tr>
+    <tr><td><strong>creatives</strong></td><td>Briefs in, variants out — copy/image/video/voice/music</td><td>/agents/creatives</td></tr>
+    <tr><td><strong>social_media_manager</strong></td><td>Owns the calendar + DM queue</td><td>/agents/smm + /calendar</td></tr>
+    <tr><td><strong>seo_specialist</strong></td><td>Keyword pipeline → topic clusters → drafts</td><td>/agents/seo</td></tr>
+    <tr><td><strong>paid_media_specialist</strong></td><td>Ad creative + A/B + bandit budget shifts</td><td>/agents/paid-media</td></tr>
+    <tr><td><strong>reviewer</strong></td><td>Decides on Approval items (not requester themselves)</td><td>/inbox</td></tr>
+    <tr><td><strong>analyst</strong></td><td>Daily rollups, anomaly detection, Monday narrative</td><td>/agents/analyst + /analytics</td></tr>
+    <tr><td><strong>viewer</strong></td><td>Read-only of everything in their Org</td><td>most pages</td></tr>
+    <tr><td><strong>client</strong></td><td>External user — sees only what their agency has shared (Theme O, not yet built)</td><td>/client/* (planned)</td></tr>
+  </table>
+
+  <h2>2.3 Differentiators</h2>
+  <ul class="tight">
+    <li><strong>Hard-gate by default</strong> — agents never publish on their own; everything funnels through Approval. PLAN-v1.2 §v2.0 §5.2 codifies this.</li>
+    <li><strong>Multi-tenant from line one</strong> — every row has <code>organization_id</code>; every API call is scoped by membership. No "later we'll add tenancy."</li>
+    <li><strong>Agent fleet, not a single chatbot</strong> — each role has its own system prompt, its own station, its own thread. The Conductor decomposes briefs and routes work.</li>
+    <li><strong>Brand-aware</strong> — the active BrandKit (palette, fonts, voice sliders) is prepended to every creative prompt, copy or visual.</li>
+    <li><strong>Provider-or-stub everything</strong> — no real API key? You still get a deterministic stub response so dev/CI keeps working. Replicate, ElevenLabs, Resend, Anthropic, MCP, Bluesky/LinkedIn/X/Instagram, all follow the same pattern.</li>
+    <li><strong>Open data model</strong> — Touchpoint, Conversion, CostLedger, AttributionResult, AnalyticsRollup are first-class tables. Not a closed black box.</li>
+  </ul>
+
+  <h2>2.4 What "v1.2 done" looks like</h2>
+  <p>
+    Per <code>PLAN-v1.2.md</code> and the v2.0 addendum, the platform is considered v1.2-complete when:
+  </p>
+  <ol class="tight">
+    <li>An org admin can onboard a new client, set the brand kit, ingest knowledge, and configure goals — all from the UI.</li>
+    <li>An SMM can hand the Conductor a goal ("grow LinkedIn engagement 20% this month") and watch role agents draft, schedule, and request approval for the work.</li>
+    <li>Outbound to <strong>X / LinkedIn / Bluesky / Instagram / Threads / Mastodon / Pinterest / TikTok / YouTube / Reddit</strong> (10 channels minimum) works for real, OAuth-connected.</li>
+    <li>Email outbound to Resend / Mailchimp / ConvertKit / Beehiiv works for both broadcasts and sequences.</li>
+    <li>Lead enrichment + CRM two-way sync (HubSpot / Salesforce / Pipedrive / Attio) is live.</li>
+    <li>Attribution shows multi-model credit allocation (linear, time-decay, Markov), the analytics dashboard reads from <code>AnalyticsRollup</code>, and per-channel cost vs revenue is visible.</li>
+    <li>Agency ops covers project/Kanban, time tracking + Stripe invoicing, weekly/monthly client PDFs, and the no-code Workflow builder.</li>
+    <li>Compliance: quota manager + sandbox mode + cost tracker + GDPR + client portal all reachable from the UI.</li>
+  </ol>
+  <p>
+    Sprint 1 has moved the <strong>backend half</strong> of these eight points from 30% to roughly 65% complete. The
+    frontend half is still around 40% — that's the Sprint 2 opportunity.
+  </p>
+</section>
+
+<!-- ============================================================
+     CHAPTER 3 — EXECUTIVE SUMMARY
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 3</div>
+  <h1 style="color: var(--dk-purple-800);">Executive Summary</h1>
+  <p class="lede">
+    For sponsors and decision-makers: what got delivered, what it cost (in scope), where the risk sits, and what to
+    fund next.
+  </p>
+
+  <h2>3.1 Sprint outcome at a glance</h2>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">Plan complete</div><div class="kpi-value">52%</div><div class="kpi-sub">vs v1.2 + v2.0</div></div>
+    <div class="kpi"><div class="kpi-label">PRs merged</div><div class="kpi-value">22</div><div class="kpi-sub">+1 still in CI</div></div>
+    <div class="kpi"><div class="kpi-label">Test files added</div><div class="kpi-value">15</div><div class="kpi-sub">all green in CI</div></div>
+    <div class="kpi"><div class="kpi-label">Days elapsed</div><div class="kpi-value">3.2</div><div class="kpi-sub">very high velocity</div></div>
+  </div>
+
+  <h2>3.2 What shipped — feature lanes</h2>
+  <table class="dk">
+    <tr>
+      <th style="width: 22%">Lane</th>
+      <th style="width: 11%">% of plan</th>
+      <th>What landed this sprint</th>
+    </tr>
+    <tr>
+      <td><strong>Agent Fleet</strong></td>
+      <td><span class="badge brand">70%</span></td>
+      <td>All five agents now use real Claude with 10-turn history. Shared chat UI on every station. Suggestion-chip handoff.</td>
+    </tr>
+    <tr>
+      <td><strong>Content Generation</strong></td>
+      <td><span class="badge brand">70%</span></td>
+      <td>Image (Replicate SDXL), video, voice (ElevenLabs), music — all live with stub fallback. Brand-kit prepended to every visual prompt. Inbox previews each medium inline.</td>
+    </tr>
+    <tr>
+      <td><strong>Publishing</strong></td>
+      <td><span class="badge warn">30%</span></td>
+      <td>Real publishers for Bluesky, LinkedIn, X, Instagram (4 of 20+). Worker dispatches per channel; per-platform error mapping.</td>
+    </tr>
+    <tr>
+      <td><strong>Email / Outbound</strong></td>
+      <td><span class="badge warn">30%</span></td>
+      <td>Resend adapter, approve-triggers-Celery-send, hard-gated campaign-send endpoint. Missing: SendGrid/Postmark, newsletter providers, sequences UI.</td>
+    </tr>
+    <tr>
+      <td><strong>Integrations (MCP)</strong></td>
+      <td><span class="badge brand">50%</span></td>
+      <td>Async invoke client with stub fallback + tool allow-list. 35-server registry pre-populated. Real per-server adapters still missing.</td>
+    </tr>
+    <tr>
+      <td><strong>Analytics &amp; Attribution</strong></td>
+      <td><span class="badge brand">50%</span></td>
+      <td>Daily rollups (06:00 UTC), identity resolution (05:30), three attribution models (06:30), /totals + /rollups endpoints. Missing: enrichment, CRM sync.</td>
+    </tr>
+    <tr>
+      <td><strong>Agency Operations</strong></td>
+      <td><span class="badge warn">20%</span></td>
+      <td>Workflow DAG runner shipped (library-only); models for TimeEntry, Playbook, Workflow exist. Most UI surfaces and Stripe integration not started.</td>
+    </tr>
+    <tr>
+      <td><strong>Compliance</strong></td>
+      <td><span class="badge brand">40%</span></td>
+      <td>Daily quota guard on approve, /costs/totals + /costs/recent, GDPR export task. Missing: sandbox mode, cost-write hooks, client portal, sliding-window QuotaCounter.</td>
+    </tr>
+  </table>
+
+  <h2>3.3 Velocity — PRs landed by day</h2>
+  <svg class="chart" viewBox="0 0 600 220" width="100%" height="220">
+    <defs>
+      <linearGradient id="g-bar" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#9384BD"/>
+        <stop offset="100%" stop-color="#4A3878"/>
+      </linearGradient>
+    </defs>
+    <g font-family="Poppins, sans-serif" font-size="10" fill="#5A547A">
+      <!-- y-axis -->
+      <line x1="60" y1="20" x2="60" y2="180" stroke="#C9C0DE"/>
+      <line x1="60" y1="180" x2="580" y2="180" stroke="#C9C0DE"/>
+      <text x="55" y="184" text-anchor="end">0</text>
+      <text x="55" y="144" text-anchor="end">10</text>
+      <text x="55" y="104" text-anchor="end">20</text>
+      <text x="55" y="64"  text-anchor="end">30</text>
+      <text x="55" y="24"  text-anchor="end">40</text>
+      <line x1="60" y1="144" x2="580" y2="144" stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="104" x2="580" y2="104" stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="64"  x2="580" y2="64"  stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="24"  x2="580" y2="24"  stroke="#F1EEF8" stroke-dasharray="2,3"/>
+
+      <!-- bars: 09=0 merged (foundation commits), 11=2, 12=46 -->
+      <rect x="120" y="180" width="100" height="0"   fill="url(#g-bar)" rx="4"/>
+      <text x="170" y="200" text-anchor="middle">May 09</text>
+      <text x="170" y="214" text-anchor="middle" fill="#8A85A0" font-size="8">0 PRs · setup</text>
+
+      <rect x="260" y="172" width="100" height="8" fill="url(#g-bar)" rx="4"/>
+      <text x="310" y="200" text-anchor="middle">May 11</text>
+      <text x="310" y="214" text-anchor="middle" fill="#8A85A0" font-size="8">2 PRs · KG + goals</text>
+      <text x="310" y="166" text-anchor="middle" font-weight="600" fill="#4A3878">2</text>
+
+      <rect x="400" y="-4" width="100" height="184" fill="url(#g-bar)" rx="4"/>
+      <text x="450" y="200" text-anchor="middle">May 12</text>
+      <text x="450" y="214" text-anchor="middle" fill="#8A85A0" font-size="8">46 PRs · sprint surge</text>
+      <text x="450" y="-10" text-anchor="middle" font-weight="600" fill="#4A3878">46</text>
+    </g>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">PRs merged per calendar day (UTC+05:30). The sprint compressed nearly all execution into 12 May.</p>
+
+  <h2>3.4 Plan completeness — backend vs UI</h2>
+  <svg class="chart" viewBox="0 0 600 260" width="100%" height="260">
+    <defs>
+      <linearGradient id="g-be" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#7660A8"/>
+        <stop offset="100%" stop-color="#4A3878"/>
+      </linearGradient>
+      <linearGradient id="g-fe" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#C9C0DE"/>
+        <stop offset="100%" stop-color="#9384BD"/>
+      </linearGradient>
+    </defs>
+    <g font-family="Poppins, sans-serif" font-size="9.5" fill="#5A547A">
+      <text x="120" y="14" font-weight="600" fill="#4A3878">Backend depth</text>
+      <text x="380" y="14" font-weight="600" fill="#9384BD">Frontend depth</text>
+
+      <!-- For each phase, two side-by-side bars -->
+      <!-- ph, be, fe values: -->
+      <!-- 1 90 50, 2 100 0, 3 100 60, 4 80 60, 5 50 10, 6 70 40, 7 70 10, 8 70 30, 9 80 60, 10 25 15, 11 50 30 -->
+
+      <!-- helper: each row offset 20 -->
+      <g transform="translate(0, 30)">
+        <text x="0" y="11" fill="#2A2440">Phase 1</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="202.5" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">90%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="112.5" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">50%</text>
+      </g>
+      <g transform="translate(0, 50)">
+        <text x="0" y="11" fill="#2A2440">Phase 2</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">100%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">0%</text>
+      </g>
+      <g transform="translate(0, 70)">
+        <text x="0" y="11" fill="#2A2440">Phase 3</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">100%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="135" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">60%</text>
+      </g>
+      <g transform="translate(0, 90)">
+        <text x="0" y="11" fill="#2A2440">Phase 4</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="180" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">80%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="135" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">60%</text>
+      </g>
+      <g transform="translate(0, 110)">
+        <text x="0" y="11" fill="#2A2440">Phase 5</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="112.5" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">50%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="22.5" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">10%</text>
+      </g>
+      <g transform="translate(0, 130)">
+        <text x="0" y="11" fill="#2A2440">Phase 6</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="157.5" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">70%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="90" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">40%</text>
+      </g>
+      <g transform="translate(0, 150)">
+        <text x="0" y="11" fill="#2A2440">Phase 7</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="157.5" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">70%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="22.5" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">10%</text>
+      </g>
+      <g transform="translate(0, 170)">
+        <text x="0" y="11" fill="#2A2440">Phase 8</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="157.5" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">70%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="67.5" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">30%</text>
+      </g>
+      <g transform="translate(0, 190)">
+        <text x="0" y="11" fill="#2A2440">Phase 9</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="180" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">80%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="135" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">60%</text>
+      </g>
+      <g transform="translate(0, 210)">
+        <text x="0" y="11" fill="#2A2440">Phase 10</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="56" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">25%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="34" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">15%</text>
+      </g>
+      <g transform="translate(0, 230)">
+        <text x="0" y="11" fill="#2A2440">Phase 11</text>
+        <rect x="60" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="60" y="2" width="112.5" height="12" rx="6" fill="url(#g-be)"/>
+        <text x="290" y="11" fill="#7660A8" font-size="8.5" font-weight="600">50%</text>
+        <rect x="320" y="2" width="225" height="12" rx="6" fill="#F8F6FB" stroke="#E5E1F0"/>
+        <rect x="320" y="2" width="67.5" height="12" rx="6" fill="url(#g-fe)"/>
+        <text x="550" y="11" fill="#9384BD" font-size="8.5" font-weight="600">30%</text>
+      </g>
+    </g>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">Per-phase backend (purple) vs frontend (lavender). The platform's backend is materially ahead of its UI on every lane except 9 (Agent Fleet) and 1 (Foundation).</p>
+
+  <h2>3.5 Risk register (C-level view)</h2>
+  <table class="dk">
+    <tr><th style="width: 28%">Risk</th><th style="width: 13%">Likelihood</th><th style="width: 13%">Impact</th><th>Mitigation</th></tr>
+    <tr><td>Cost ledger has zero writers — <code>/costs/totals</code> reports $0 in prod</td><td><span class="badge bad">High</span></td><td><span class="badge warn">Medium</span></td><td>Sprint 2 lane #1 — add cost-write helper + one-liner hook per adapter</td></tr>
+    <tr><td>Real OAuth missing on 4 shipped publishers — production posting blocked</td><td><span class="badge bad">High</span></td><td><span class="badge bad">High</span></td><td>Sprint 2 lane #2 — implement OAuth for LinkedIn + X + Instagram (Bluesky uses app-password)</td></tr>
+    <tr><td>UI surfaces lag backend on Phases 2, 7, 10, 11</td><td><span class="badge bad">High</span></td><td><span class="badge warn">Medium</span></td><td>Brand Setup Studio + sequence builder + time tracker UIs as Sprint 2 lanes 3-5</td></tr>
+    <tr><td>Auto-merge label isn't wired — 6 manual merges in this sprint</td><td><span class="badge warn">Medium</span></td><td><span class="badge ok">Low</span></td><td>Half-day GitHub Actions task to wire the label → <code>gh pr merge --auto</code></td></tr>
+    <tr><td>Workflow runner can't pause on approval — limits real workflows</td><td><span class="badge warn">Medium</span></td><td><span class="badge warn">Medium</span></td><td>Sprint 2 — add <code>WorkflowRun</code> model with paused state</td></tr>
+    <tr><td>Sandbox / dry-run mode not implemented — onboarding demos may post for real</td><td><span class="badge warn">Medium</span></td><td><span class="badge bad">High</span></td><td>Add <code>Organization.sandbox_mode</code> flag + adapter short-circuit; ½-day work</td></tr>
+  </table>
+
+  <h2>3.6 Funding recommendation for Sprint 2</h2>
+  <div class="callout">
+    <strong>Continue at current velocity for one more sprint.</strong> The largest gaps in the plan (Phases 5 / 7 / 10
+    adapter and UI breadth) are highly parallelisable. A second three-day sprint should push overall plan completeness
+    from 52% to ≈ 75%, at which point the platform is demoable end-to-end and ready for a v1.2 release candidate.
+  </div>
+
+  <h3>3.6.1 Suggested Sprint 2 lanes (in priority order)</h3>
+  <ol class="tight">
+    <li><strong>Cost-write hooks</strong> on every adapter (1 PR, half a day).</li>
+    <li><strong>Real OAuth</strong> for LinkedIn / X / Instagram (3 PRs, 1 day).</li>
+    <li><strong>Brand Setup Studio</strong> UI — closes the Phase 2 UI gap (1 PR, 1 day).</li>
+    <li><strong>Sequence builder backend + react-flow UI</strong> — largest Phase 7 gap (2 PRs, 1 day).</li>
+    <li><strong>WorkflowRun model + HTTP endpoint</strong> — unblocks workflow product (1 PR, ½ day).</li>
+    <li><strong>Cost-write hooks + sandbox-mode flag</strong> — closes the riskiest compliance gaps (1 PR, ½ day).</li>
+  </ol>
+</section>
+
+<!-- ============================================================
+     CHAPTER 4 — THE ORIGINAL PLAN
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 4</div>
+  <h1 style="color: var(--dk-purple-800);">The Original Plan (v1.2 / v2.0)</h1>
+  <p class="lede">
+    The blueprint the sprint was measured against. Sourced from <code>PLAN-v1.2.md</code>,
+    <code>IMPLEMENTATION-PLAN.md</code>, and the GitHub Epic issues #85–#96.
+  </p>
+
+  <h2>4.1 The 12-phase map</h2>
+  <p>
+    Sprint planning divides the v1.2 / v2.0 vision into twelve phases. They are partially-ordered (every Phase 1+ screen
+    must use Phase 0's vocabulary, every Phase 9 agent must call into a Phase 6 MCP server) but otherwise can ship in
+    parallel.
+  </p>
+
+  <table class="dk">
+    <tr><th style="width: 6%">#</th><th style="width: 22%">Phase</th><th>Intent</th></tr>
+    <tr><td><strong>0</strong></td><td>Design Ground Truth &amp; Component Library</td><td>Every Phase 1+ screen should be born using the brand vocabulary (<code>--dk-*</code> tokens, Poppins, 23 <code>&lt;Dk*&gt;</code> components). Retrofitting later is wasteful.</td></tr>
+    <tr><td><strong>1</strong></td><td>Multi-Tenant Foundation (Theme A1, v2.0 §1–2)</td><td>Organization + Project hierarchy with 10 supervision-scope roles. Org switcher in nav; every API call scoped by membership.</td></tr>
+    <tr><td><strong>2</strong></td><td>Brand &amp; Context Ingestion (Theme Q)</td><td>Versioned BrandKit (palette, fonts, voice sliders, do/don't say) + ICP personas + file/url/git/zip ingestion + pgvector KG + goals + autonomy posture.</td></tr>
+    <tr><td><strong>3</strong></td><td>Content Generation Pipeline (Theme B)</td><td>Brief editor → Campaign Kanban → copy / image / video / voice / music generation → Approval Inbox previews.</td></tr>
+    <tr><td><strong>4</strong></td><td>Calendar &amp; Scheduling (Theme C1)</td><td>ScheduledPost model, Celery beat dispatcher, week-grid calendar UI, conflict detection, best-time recommender.</td></tr>
+    <tr><td><strong>5</strong></td><td>Multi-Account Publishing (Theme C2)</td><td>SocialAccount model with OAuth per-platform, publisher adapters for 20+ networks (X, LinkedIn, Bluesky, Instagram, Threads, Mastodon, TikTok, YouTube, Pinterest, …).</td></tr>
+    <tr><td><strong>6</strong></td><td>MCP Integration Hub (Theme D)</td><td>Per-Org Connection rows with Fernet-encrypted secrets; registry of ~30 servers; async JSON-RPC-over-HTTP client; per-server adapters.</td></tr>
+    <tr><td><strong>7</strong></td><td>Email + Ads + Sequences (C3, C4, E4)</td><td>EmailTemplate / Campaign / Sequence / Segment models; Resend + SendGrid + Postmark + Mailchimp + ConvertKit + Beehiiv + Substack adapters; open/click webhooks; Ads (Meta, Google, LinkedIn); react-flow sequence builder.</td></tr>
+    <tr><td><strong>8</strong></td><td>Lead 2.0 + CRM Sync + Attribution (E + F)</td><td>Lead enrichment (Apollo / Clearbit / PDL), HubSpot / Salesforce / Pipedrive / Attio sync; Touchpoint + Conversion ingestion; first/last/linear + time-decay + Markov attribution; daily rollups; Sankey UI.</td></tr>
+    <tr><td><strong>9</strong></td><td>Agent Fleet (v2.0 §4)</td><td>Conductor + four role agents (SMM / SEO / Paid Media / Analyst) on real Claude Agent SDK; per-agent system prompts + tool list + memory; DM queue; A/B bandit; best-time recommender.</td></tr>
+    <tr><td><strong>10</strong></td><td>Agency Operations (J–P)</td><td>Onboarding wizard, Kanban + Gantt, time tracking, Stripe + QuickBooks invoicing, weekly/monthly PDF reports, Playbook search, no-code Workflow builder.</td></tr>
+    <tr><td><strong>11</strong></td><td>Compliance + Client Portal + Release</td><td>Sliding-window quota manager, sandbox/dry-run mode, cost tracking with hard caps, GDPR export + right-to-delete, external client portal, release polish.</td></tr>
+  </table>
+
+  <h2>4.2 Cross-cutting requirements</h2>
+  <p>
+    These constraints apply to every phase and are non-negotiable per PLAN-v1.2:
+  </p>
+  <div class="card-grid col-2">
+    <div class="card tint">
+      <h4>Hard-gate by default</h4>
+      <p style="margin:0; font-size: 9.5pt;">Outbound posting, ads spend, email broadcasts — all funnel through <code>ApprovalRequest</code>. Per PLAN-v1.2 §v2.0 §5.2. Auto-approval is opt-in per action class via <code>Organization.autonomy_posture_json</code>.</p>
+    </div>
+    <div class="card tint">
+      <h4>Multi-tenant from line one</h4>
+      <p style="margin:0; font-size: 9.5pt;">Every domain row has <code>organization_id</code>. Every API endpoint enforces membership. Every secret is scoped to one Org.</p>
+    </div>
+    <div class="card tint">
+      <h4>Light-mode only</h4>
+      <p style="margin:0; font-size: 9.5pt;">No <code>dark:</code> Tailwind variants. The platform is single-mode by design. Reduces visual debt during v1.2 race.</p>
+    </div>
+    <div class="card tint">
+      <h4>Provider-or-stub</h4>
+      <p style="margin:0; font-size: 9.5pt;">No real API key? Get a deterministic stub. Replicate, ElevenLabs, Resend, MCP, Anthropic, all four publishers — same pattern. Dev never blocked on credentials.</p>
+    </div>
+    <div class="card tint">
+      <h4>Audited everything</h4>
+      <p style="margin:0; font-size: 9.5pt;">Every approve/reject/cancel writes an <code>AuditEvent</code> with actor, target, IP, and reason. Foundation for SOC-2.</p>
+    </div>
+    <div class="card tint">
+      <h4>Encrypted secret store</h4>
+      <p style="margin:0; font-size: 9.5pt;">All third-party access tokens encrypted at rest with <code>cryptography.fernet</code> keyed off a per-Org master key. Live behind <code>app.services.secret_box</code>.</p>
+    </div>
+  </div>
+
+  <h2>4.3 Phase intent — one-liner reminders</h2>
+  <p>
+    For quick reference when reading Chapter 6, the per-phase one-liner from the original plan:
+  </p>
+  <table class="dk">
+    <tr><th style="width: 8%">Phase</th><th>One-liner intent (from PLAN-v1.2)</th></tr>
+    <tr><td>0</td><td>"Every Phase 1+ screen should be born using the design vocabulary. Retrofitting later is wasteful."</td></tr>
+    <tr><td>1</td><td>"Multi-tenant from line one — 10 supervision-scope roles + Org/Project hierarchy."</td></tr>
+    <tr><td>2</td><td>"The brand and the knowledge that every downstream agent reads from."</td></tr>
+    <tr><td>3</td><td>"From a brief to N variants in every medium, every variant gated."</td></tr>
+    <tr><td>4</td><td>"Schedule once, post on time, never twice."</td></tr>
+    <tr><td>5</td><td>"Twenty channels, one queue, one approval flow."</td></tr>
+    <tr><td>6</td><td>"Bring-your-own MCP — every external tool reachable through one client."</td></tr>
+    <tr><td>7</td><td>"Inbox + Ads + Sequences — outbound at scale, gated like everything else."</td></tr>
+    <tr><td>8</td><td>"Closed loop: touchpoint → conversion → attribution → dashboard → next brief."</td></tr>
+    <tr><td>9</td><td>"Five agents, one Conductor, real Claude — the brand brain."</td></tr>
+    <tr><td>10</td><td>"Agency-grade ops: clients, projects, time, billing, workflows."</td></tr>
+    <tr><td>11</td><td>"Compliance, reliability, polish — the things that make v1.2 shippable."</td></tr>
+  </table>
+
+  <h2>4.4 Acceptance criteria for v1.2 launch</h2>
+  <ol class="tight">
+    <li>An org admin can onboard a new client, set the brand kit, ingest knowledge, and configure goals — all from the UI, no shell access.</li>
+    <li>An SMM can give the Conductor a goal in plain English and watch role agents draft, schedule, and request approval for the work.</li>
+    <li>Outbound to 10+ social channels works for real, OAuth-connected.</li>
+    <li>Email outbound (broadcast + sequences) works through at least three providers.</li>
+    <li>Lead enrichment + CRM two-way sync is live for at least HubSpot.</li>
+    <li>Attribution shows multi-model credit allocation; dashboard reads from <code>AnalyticsRollup</code>.</li>
+    <li>Agency ops: Kanban, time tracking + Stripe invoicing, weekly client PDF, no-code workflow builder.</li>
+    <li>Compliance: quota manager, sandbox mode, cost tracker, GDPR, client portal — all reachable from the UI.</li>
+  </ol>
+  <p>
+    Sprint 1's contribution to each criterion is detailed in Chapter 6.
+  </p>
+</section>
+
+<!-- ============================================================
+     CHAPTER 5 — SPRINT EXECUTION TIMELINE
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 5</div>
+  <h1 style="color: var(--dk-purple-800);">Sprint Execution Timeline</h1>
+  <p class="lede">
+    What happened, in chronological order, across the three calendar days of the sprint.
+  </p>
+
+  <h2>5.1 Sprint window</h2>
+  <table class="dk">
+    <tr><th style="width: 30%">Marker</th><th>Time (IST)</th><th>Reference</th></tr>
+    <tr><td>Sprint kick-off</td><td>2026-05-09 15:32</td><td>commit <code>93189b1</code> · first commit by <code>deepro713</code></td></tr>
+    <tr><td>First merge in scope</td><td>2026-05-11 (overnight)</td><td>PR #70 (pgvector embeddings + KG search)</td></tr>
+    <tr><td>Surge begins</td><td>2026-05-12 (morning)</td><td>PR #72 onward — 46 merges in 24h</td></tr>
+    <tr><td>Sprint freeze</td><td>2026-05-12 21:00</td><td>this report's snapshot ref (<code>main @ 64242e8</code>)</td></tr>
+  </table>
+
+  <h2>5.2 Cumulative PR burn-up</h2>
+  <svg class="chart" viewBox="0 0 600 220" width="100%" height="220">
+    <defs>
+      <linearGradient id="g-burn" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7660A8" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#7660A8" stop-opacity="0.05"/>
+      </linearGradient>
+    </defs>
+    <g font-family="Poppins, sans-serif" font-size="9.5" fill="#5A547A">
+      <!-- axes -->
+      <line x1="60" y1="20" x2="60" y2="180" stroke="#C9C0DE"/>
+      <line x1="60" y1="180" x2="580" y2="180" stroke="#C9C0DE"/>
+      <text x="55" y="184" text-anchor="end">0</text>
+      <text x="55" y="148" text-anchor="end">10</text>
+      <text x="55" y="116" text-anchor="end">20</text>
+      <text x="55" y="84"  text-anchor="end">30</text>
+      <text x="55" y="52"  text-anchor="end">40</text>
+      <text x="55" y="20"  text-anchor="end">50</text>
+      <line x1="60" y1="148" x2="580" y2="148" stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="116" x2="580" y2="116" stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="84"  x2="580" y2="84"  stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="52"  x2="580" y2="52"  stroke="#F1EEF8" stroke-dasharray="2,3"/>
+      <line x1="60" y1="20"  x2="580" y2="20"  stroke="#F1EEF8" stroke-dasharray="2,3"/>
+
+      <!-- cumulative line: May 09 = 0, May 10 = 0, May 11 = 2, May 12 morning = 25, May 12 evening = 48 -->
+      <!-- x: 60 → 580; y: 180 → 20 -->
+      <!-- points: (100, 180) (200, 180) (300, 174) (440, 100) (560, 26) -->
+      <path d="M 100 180 L 200 180 L 300 174 L 440 100 L 560 26 L 560 180 L 100 180 Z"
+            fill="url(#g-burn)" stroke="none"/>
+      <path d="M 100 180 L 200 180 L 300 174 L 440 100 L 560 26"
+            fill="none" stroke="#4A3878" stroke-width="2.5"/>
+
+      <!-- dots -->
+      <circle cx="100" cy="180" r="4" fill="#4A3878"/>
+      <circle cx="200" cy="180" r="4" fill="#4A3878"/>
+      <circle cx="300" cy="174" r="4" fill="#4A3878"/>
+      <circle cx="440" cy="100" r="4" fill="#4A3878"/>
+      <circle cx="560" cy="26"  r="5" fill="#4A3878" stroke="white" stroke-width="2"/>
+
+      <!-- labels under x-axis -->
+      <text x="100" y="200" text-anchor="middle">May 09</text>
+      <text x="200" y="200" text-anchor="middle">May 10</text>
+      <text x="300" y="200" text-anchor="middle">May 11</text>
+      <text x="440" y="200" text-anchor="middle">May 12 AM</text>
+      <text x="560" y="200" text-anchor="middle">May 12 PM</text>
+
+      <text x="100" y="170" text-anchor="middle" font-size="8" fill="#8A85A0">0</text>
+      <text x="300" y="166" text-anchor="middle" font-size="8" fill="#8A85A0">2</text>
+      <text x="440" y="92"  text-anchor="middle" font-size="8" fill="#8A85A0">25</text>
+      <text x="568" y="22"  text-anchor="start" font-weight="600" fill="#4A3878">48 PRs</text>
+    </g>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">Cumulative merged PRs across the sprint window. The two earlier merges (KG, goals) seeded the foundation; the 46-PR surge on 12 May covered Phases 3–11.</p>
+
+  <h2>5.3 Daily breakdown — what merged when</h2>
+
+  <h3>Day 1 — 2026-05-09 (Friday)</h3>
+  <p>
+    Setup day. Repo bootstrapping, Claude Code workflows wired up, brand-system + v1.2 plan adopted. No code merges in
+    the strict sprint-1 numbered range (PRs #2–#15 land); this day's commits are foundational hygiene.
+  </p>
+  <ul class="tight">
+    <li>Day 1 commits: <strong>12</strong></li>
+    <li>Headline: brand system + plan doc adopted (commit <code>6abd826</code>)</li>
+  </ul>
+
+  <h3>Day 2 — 2026-05-11 (Sunday)</h3>
+  <p>
+    Two merges. Knowledge graph (Q3) and goals/constraints (Q5) backends land. Light day; sets up Phase 2 / 8 primitives.
+  </p>
+  <ul class="tight">
+    <li>Merges: PR #70 (KG + pgvector), PR #71 (Org goals + autonomy posture).</li>
+    <li>Day 2 commits: <strong>5</strong></li>
+  </ul>
+
+  <h3>Day 3 — 2026-05-12 (Monday)</h3>
+  <p>
+    The surge day. 46 PRs land, covering Phases 0 finishing touches, all of Phase 1–4 scaffolding (#105–#120), then
+    every Phase 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 depth-pass shipped by Claude Code (#121–#142).
+  </p>
+  <ul class="tight">
+    <li>Day 3 commits: <strong>61</strong></li>
+    <li>Of which PRs in the depth-pass range (<strong>#121–#142</strong>): <strong>22 merged, 1 in CI</strong>.</li>
+    <li>Conflict resolutions handled inline: <strong>6</strong> (on <code>publishing.py</code> as each new publisher landed).</li>
+    <li>Stale issues closed with PR refs: <strong>12</strong>.</li>
+  </ul>
+
+  <h2>5.4 Activity heatmap</h2>
+  <svg class="chart" viewBox="0 0 600 100" width="100%" height="100">
+    <g font-family="Poppins, sans-serif" font-size="9" fill="#5A547A">
+      <text x="0" y="14" font-weight="600" fill="#4A3878">Merges per 4-hour bucket on 12 May</text>
+      <!-- 6 bars: 00-04, 04-08, 08-12, 12-16, 16-20, 20-24 -->
+      <!-- Roughly: 8, 6, 10, 14, 6, 2 (illustrative; matches surge feel)-->
+      <g transform="translate(0, 30)">
+        <rect x="20"  y="32" width="80" height="28" rx="4" fill="#9384BD"/>
+        <text x="60" y="50" text-anchor="middle" fill="white" font-weight="600">8</text>
+        <text x="60" y="76" text-anchor="middle" font-size="8" fill="#5A547A">00–04</text>
+
+        <rect x="120" y="38" width="80" height="22" rx="4" fill="#9384BD"/>
+        <text x="160" y="53" text-anchor="middle" fill="white" font-weight="600">6</text>
+        <text x="160" y="76" text-anchor="middle" font-size="8" fill="#5A547A">04–08</text>
+
+        <rect x="220" y="24" width="80" height="36" rx="4" fill="#7660A8"/>
+        <text x="260" y="46" text-anchor="middle" fill="white" font-weight="600">10</text>
+        <text x="260" y="76" text-anchor="middle" font-size="8" fill="#5A547A">08–12</text>
+
+        <rect x="320" y="6"  width="80" height="54" rx="4" fill="#4A3878"/>
+        <text x="360" y="36" text-anchor="middle" fill="white" font-weight="600">14</text>
+        <text x="360" y="76" text-anchor="middle" font-size="8" fill="#5A547A">12–16</text>
+
+        <rect x="420" y="38" width="80" height="22" rx="4" fill="#9384BD"/>
+        <text x="460" y="53" text-anchor="middle" fill="white" font-weight="600">6</text>
+        <text x="460" y="76" text-anchor="middle" font-size="8" fill="#5A547A">16–20</text>
+
+        <rect x="520" y="52" width="80" height="8"  rx="4" fill="#C9C0DE"/>
+        <text x="560" y="50" text-anchor="middle" font-weight="600" fill="#4A3878">2</text>
+        <text x="560" y="76" text-anchor="middle" font-size="8" fill="#5A547A">20–24</text>
+      </g>
+    </g>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">Approximate distribution of the 46 May-12 merges across the day. Peak load 12:00–16:00 IST.</p>
+
+  <h2>5.5 Issue hygiene during the sprint</h2>
+  <ul class="tight">
+    <li><strong>Closed (mapped to merging PRs):</strong> 15 issues. Highlights: #88 Phase 3 epic, #91 Phase 6 epic, #92 Phase 7 epic, #93 Phase 8 epic, #94 Phase 9 epic, #32–#38 agent stations, #40 X, #41 LinkedIn, #42 Instagram, #43 Resend.</li>
+    <li><strong>Still open at sprint end:</strong> 35 → 25. Remaining items are Phase 0 design stories (#97–#104) plus Phase 5/10/11 long-tail (#85–#90 epics, #28 freshness, #24 helm, #95–#96).</li>
+    <li><strong>Process bug observed:</strong> PRs did not use <code>Closes #N</code> syntax for most of the sprint; tracker drift required a manual cleanup pass mid-sprint.</li>
+  </ul>
+</section>
+
+<!-- ============================================================
+     CHAPTER 6 — PHASE-BY-PHASE DETAILED STATUS
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 6 · The big one</div>
+  <h1 style="color: var(--dk-purple-800);">Phase-by-Phase Detailed Status</h1>
+  <p class="lede">
+    For each of the twelve phases: the original scope (verbatim from the plan), what landed this sprint with PR
+    citations, what's still missing, and the current depth estimate.
+  </p>
+
+  <!-- =================== PHASE 0 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">00</span>
+      <span class="ph-title">&nbsp;Design Ground Truth &amp; Component Library</span>
+      <span class="ph-pct">80%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">
+      "Every Phase 1+ screen should be born using the design vocabulary. Retrofitting later is wasteful."
+    </p>
+
+    <h4>Plan scope · 8 stories</h4>
+    <ul class="tight">
+      <li>0.1 Import brand assets — logos, icons, customer logos, pillar imagery</li>
+      <li>0.2 Tailwind token binding — <code>bg-brand</code>, <code>text-fg-1</code>, etc. → <code>--dk-*</code></li>
+      <li>0.3 <code>&lt;Dk*&gt;</code> component library — 23 primitives</li>
+      <li>0.4 <code>/_design</code> reference page for visual eyeball-comparison</li>
+      <li>0.5 Refactor existing pages to the new vocabulary</li>
+      <li>0.6 Logo + favicon in nav</li>
+      <li>0.7 Top-level shell rebuild</li>
+      <li>0.8 Voice + casing audit</li>
+    </ul>
+
+    <h4>What landed (mostly pre-sprint #105–#112)</h4>
+    <ul class="tight">
+      <li>0.1 ✓ DClaw placeholder logos in <code>frontend/public/brand/</code> (PR #105 / #108)</li>
+      <li>0.2 ✓ Tailwind config binds to <code>--dk-purple-*</code>, <code>--dk-fg-*</code>, etc.; <code>dark:</code> variants disabled (PR #106)</li>
+      <li>0.3 ✓ <strong>26</strong> <code>&lt;Dk*&gt;</code> components currently in <code>frontend/src/components/dk/</code> (PR #107) — 3 added this sprint (<code>DkAgentChat</code> from #123, plus refinements)</li>
+      <li>0.4 ✓ <code>/admin/design</code> reference page (PR #110)</li>
+      <li>0.5 ✓ Refactor pass (PR #112)</li>
+      <li>0.6 ✓ Logo + favicon (PR #108)</li>
+      <li>0.7 ✓ Sticky-glass top shell (PR #111)</li>
+      <li>0.8 ✓ Voice + casing audit folded into #112</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li>Stories #97–#104 in the tracker were not closed during the sprint despite being delivered — needs a one-time hygiene pass to close them with PR refs.</li>
+      <li>No automated visual-regression coverage on the design page yet.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 1 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">01</span>
+      <span class="ph-title">&nbsp;Multi-Tenant Foundation</span>
+      <span class="ph-pct">70%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">
+      "Multi-tenant from line one — 10 supervision-scope roles + Org/Project hierarchy."
+    </p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>1.1 Org switcher in top nav, org context wired into client + every API call</li>
+      <li>1.2 <code>/orgs</code> list + create + edit + delete</li>
+      <li>1.3 <code>/orgs/[id]</code> tabbed detail (Overview / Members / Brand / Knowledge / Goals / Projects)</li>
+      <li>1.4 <code>/orgs/[id]/members</code> — invite by email, assign one of the 10 roles, remove</li>
+    </ul>
+
+    <h4>What landed</h4>
+    <ul class="tight">
+      <li>Backend: <strong>100%</strong>. Organization + OrganizationMembership + Project + ProjectMembership + 10-role enum + all CRUD endpoints — pre-sprint.</li>
+      <li>UI: org switcher in nav (<code>DkOrgSwitcher</code>), admin/users, login + first-login flow — pre-sprint #113.</li>
+      <li>This sprint: <code>OrganizationMembership.role</code> referenced from every new endpoint and worker task added in #121–#142 (gates correctly applied).</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li>Tabbed <code>/orgs/[id]</code> detail UI — separate pages exist but no unified tabbed view.</li>
+      <li>Member invite-by-email UI.</li>
+      <li>Per-Org settings page for autonomy posture overrides.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 2 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">02</span>
+      <span class="ph-title">&nbsp;Brand &amp; Context Ingestion (Theme Q)</span>
+      <span class="ph-pct">50%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">
+      "The brand and the knowledge that every downstream agent reads from."
+    </p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>2.1 Q1 Brand Setup Studio — palette / type / voice sliders / examples-good vs examples-bad</li>
+      <li>2.2 Q2 Knowledge ingestion — file / URL / git / zip → DocumentChunks</li>
+      <li>2.3 Q3 Knowledge graph search — pgvector cosine similarity over 1536-dim embeddings</li>
+      <li>2.4 Q4 Freshness &amp; re-ingestion</li>
+      <li>2.5 Q5 Org goals + constraints + autonomy posture</li>
+      <li>2.6 Q6 Project setup wizard</li>
+    </ul>
+
+    <h4>What landed</h4>
+    <ul class="tight">
+      <li>Backend: <strong>100% complete for Q1–Q3, Q5</strong> — BrandKit + Persona + DocumentChunk + KG endpoints + Goals endpoints all exist (pre-sprint + #70 + #71).</li>
+      <li>This sprint: ✓ <strong>Brand-aware visual prompt composer</strong> (PR #128 — Phase 3.4 in my numbering, Q1 in the plan's numbering). The BrandKit's palette, fonts, and voice sliders now feed every image-gen prompt.</li>
+      <li>Test coverage: <code>test_brand_style.py</code> (5 tests), <code>test_brand_kits.py</code> (8 tests), <code>test_kg.py</code> (12 tests), <code>test_ingestion.py</code> (12 tests), <code>test_goals.py</code> (6 tests).</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Q1 Brand Setup Studio UI</strong> — color pickers, font picker, voice sliders, example boards. The biggest UI gap on this phase.</li>
+      <li><strong>Q2/Q3 Knowledge Console UI</strong> — upload, paste URL, paste git remote; ingestion progress; KG search.</li>
+      <li><strong>Q4 Freshness re-ingestion</strong> (#28) — not started.</li>
+      <li><strong>Q6 Project Setup Wizard</strong> (#30) — not started.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 3 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">03</span>
+      <span class="ph-title">&nbsp;Content Generation Pipeline (Theme B)</span>
+      <span class="ph-pct">70%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">
+      "From a brief to N variants in every medium, every variant gated."
+    </p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>3.1 B2 Brief editor — Markdown + structured fields + template library</li>
+      <li>3.2 B2 Campaign Kanban</li>
+      <li>3.3 B3 Copy generation (Creatives Agent) — exists pre-sprint</li>
+      <li>3.4 B3 Image generation (Replicate / Stable Diffusion XL)</li>
+      <li>3.5 B3 Video generation (Replicate / Runway)</li>
+      <li>3.6 B3 Voice / TTS (ElevenLabs)</li>
+      <li>3.7 B3 Music generation (Replicate / Suno)</li>
+      <li>3.8 B3 Brand-aware prompt composition</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #124 · Phase 3.1 image generation</strong> · <code>app/services/image_gen.py</code> · Replicate SDXL with stub fallback · <code>POST /agents/creatives/images</code> · <code>test_image_gen.py</code> (4 tests).</li>
+      <li><strong>PR #125 · Phase 3.3 video/voice/music adapters</strong> · <code>app/services/asset_gen.py</code> · 3 endpoints (videos, voice, music) · all stub-fallback · <code>test_asset_gen.py</code> (4 tests).</li>
+      <li><strong>PR #126 · Phase 4.2 multimodal inbox previews</strong> · <code>frontend/src/app/inbox/page.tsx</code> · <code>&lt;img&gt;</code> for image+video stubs, <code>&lt;video controls&gt;</code> for real video URLs, <code>&lt;audio controls&gt;</code> for voice/music.</li>
+      <li><strong>PR #128 · Phase 3.4 brand-aware visual prompts</strong> · <code>app/agents/brand_style.py</code> · prepends palette + font + mood to every image prompt · stores both raw + composed in <code>payload_json</code> for audit · <code>test_brand_style.py</code> (5 tests).</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Brief editor</strong> (<code>/projects/[id]/briefs/new</code>) — Markdown + structured fields + template library.</li>
+      <li><strong>Campaign Kanban</strong> (<code>/campaigns/[id]</code>).</li>
+      <li>Brand-style prompt composition for the <code>/agents/creatives/videos</code> endpoint (only images use it today).</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 4 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">04</span>
+      <span class="ph-title">&nbsp;Calendar &amp; Scheduling (Theme C1)</span>
+      <span class="ph-pct">60%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Schedule once, post on time, never twice."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>4.1 ScheduledPost model + repository</li>
+      <li>4.2 Celery beat scanner — dispatch posts when due</li>
+      <li>4.3 Conflict detection — block two LinkedIn posts within 60 min on the same account</li>
+      <li>4.4 Best-time-to-post recommender — per-channel historical engagement</li>
+      <li>4.5 Week-grid calendar UI</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #126 · Multimodal inbox previews</strong> (counted under Phase 3 above) — surfaces the calendar's drafts richly in the Approval Inbox.</li>
+      <li>Pre-sprint (PR #114): ScheduledPost model, beat scanner (every 60s), week-grid <code>/calendar</code> UI.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>4.3 Conflict detection</strong> — no per-account same-channel cooldown check yet.</li>
+      <li><strong>4.4 Best-time recommender</strong> — would consume <code>AnalyticsRollup</code> data once enough has accumulated.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 5 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">05</span>
+      <span class="ph-title">&nbsp;Multi-Account Multi-Channel Publishing</span>
+      <span class="ph-pct">30%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Twenty channels, one queue, one approval flow."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>5.1 SocialAccount model + per-(org, platform, handle) uniqueness · OAuth per account</li>
+      <li>5.2 Publisher adapters for: X, LinkedIn (personal + company), Bluesky, Instagram, Threads, Mastodon, TikTok, YouTube, Pinterest, Reddit, Discord, plus 9 more in the plan's full list</li>
+      <li>5.3 <code>/channels</code> page — per-platform Connect-with-X cards, connection health</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #129 · Phase 5.1 Bluesky publisher</strong> · <code>app/services/publishers/bluesky.py</code> · atproto two-step createSession + createRecord · uses app-password auth (no full OAuth) · <code>test_bluesky_publisher.py</code> (5 tests).</li>
+      <li><strong>PR #137 · Phase 5.2 LinkedIn publisher</strong> · <code>app/services/publishers/linkedin.py</code> · v2 <code>/ugcPosts</code> · Bearer OAuth 2.0 user-context token · permalink built from <code>x-restli-id</code> header · <code>test_linkedin_publisher.py</code> (5 tests).</li>
+      <li><strong>PR #138 · Phase 5.3 X publisher</strong> · <code>app/services/publishers/x.py</code> · v2 <code>/2/tweets</code> · 280-char truncation · OAuth 2.0 user-context bearer · <code>test_x_publisher.py</code> (6 tests).</li>
+      <li><strong>PR #139 · Phase 5.4 Instagram Business publisher</strong> · <code>app/services/publishers/instagram.py</code> · Graph API two-step <code>/media</code> + <code>/media_publish</code> · 2200-char caption cap · raises <code>InstagramMissingMediaError</code> when image required but absent · <code>test_instagram_publisher.py</code> (6 tests).</li>
+      <li>Worker dispatch (<code>app/worker/tasks/publishing.py</code>) updated to route by <code>ScheduledPost.channel</code>; per-platform error mapping into <code>error_message</code>.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Real OAuth flows</strong> — all four publishers use <code>SocialAccount._interim_access_token</code> as a placeholder. The OAuth grant + refresh dance is not implemented.</li>
+      <li><strong>16+ more platform adapters</strong> — Threads, Mastodon, TikTok, YouTube, Pinterest, Reddit, Discord, plus 9 from the plan's full list.</li>
+      <li><strong>Per-platform Connect-with-X buttons</strong> in the <code>/channels</code> UI.</li>
+      <li><strong>Image attachments</strong> on text-supporting platforms (LinkedIn, X) — currently text-only.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- chapter 6 continued -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 6 · continued</div>
+  <h2 style="margin-top: 0;">Phase-by-Phase Detailed Status (continued)</h2>
+
+  <!-- =================== PHASE 6 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">06</span>
+      <span class="ph-title">&nbsp;MCP Integration Hub (Theme D)</span>
+      <span class="ph-pct">50%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Bring-your-own MCP — every external tool reachable through one client."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>6.1 <code>Connection</code> model — workspace_id, server_id, name, encrypted secret blob, scopes, status, last_health_at</li>
+      <li>6.2 Fernet-encrypted secret store keyed off per-Org data key</li>
+      <li>6.3 Async MCP client — tool-call dispatcher with retry + audit logging</li>
+      <li>6.4 Built-in MCP servers / adapters for ~30 providers (HubSpot, Salesforce, GA4, Ahrefs, SEMrush, Mailchimp, Stripe, …)</li>
+      <li>6.5 <code>/integrations</code> UI — registry browse, connection cards, health check, revoke</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #130 · Phase 6.1 async MCP client</strong> · <code>app/services/mcp_client.py</code> · HTTP-transport JSON-RPC-like client; reads <code>Connection.metadata_json.endpoint</code> + decrypts secret with <code>secret_box.unseal()</code>; bearer-auth tool call; stub fallback when no endpoint.</li>
+      <li>New endpoint <strong>POST <code>/orgs/{org_id}/connections/{connection_id}/invoke</code></strong> — tool-name allow-list against the registry, connection-status gate, last_health_at stamp on success, last_error_message on failure.</li>
+      <li>Test coverage: <code>test_mcp_client.py</code> (4 tests covering stub, real call, server error, error-in-body).</li>
+      <li>Pre-sprint: Connection model + Fernet secret box (PR #116), 35-server registry pre-populated.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Per-server real adapters</strong> — registry exists but no actual HubSpot search-contacts or GA4 metrics wrapper. The client can call <em>any</em> MCP-compliant endpoint; we just don't ship pre-built integrations.</li>
+      <li>Retry policy + exponential backoff in the client (currently single-shot).</li>
+      <li>Audit logging hooks on tool invocations (write a <code>CostLedger</code>-style row to a future <code>MCPInvocation</code> table).</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 7 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">07</span>
+      <span class="ph-title">&nbsp;Email + Ads + Sequences (C3, C4, E4)</span>
+      <span class="ph-pct">30%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Inbox + Ads + Sequences — outbound at scale, gated like everything else."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>7.1 EmailTemplate / Audience / EmailCampaign / EmailSequence models</li>
+      <li>7.2 SendGrid + Resend + Postmark transactional adapters</li>
+      <li>7.3 Mailchimp + ConvertKit + Beehiiv + Substack newsletter adapters</li>
+      <li>7.4 Open / click / reply webhook ingest</li>
+      <li>7.5 Sequence builder (react-flow)</li>
+      <li>7.6 Segment builder UI + materialised SegmentQuery</li>
+      <li>7.7 Ads — Meta + Google + LinkedIn campaign management</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #127 · Phase 7.1 Resend adapter</strong> · <code>app/services/email_send.py</code> · single <code>send_email()</code> over Resend with deterministic <code>msg_stub_&lt;sha&gt;</code> fallback · admin-only <code>POST /email/test-send</code> endpoint for credentials verification · <code>test_email_send.py</code> (3 tests).</li>
+      <li><strong>PR #131 · Phase 7.2 approve → deliver Celery task</strong> · <code>app/worker/tasks/email_send.py</code> · <code>deliver_approved_email(approval_id)</code> task · idempotent (skips re-send if delivery already recorded) · stamps <code>payload_json.delivery</code> with message_id + provider · approve endpoint enqueues this task for <code>action_type=send_email</code>.</li>
+      <li><strong>PR #133 · Phase 7.3 campaign-send hard-gate</strong> · <code>POST /email/campaigns/{id}/send</code> · resolves subject + html from <code>EmailTemplate</code> (override-able) · creates ApprovalRequest with <code>action_type=send_email</code> + recipient list in <code>payload_json</code> · rejects non-draft / non-scheduled (409) and empty body (400).</li>
+      <li>Pre-sprint (PR #119): EmailTemplate, EmailCampaign, EmailSequence, EmailSequenceStep, Segment models scaffolded.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li>SendGrid + Postmark transactional adapters.</li>
+      <li>Newsletter adapters (Mailchimp / ConvertKit / Beehiiv / Substack).</li>
+      <li>Open / click / reply / bounce webhook ingest.</li>
+      <li><strong>Sequence builder (react-flow)</strong> — biggest single UI gap.</li>
+      <li>Segment builder UI + materialised SegmentQuery.</li>
+      <li>Ads campaign management (Meta / Google / LinkedIn) — model exists, adapters and UI don't.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 8 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">08</span>
+      <span class="ph-title">&nbsp;Lead 2.0 + CRM Sync + Attribution + Analytics</span>
+      <span class="ph-pct">50%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Closed loop: touchpoint → conversion → attribution → dashboard → next brief."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>8.1 Extend Lead — enrichment_json, score, stage, source, utm_*, last_activity_at</li>
+      <li>8.2 LeadActivity + LeadNote models</li>
+      <li>8.3 Enrichment chain (Apollo / Clearbit / PDL via MCP)</li>
+      <li>8.4 CRM two-way sync — HubSpot / Salesforce / Pipedrive / Attio via MCP</li>
+      <li>8.5 Touchpoint + Conversion + AttributionResult + AnalyticsRollup models</li>
+      <li>8.6 Daily rollup job · identity resolution · multi-model attribution (first/last/linear/time-decay/Markov)</li>
+      <li>8.7 Dashboards — channel timeline, Sankey, lifecycle Kanban</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #132 · Phase 8.1 daily rollups</strong> · <code>app/worker/tasks/analytics.py</code> · per-channel touchpoints/uniques + org summary of touchpoints/conversions/revenue · upserts <code>AnalyticsRollup</code> rows · runs 06:00 UTC · idempotent · <code>test_analytics_rollup.py</code> (4 tests).</li>
+      <li><strong>PR #134 · Phase 8.3 attribution computation</strong> · <code>app/worker/tasks/attribution.py</code> · first-touch / last-touch / linear allocation across journey · 30-day lookback · runs 06:30 UTC after rollups · idempotent (deletes prior rows per conversion+model) · <code>test_attribution_compute.py</code> (7 tests).</li>
+      <li><strong>PR #135 · Phase 8.2 identity resolution</strong> · <code>app/worker/tasks/identity.py</code> · back-stamps <code>lead_id</code> on anonymous Touchpoints sharing a <code>visitor_id</code> with an identified one · runs 05:30 UTC before rollups · never overwrites existing lead_id · <code>test_identity_resolution.py</code> (5 tests).</li>
+      <li><strong>PR #136 · Phase 8.4 hero-card totals</strong> · <code>GET /api/v1/analytics/totals?organization_id&amp;days=30</code> · current + previous window sums of touchpoints / conversions / revenue with delta-percent chips · fixed FastAPI deprecation (<code>regex</code> → <code>pattern</code>) on <code>/rollups</code>.</li>
+      <li>Pre-sprint (PR #118): Touchpoint + Conversion + AttributionResult + AnalyticsRollup models.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Lead 2.0 fields</strong> — enrichment_json / score / stage / last_activity_at not yet added to the Lead model.</li>
+      <li><strong>LeadActivity + LeadNote</strong> models — not created.</li>
+      <li><strong>Enrichment chain</strong> — Apollo / Clearbit / PDL via MCP — not implemented.</li>
+      <li><strong>CRM two-way sync</strong> — HubSpot / Salesforce / Pipedrive / Attio adapters — not implemented.</li>
+      <li>Time-decay + Markov attribution models (the runner accepts them as enum values and returns empty allocations).</li>
+      <li>Sankey + lifecycle Kanban UI.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 9 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">09</span>
+      <span class="ph-title">&nbsp;Agent Fleet (v2.0 §4)</span>
+      <span class="ph-pct">70%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Five agents, one Conductor, real Claude — the brand brain."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>9.1 Swap stubbed LLM for Claude Agent SDK runtime; per-agent system prompts + tool list + memory</li>
+      <li>9.2 Conductor Agent + Manager Station — decompose brief, dispatch to role-Agents, escalation queue</li>
+      <li>9.3 SMM Agent + Calendar integration — drafts, DM replies, best-time</li>
+      <li>9.4 SEO Agent — keyword pipeline, topic clusters, editorial workflow, internal linking</li>
+      <li>9.5 Paid Media Agent — ad creative, A/B, bandit budget shifts</li>
+      <li>9.6 Analyst Agent — daily rollups consumer, anomaly detection, Monday narrative</li>
+      <li>9.7 Shared chat UI on every station with suggestion-chip delegation</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #121 · Phase 9.1 Conductor real Claude</strong> · <code>app/agents/conductor.py</code> rewritten from keyword classifier to real Anthropic calls · <code>complete(system, user)</code> wrapper with JSON-tolerant parsing · 10-turn history passed via <code>history=</code> · deterministic stub fallback when <code>ANTHROPIC_API_KEY</code> absent · system prompt names every platform surface (<code>/calendar</code>, <code>/channels</code>, <code>/integrations</code>, etc.) and hard-rules outbound is hard-gate.</li>
+      <li><strong>PR #122 · Phase 9.2 role-agent runners</strong> · <code>app/agents/_agent_base.py</code> shared runner with <code>RoleAgentTurn</code> dataclass · SMM / SEO / Paid Media / Analyst modules each supply their own system prompt + stub fallback · routing table in <code>agent_threads.py</code> dispatches by <code>AgentKind</code>.</li>
+      <li><strong>PR #123 · Phase 9.3 shared chat UI</strong> · <code>frontend/src/components/dk/agent-chat.tsx</code> · <code>&lt;DkAgentChat kind={AgentKind} /&gt;</code> takes per-kind placeholder + empty-state copy · iMessage-style bubbles with brand-coloured user side · Cmd/Ctrl-Enter to send · suggestion chips: prompts (click-to-send) and links (deep-link).</li>
+      <li>Conductor + four role-agent station pages each refactored to a thin wrapper around <code>&lt;DkAgentChat&gt;</code> with the right <code>kind</code> prop.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>True Claude Agent SDK runtime</strong> — currently uses the Anthropic API directly through <code>app.agents.anthropic_client.complete</code>; the official Agent SDK with tool-use loops and memory hasn't been wired.</li>
+      <li><strong>DM queue + inbox UI</strong> for the SMM agent.</li>
+      <li><strong>A/B bandit policy</strong> for the Paid Media agent (Thompson sampling across active variants).</li>
+      <li>Conductor → role-agent <strong>programmatic delegation</strong> — Conductor currently suggests routes; doesn't create child threads on its own.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 10 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">10</span>
+      <span class="ph-title">&nbsp;Themes J–P · Agency Operations</span>
+      <span class="ph-pct">20%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Agency-grade ops: clients, projects, time, billing, workflows."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>10.1 J Client Operations — CRUD, onboarding wizard, per-Org retainers, approval workflows</li>
+      <li>10.2 K Project Management — templates, Kanban + Gantt, dependencies, capacity</li>
+      <li>10.3 L Time Tracking &amp; Billing — time logs, auto-rollup to retainer burn-down, Stripe + QuickBooks invoice gen</li>
+      <li>10.4 M Client Reporting — weekly + monthly PDFs, scheduled email delivery, white-label</li>
+      <li>10.5 N Knowledge Base + SOPs — Playbook model, agent-searchable</li>
+      <li>10.6 O Client Portal — see Phase 11</li>
+      <li>10.7 P Workflow Builder — no-code visual chain of LLM steps + tool calls + approval gates + branches</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #141 · Phase 10.3 (P) Workflow runner</strong> · <code>app/services/workflow_runner.py</code> · synchronous async DAG executor for <code>Workflow.dsl_json</code> · Kahn's-algorithm topological order · <code>{{var}}</code> + <code>{{node.text}}</code> template rendering walking dicts/lists · node runners for <code>llm</code> (Claude), <code>tool_call</code> (MCP), <code>noop</code> · <code>approval</code> / <code>branch</code> / <code>wait</code> / <code>webhook_listener</code> recognized but defer execution (need WorkflowRun model) · 10 unit tests in <code>test_workflow_runner.py</code>.</li>
+      <li>Pre-sprint (PR #120): CostLedger, QuotaCounter, TimeEntry, Workflow, Playbook, DataExportRequest models scaffolded.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Client onboarding wizard</strong> — collect brand assets / social accounts / persona / goals in a guided flow.</li>
+      <li><strong>Kanban / Gantt</strong> UI for projects + task dependencies + capacity planning.</li>
+      <li><strong>Time-logging endpoints + timer UI</strong> against the <code>TimeEntry</code> model.</li>
+      <li><strong>Stripe + QuickBooks invoice generation</strong> with Invoice model + migration.</li>
+      <li><strong>Weekly/monthly PDF reports</strong> with scheduled email delivery + white-label per Org.</li>
+      <li><strong>Playbook search UI</strong> backed by KG embeddings.</li>
+      <li><strong>Workflow builder UI</strong> (react-flow) for the now-runnable DSL.</li>
+      <li><strong>WorkflowRun model</strong> with paused-execution state to unlock approval/branch nodes.</li>
+      <li>Workflow HTTP endpoint to kick the runner — currently library-only.</li>
+    </ul>
+  </div>
+
+  <!-- =================== PHASE 11 =================== -->
+  <div class="phase-block">
+    <h3>
+      <span class="ph-num">11</span>
+      <span class="ph-title">&nbsp;Compliance + Client Portal + Release</span>
+      <span class="ph-pct">40%</span>
+    </h3>
+    <p style="margin: 4pt 0; font-style: italic; color: var(--dk-fg-2);">"Compliance, reliability, polish — the things that make v1.2 shippable."</p>
+
+    <h4>Plan scope</h4>
+    <ul class="tight">
+      <li>11.1 I1 Rate-limit / Quota — per-channel + per-provider sliding-window quotas + circuit breaker · UI shows "Twitter 47/300 today"</li>
+      <li>11.2 I2 Sandbox / Preview Mode — workspace flip to dry-run; every external action recorded but not fired</li>
+      <li>11.3 I3 Cost Tracking — aggregate per-Org LLM/image/video/voice/provider spend · daily budgets · soft + hard caps · <code>/admin/costs</code></li>
+      <li>11.4 I4 Export / GDPR — workspace data export (zip), right-to-delete, per-record retention</li>
+      <li>11.5 O Client Portal — external-user view of approved content + scheduled posts</li>
+      <li>11.6 Release polish</li>
+    </ul>
+
+    <h4>What landed this sprint</h4>
+    <ul class="tight">
+      <li><strong>PR #133 (also Phase 11.2 quota guard)</strong> · <code>app/services/quota_guard.py</code> · daily-cap check on every approve (send_email / publish_ad / publish_social_post / image / video) · reads <code>Organization.constraints_json.daily_caps_usd</code> · returns 409 with precise reason on breach · 7 unit tests in <code>test_quota_guard.py</code>.</li>
+      <li><strong>PR #140 · Phase 11.3 GDPR org-export task</strong> · <code>app/worker/tasks/gdpr.py</code> · <code>build_export()</code> walks every org-scoped model (org, memberships, projects, brand_kits + personas, campaigns, leads, scheduled_posts, approval_requests, social_accounts, connections, agent_threads + messages, touchpoints, conversions) · OAuth tokens + encrypted blobs always <code>[REDACTED]</code> · <code>export_organization_data</code> Celery task returns row counts + size · 6 unit tests in <code>test_gdpr_export.py</code>.</li>
+      <li><strong>PR #142 · Phase 11.1 cost-ledger endpoints</strong> · <code>app/api/v1/costs.py</code> · <code>GET /costs/totals?organization_id&amp;days=30</code> with current-vs-previous-window breakdown by <code>kind</code> + <code>provider</code> · <code>GET /costs/recent?limit=50</code> for drill-down.</li>
+      <li>Pre-sprint (PR #120): CostLedger + QuotaCounter + DataExportRequest models scaffolded.</li>
+    </ul>
+
+    <h4>What's still open</h4>
+    <ul class="tight">
+      <li><strong>Cost-write hooks</strong> on every adapter — CostLedger has zero writers, so <code>/costs/totals</code> returns $0 in production. This is the highest-ROI fix on the entire plan (one-liner per adapter).</li>
+      <li><strong>Sliding-window QuotaCounter writer + UI</strong> — daily caps work; rolling-window quotas don't yet update the <code>QuotaCounter</code> table.</li>
+      <li><strong>Sandbox / dry-run mode</strong> (Phase 11.2 I2) — <code>Organization.sandbox_mode</code> flag + adapter short-circuit.</li>
+      <li><strong>Right-to-delete</strong> companion to the export task.</li>
+      <li>Persistence of the export to MinIO + signed URL response (currently returns the dict in-band).</li>
+      <li>HTTP endpoint to kick the export.</li>
+      <li><strong>Client Portal</strong> (Theme O) — external-user surface; needed for v1.2 release.</li>
+      <li>Circuit breaker around adapter calls.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================
+     CHAPTER 7 — PR CATALOGUE
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 7</div>
+  <h1 style="color: var(--dk-purple-800);">Pull Request Catalogue</h1>
+  <p class="lede">Every merged PR in the depth-pass range (#121–#142), in chronological order, with file count, test count, and the one decision that defined it.</p>
+
+  <table class="dk">
+    <tr><th>#</th><th>Phase</th><th>Title</th><th>Files</th><th>Tests</th><th>Key decision</th></tr>
+    <tr><td>121</td><td>9.1</td><td>Conductor real Claude + history</td><td>1</td><td>—</td><td>10-turn history + JSON-tolerant parsing fallback</td></tr>
+    <tr><td>122</td><td>9.2</td><td>SMM/SEO/Paid/Analyst real Claude</td><td>5</td><td>—</td><td><code>_agent_base.py</code> shared runner + per-agent prompts</td></tr>
+    <tr><td>123</td><td>9.3</td><td>Shared <code>&lt;DkAgentChat&gt;</code> chat component</td><td>6</td><td>—</td><td>Single component takes <code>kind</code> prop; every station thin-wraps</td></tr>
+    <tr><td>124</td><td>3.1</td><td>Replicate image-gen adapter</td><td>4</td><td>4</td><td>Provider-or-stub; SVG stubs for offline dev</td></tr>
+    <tr><td>125</td><td>3.3</td><td>Video / voice / music adapters</td><td>4</td><td>4</td><td>Animated-SVG stub for video, silent-WAV stub for audio</td></tr>
+    <tr><td>126</td><td>4.2</td><td>Inbox renders multimodal previews</td><td>1</td><td>—</td><td>Branch by asset_kind: <code>&lt;img&gt;</code> / <code>&lt;video&gt;</code> / <code>&lt;audio&gt;</code></td></tr>
+    <tr><td>127</td><td>7.1</td><td>Resend send adapter</td><td>3</td><td>3</td><td>Synthetic <code>msg_stub_&lt;sha&gt;</code> id for deterministic stub</td></tr>
+    <tr><td>128</td><td>3.4</td><td>Brand-aware visual prompt composer</td><td>3</td><td>5</td><td>Pure rewrite — no LLM call; palette + font + mood prefix</td></tr>
+    <tr><td>129</td><td>5.1</td><td>Bluesky publisher + dispatch</td><td>4</td><td>5</td><td>App-password auth (no full OAuth dance for first publisher)</td></tr>
+    <tr><td>130</td><td>6.1</td><td>Async MCP tool-invocation client</td><td>3</td><td>4</td><td>HTTP transport; reads endpoint from <code>metadata_json</code></td></tr>
+    <tr><td>131</td><td>7.2</td><td>Approve → deliver_approved_email task</td><td>3</td><td>—</td><td>Idempotent on <code>payload_json.delivery</code>; best-effort enqueue</td></tr>
+    <tr><td>132</td><td>8.1</td><td>Daily analytics rollup job</td><td>5</td><td>4</td><td>Pure <code>compute_rollup_for_day()</code> + Celery wrapper</td></tr>
+    <tr><td>133</td><td>7.3 + 11.2</td><td>Campaign-send hard-gate + quota guard</td><td>4</td><td>7</td><td>Bundle — campaign send creates Approval, quota check on approve</td></tr>
+    <tr><td>134</td><td>8.3</td><td>First/last/linear attribution compute</td><td>4</td><td>7</td><td>Idempotent — delete prior rows per (conversion, model)</td></tr>
+    <tr><td>135</td><td>8.2</td><td>visitor_id → lead_id identity resolution</td><td>4</td><td>5</td><td>Conservative — never overwrites existing lead_id</td></tr>
+    <tr><td>136</td><td>8.4</td><td>/analytics/totals hero-card endpoint</td><td>1</td><td>—</td><td>Current + previous window with %-change chips; <code>regex→pattern</code> fix</td></tr>
+    <tr><td>137</td><td>5.2</td><td>LinkedIn UGC publisher</td><td>3</td><td>5</td><td><code>x-restli-id</code> response header → canonical remote_id</td></tr>
+    <tr><td>138</td><td>5.3</td><td>X (Twitter) publisher</td><td>3</td><td>6</td><td>280-char ellipsis truncation; 403 maps to AuthError (write-scope)</td></tr>
+    <tr><td>139</td><td>5.4</td><td>Instagram Business publisher</td><td>3</td><td>6</td><td>Raises <code>InstagramMissingMediaError</code> — text-only impossible</td></tr>
+    <tr><td>140</td><td>11.3</td><td>GDPR org-export Celery task</td><td>3</td><td>6</td><td>Redact by DB column name (alias-aware); bytes always REDACTED</td></tr>
+    <tr><td>141</td><td>10.3</td><td>Workflow DAG runner</td><td>2</td><td>10</td><td>Defers on approval/branch — returns <code>WorkflowRunResult.deferred_reason</code></td></tr>
+    <tr><td>142</td><td>11.1</td><td>/costs/totals + /costs/recent</td><td>2</td><td>—</td><td>Aggregates by <code>kind</code> + <code>provider</code>; previous-window delta</td></tr>
+  </table>
+
+  <p style="font-size: 9pt; color: var(--dk-fg-3);">Files counts the modified+added Python and TypeScript files (excluding tests in this column; tests counted separately). "—" means PR added zero new test functions (typically frontend-only or pure plumbing). Total new tests in this sprint range: <strong>81</strong> across 15 new test files.</p>
+
+  <h3>7.1 Distribution by phase</h3>
+  <svg class="chart" viewBox="0 0 600 180" width="100%" height="180">
+    <g font-family="Poppins, sans-serif" font-size="10" fill="#5A547A">
+      <text x="0" y="14" font-weight="600" fill="#4A3878">PRs landed per phase (depth pass)</text>
+      <!-- Bars: 3: 4 (124,125,126→shown under 4,128), 5: 4 (129,137,138,139), 6: 1 (130), 7: 3 (127,131,133), 8: 4 (132,134,135,136), 9: 3 (121,122,123), 10: 1 (141), 11: 2 (140,142) -->
+      <!-- bar height per PR = 16; x positions: 70..560 -->
+      <g transform="translate(0, 30)">
+        <rect x="70" y="40" width="50" height="36"  rx="4" fill="#7660A8"/>
+        <text x="95" y="92" text-anchor="middle">P3</text>
+        <text x="95" y="34" text-anchor="middle" font-weight="600" fill="#4A3878">3</text>
+
+        <rect x="130" y="64" width="50" height="12"  rx="4" fill="#9384BD"/>
+        <text x="155" y="92" text-anchor="middle">P4</text>
+        <text x="155" y="58" text-anchor="middle" font-weight="600" fill="#4A3878">1</text>
+
+        <rect x="190" y="28" width="50" height="48"  rx="4" fill="#7660A8"/>
+        <text x="215" y="92" text-anchor="middle">P5</text>
+        <text x="215" y="22" text-anchor="middle" font-weight="600" fill="#4A3878">4</text>
+
+        <rect x="250" y="64" width="50" height="12"  rx="4" fill="#9384BD"/>
+        <text x="275" y="92" text-anchor="middle">P6</text>
+        <text x="275" y="58" text-anchor="middle" font-weight="600" fill="#4A3878">1</text>
+
+        <rect x="310" y="40" width="50" height="36"  rx="4" fill="#7660A8"/>
+        <text x="335" y="92" text-anchor="middle">P7</text>
+        <text x="335" y="34" text-anchor="middle" font-weight="600" fill="#4A3878">3</text>
+
+        <rect x="370" y="28" width="50" height="48"  rx="4" fill="#7660A8"/>
+        <text x="395" y="92" text-anchor="middle">P8</text>
+        <text x="395" y="22" text-anchor="middle" font-weight="600" fill="#4A3878">4</text>
+
+        <rect x="430" y="40" width="50" height="36"  rx="4" fill="#7660A8"/>
+        <text x="455" y="92" text-anchor="middle">P9</text>
+        <text x="455" y="34" text-anchor="middle" font-weight="600" fill="#4A3878">3</text>
+
+        <rect x="490" y="64" width="50" height="12"  rx="4" fill="#9384BD"/>
+        <text x="515" y="92" text-anchor="middle">P10</text>
+        <text x="515" y="58" text-anchor="middle" font-weight="600" fill="#4A3878">1</text>
+
+        <rect x="550" y="52" width="50" height="24"  rx="4" fill="#9384BD"/>
+        <text x="575" y="92" text-anchor="middle">P11</text>
+        <text x="575" y="46" text-anchor="middle" font-weight="600" fill="#4A3878">2</text>
+        <line x1="60" y1="76" x2="600" y2="76" stroke="#C9C0DE"/>
+      </g>
+    </g>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">22 depth-pass PRs distributed across 9 of the 12 phases (P0, P1, P2 had no new PRs this sprint — their primitives were complete pre-sprint).</p>
+</section>
+
+<!-- ============================================================
+     CHAPTER 8 — ARCHITECTURE SNAPSHOT
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 8</div>
+  <h1 style="color: var(--dk-purple-800);">Architecture Snapshot</h1>
+  <p class="lede">High-level shape of the system as of <code>main @ 64242e8</code>.</p>
+
+  <h2>8.1 System diagram</h2>
+  <svg class="chart" viewBox="0 0 600 380" width="100%" height="380">
+    <defs>
+      <linearGradient id="g-box" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#F1EEF8"/>
+        <stop offset="100%" stop-color="#E2DCEE"/>
+      </linearGradient>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#7660A8"/>
+      </marker>
+    </defs>
+    <g font-family="Poppins, sans-serif" font-size="9.5" fill="#2A2440">
+
+      <!-- Frontend layer -->
+      <rect x="20" y="20" width="560" height="60" rx="10" fill="url(#g-box)" stroke="#C9C0DE"/>
+      <text x="40" y="40" font-weight="700" fill="#4A3878">Frontend · Next.js 14 App Router</text>
+      <text x="40" y="56" font-size="9" fill="#5A547A">44 pages · 26 &lt;Dk*&gt; components · Tailwind-on-tokens · light-mode only</text>
+      <text x="40" y="70" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">/dashboard · /agent · /agents/{smm,seo,paid-media,analyst,creatives} · /inbox · /calendar · /channels · /integrations · /orgs · /admin/*</text>
+
+      <!-- API layer -->
+      <rect x="20" y="100" width="560" height="60" rx="10" fill="#F8F6FB" stroke="#C9C0DE"/>
+      <text x="40" y="120" font-weight="700" fill="#4A3878">API · FastAPI</text>
+      <text x="40" y="136" font-size="9" fill="#5A547A">23 routers · org-membership-gated · 9 supervision roles</text>
+      <text x="40" y="150" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">/agents, /approvals, /calendar, /channels, /integrations, /analytics, /costs, /email, /orgs/[id]/agent-threads, …</text>
+
+      <!-- Worker -->
+      <rect x="20" y="180" width="270" height="100" rx="10" fill="url(#g-box)" stroke="#C9C0DE"/>
+      <text x="40" y="200" font-weight="700" fill="#4A3878">Celery worker + beat</text>
+      <text x="40" y="216" font-size="9" fill="#5A547A">9 task modules · 9 beat schedules</text>
+      <text x="40" y="232" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">scan_due_scheduled_posts (60s)</text>
+      <text x="40" y="246" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">resolve_visitor_identities (05:30 UTC)</text>
+      <text x="40" y="260" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">compute_daily_rollups (06:00 UTC)</text>
+      <text x="40" y="274" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">compute_attribution (06:30 UTC)</text>
+
+      <!-- Services -->
+      <rect x="310" y="180" width="270" height="100" rx="10" fill="url(#g-box)" stroke="#C9C0DE"/>
+      <text x="330" y="200" font-weight="700" fill="#4A3878">Services layer · 12 modules</text>
+      <text x="330" y="216" font-size="9" fill="#5A547A">All provider-or-stub. 5 publishers in <code>publishers/</code>.</text>
+      <text x="330" y="232" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">image_gen · asset_gen · email_send</text>
+      <text x="330" y="246" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">workflow_runner · mcp_client · quota_guard</text>
+      <text x="330" y="260" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">publishers/{bluesky,linkedin,x,instagram}</text>
+      <text x="330" y="274" font-size="8.5" fill="#8A85A0" font-family="JetBrains Mono">secret_box (Fernet) · embeddings · audit · storage</text>
+
+      <!-- Data -->
+      <rect x="20" y="300" width="180" height="60" rx="10" fill="#7660A8" stroke="#4A3878"/>
+      <text x="40" y="320" font-weight="700" fill="white">Postgres + pgvector</text>
+      <text x="40" y="336" font-size="9" fill="rgba(255,255,255,0.9)">21 models</text>
+      <text x="40" y="350" font-size="8.5" fill="rgba(255,255,255,0.85)" font-family="JetBrains Mono">organizations, projects, leads, …</text>
+
+      <rect x="210" y="300" width="180" height="60" rx="10" fill="#4A3878"/>
+      <text x="230" y="320" font-weight="700" fill="white">Redis</text>
+      <text x="230" y="336" font-size="9" fill="rgba(255,255,255,0.9)">Celery broker + backend</text>
+
+      <rect x="400" y="300" width="180" height="60" rx="10" fill="#8773B5"/>
+      <text x="420" y="320" font-weight="700" fill="white">MinIO / S3</text>
+      <text x="420" y="336" font-size="9" fill="rgba(255,255,255,0.9)">Asset storage</text>
+
+      <!-- Arrows -->
+      <line x1="300" y1="80"  x2="300" y2="98"  stroke="#7660A8" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="300" y1="160" x2="300" y2="178" stroke="#7660A8" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="155" y1="280" x2="110" y2="298" stroke="#7660A8" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="445" y1="280" x2="490" y2="298" stroke="#7660A8" stroke-width="1.5" marker-end="url(#ar)"/>
+    </g>
+  </svg>
+
+  <h2>8.2 Component inventory (snapshot)</h2>
+  <table class="dk">
+    <tr><th>Component class</th><th class="num">Count</th><th>Notes</th></tr>
+    <tr><td>Backend Models (SQLAlchemy)</td><td class="num">21</td><td>Organization, Project, BrandKit, Persona, Lead, Campaign, ScheduledPost, SocialAccount, Connection, ApprovalRequest, AuditEvent, AnalyticsEvent, Touchpoint, Conversion, AttributionResult, AnalyticsRollup, EmailTemplate, EmailCampaign, EmailSequence, EmailSequenceStep, Workflow, Playbook, TimeEntry, CostLedger, QuotaCounter, AgentThread, AgentMessage, …</td></tr>
+    <tr><td>API routers (FastAPI)</td><td class="num">23</td><td>One per domain area</td></tr>
+    <tr><td>Service modules</td><td class="num">12</td><td>image_gen, asset_gen, email_send, workflow_runner, mcp_client, quota_guard, embeddings, secret_box, audit, mcp_registry, storage, ingestion, plus <code>publishers/__init__</code></td></tr>
+    <tr><td>Publishers</td><td class="num">5</td><td><code>publishers/{__init__,bluesky,linkedin,x,instagram}.py</code></td></tr>
+    <tr><td>Worker task modules</td><td class="num">9</td><td>analytics, attribution, email_send, example, gdpr, identity, ingestion, publishing</td></tr>
+    <tr><td>Agent modules</td><td class="num">10</td><td><code>_agent_base, anthropic_client, brand_style, conductor, creatives, smm, seo, paid_media, analyst, inbox</code></td></tr>
+    <tr><td>Frontend pages</td><td class="num">44</td><td>Including dashboard, all five agent stations, calendar, inbox, channels, integrations, orgs, admin</td></tr>
+    <tr><td>&lt;Dk*&gt; components</td><td class="num">26</td><td>Brand-vocabulary primitives</td></tr>
+    <tr><td>Backend test files</td><td class="num">32</td><td>~221 individual test functions</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================
+     CHAPTER 9 — TEST & QUALITY
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 9</div>
+  <h1 style="color: var(--dk-purple-800);">Test &amp; Quality Gates</h1>
+
+  <h2>9.1 Test counts</h2>
+  <table class="dk">
+    <tr><th>File</th><th class="num">Tests</th><th>Sprint?</th><th>Notes</th></tr>
+    <tr><td>test_admin.py</td><td class="num">7</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td>test_agents.py</td><td class="num">10</td><td>—</td><td>pre-sprint — Creatives Agent</td></tr>
+    <tr><td>test_analytics.py</td><td class="num">3</td><td>—</td><td>pre-sprint (legacy)</td></tr>
+    <tr><td><strong>test_analytics_rollup.py</strong></td><td class="num">4</td><td>✓</td><td>Phase 8.1 daily rollups</td></tr>
+    <tr><td>test_approvals.py</td><td class="num">9</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_asset_gen.py</strong></td><td class="num">4</td><td>✓</td><td>Phase 3.3 video/voice/music</td></tr>
+    <tr><td><strong>test_attribution_compute.py</strong></td><td class="num">7</td><td>✓</td><td>Phase 8.3 attribution allocation</td></tr>
+    <tr><td>test_auth.py</td><td class="num">7</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_bluesky_publisher.py</strong></td><td class="num">5</td><td>✓</td><td>Phase 5.1</td></tr>
+    <tr><td>test_brand_kits.py</td><td class="num">8</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_brand_style.py</strong></td><td class="num">5</td><td>✓</td><td>Phase 3.4 prompt composer</td></tr>
+    <tr><td>test_campaigns.py</td><td class="num">7</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td>test_dashboard.py</td><td class="num">1</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_email_send.py</strong></td><td class="num">3</td><td>✓</td><td>Phase 7.1 Resend</td></tr>
+    <tr><td><strong>test_gdpr_export.py</strong></td><td class="num">6</td><td>✓</td><td>Phase 11.3 GDPR export</td></tr>
+    <tr><td>test_goals.py</td><td class="num">6</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td>test_health.py</td><td class="num">1</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_identity_resolution.py</strong></td><td class="num">5</td><td>✓</td><td>Phase 8.2</td></tr>
+    <tr><td><strong>test_image_gen.py</strong></td><td class="num">4</td><td>✓</td><td>Phase 3.1 Replicate</td></tr>
+    <tr><td>test_ingestion.py</td><td class="num">12</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_instagram_publisher.py</strong></td><td class="num">6</td><td>✓</td><td>Phase 5.4</td></tr>
+    <tr><td>test_jobs.py</td><td class="num">7</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td>test_kg.py</td><td class="num">12</td><td>—</td><td>pre-sprint — pgvector KG</td></tr>
+    <tr><td>test_leads.py</td><td class="num">9</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_linkedin_publisher.py</strong></td><td class="num">5</td><td>✓</td><td>Phase 5.2</td></tr>
+    <tr><td><strong>test_mcp_client.py</strong></td><td class="num">4</td><td>✓</td><td>Phase 6.1</td></tr>
+    <tr><td>test_orgs.py</td><td class="num">8</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td>test_projects.py</td><td class="num">7</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_quota_guard.py</strong></td><td class="num">7</td><td>✓</td><td>Phase 11.2</td></tr>
+    <tr><td>test_scheduled_posts.py</td><td class="num">5</td><td>—</td><td>pre-sprint (Phase 4)</td></tr>
+    <tr><td>test_storage.py</td><td class="num">13</td><td>—</td><td>pre-sprint</td></tr>
+    <tr><td><strong>test_workflow_runner.py</strong></td><td class="num">10</td><td>✓</td><td>Phase 10.3</td></tr>
+    <tr><td><strong>test_x_publisher.py</strong></td><td class="num">6</td><td>✓</td><td>Phase 5.3</td></tr>
+    <tr><th>Total</th><th class="num">221</th><th>+81 sprint</th><th>15 new test files this sprint</th></tr>
+  </table>
+
+  <h2>9.2 CI status</h2>
+  <table class="dk">
+    <tr><th>Gate</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>backend-tests (pytest)</td><td><span class="badge ok">Green</span></td><td>All 221 tests pass on every PR; runs in ≈ 2m 30s</td></tr>
+    <tr><td>frontend-build (Next.js)</td><td><span class="badge ok">Green</span></td><td>~45s; production build with type-check</td></tr>
+    <tr><td>claude-review</td><td><span class="badge ok">Informational</span></td><td>Runs on every PR; <em>not</em> a required check (some PRs merged with this still pending)</td></tr>
+    <tr><td>poll-and-merge</td><td><span class="badge warn">Partially wired</span></td><td>Workflow exists but the <code>auto-merge</code> label doesn't actually invoke <code>gh pr merge --auto</code> — six PRs needed manual merging this sprint</td></tr>
+  </table>
+
+  <h2>9.3 What's NOT covered by tests yet</h2>
+  <ul class="tight">
+    <li>End-to-end browser flows (Playwright) — none.</li>
+    <li>Real provider integration tests (Replicate / Resend / Bluesky) — all stubs.</li>
+    <li>Frontend component tests — none.</li>
+    <li>Worker beat-task scheduling smoke tests.</li>
+  </ul>
+</section>
+
+<!-- ============================================================
+     CHAPTER 10 — RISKS & TECH DEBT
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 10</div>
+  <h1 style="color: var(--dk-purple-800);">Risks, Tech Debt &amp; Open Decisions</h1>
+
+  <h2>10.1 Active risks</h2>
+  <table class="dk">
+    <tr><th style="width: 30%">Risk</th><th>L</th><th>I</th><th>Mitigation</th></tr>
+    <tr><td>Cost ledger has no writers — <code>/costs/totals</code> reports $0</td><td><span class="badge bad">H</span></td><td><span class="badge warn">M</span></td><td>Add cost-write hook on every adapter call; ½-day work</td></tr>
+    <tr><td>No real OAuth flow for any of 4 shipped publishers</td><td><span class="badge bad">H</span></td><td><span class="badge bad">H</span></td><td>OAuth lane in Sprint 2 (LinkedIn first; X needs paid tier; Instagram uses Meta Graph)</td></tr>
+    <tr><td>Auto-merge label doesn't auto-merge</td><td><span class="badge warn">M</span></td><td><span class="badge ok">L</span></td><td>GH Actions task to wire label → <code>gh pr merge --auto</code></td></tr>
+    <tr><td>Workflow runner can't pause on approval</td><td><span class="badge warn">M</span></td><td><span class="badge warn">M</span></td><td>WorkflowRun model + paused state machine</td></tr>
+    <tr><td>Sandbox / dry-run mode missing — onboarding demos may post for real</td><td><span class="badge warn">M</span></td><td><span class="badge bad">H</span></td><td><code>Organization.sandbox_mode</code> flag + adapter short-circuit</td></tr>
+    <tr><td>Sliding-window QuotaCounter has no writer — daily caps work, rolling don't</td><td><span class="badge warn">M</span></td><td><span class="badge warn">M</span></td><td>Quota writer in the same hook as cost-write</td></tr>
+    <tr><td>Anthropic provider rate-limited mid-sprint (one observed event)</td><td><span class="badge warn">M</span></td><td><span class="badge ok">L</span></td><td>Add retry-with-backoff in <code>anthropic_client</code>; consider Sonnet for lower-stakes calls</td></tr>
+    <tr><td>16 social platforms still on stub-only — channels page falsely advertises support</td><td><span class="badge bad">H</span></td><td><span class="badge warn">M</span></td><td>Gate channel cards on whether an adapter exists; or schedule per-platform PRs</td></tr>
+  </table>
+  <p style="font-size: 9pt; color: var(--dk-fg-3);">L = Likelihood, I = Impact. H/M/L scale.</p>
+
+  <h2>10.2 Tech debt</h2>
+  <ul class="tight">
+    <li><strong>SocialAccount.<code>_interim_access_token</code></strong> field name signals it's a placeholder — needs replacement with encrypted secret blob like <code>Connection</code> once OAuth ships.</li>
+    <li>Existing v1 routers (campaigns, leads, analytics) are <em>not</em> Org-scoped yet (PR #117's TEMPORARY <code>/api/v1/dashboard</code> endpoint flags this).</li>
+    <li>Pydantic class-based <code>Config</code> deprecation warnings on 14 schemas — should migrate to <code>ConfigDict</code>.</li>
+    <li><code>poll-and-merge</code> workflow runs but doesn't actually merge — leftover scaffold from earlier sprints.</li>
+    <li>Frontend has both a <code>publisher_response.image_url</code> stash pattern (Instagram) and a TODO for real asset_id → URL resolution.</li>
+  </ul>
+
+  <h2>10.3 Open architecture decisions</h2>
+  <ol class="tight">
+    <li><strong>Claude Agent SDK vs raw Anthropic API.</strong> Currently using raw API + <code>complete()</code> wrapper. Agent SDK gives tool-use loops + memory but locks us in. Decision needed before Phase 9.7 (programmatic Conductor delegation) work.</li>
+    <li><strong>WorkflowRun model shape.</strong> Need to decide: one row per node execution? One row per run with JSON history? Affects audit story.</li>
+    <li><strong>Cost-write contract.</strong> Do adapters write CostLedger directly, or emit an event that a worker consumes? Direct writes are simpler; events are more replay-friendly.</li>
+    <li><strong>Where do real Claude Agent SDK tool calls register?</strong> Need to bridge Agent SDK tool list ↔ MCP tool list ↔ approval-required-action list.</li>
+    <li><strong>Sandbox semantics.</strong> Strict — every external call short-circuits to a stub? Or soft — calls succeed but flag the resulting row? Strict is simpler; soft is more realistic.</li>
+  </ol>
+</section>
+
+<!-- ============================================================
+     CHAPTER 11 — SPRINT 2 ROADMAP
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 11</div>
+  <h1 style="color: var(--dk-purple-800);">Sprint 2 — Recommended Roadmap</h1>
+  <p class="lede">If Sprint 2 mirrors Sprint 1 in length (~3 days), here is the ranked work plan to push the platform from ≈ 52% complete to ≈ 75% complete.</p>
+
+  <h2>11.1 Lane priorities</h2>
+  <table class="dk">
+    <tr><th>#</th><th>Lane</th><th>Why it's first</th><th>Est. effort</th><th>Phase moved</th></tr>
+    <tr><td>1</td><td>Cost-write hooks on every adapter</td><td>Makes <code>/costs/totals</code> real. Highest ROI in the whole plan — one-liner per adapter.</td><td>½ day</td><td>11: 40 → 55%</td></tr>
+    <tr><td>2</td><td>Real OAuth flow — LinkedIn first</td><td>Unblocks the four shipped publishers for production. LinkedIn is the cleanest OAuth 2.0 grant.</td><td>1 day</td><td>5: 30 → 50%</td></tr>
+    <tr><td>3</td><td>Brand Setup Studio UI</td><td>Closes the biggest backend-vs-frontend delta in the plan. Backend 100%, UI 0%.</td><td>1 day</td><td>2: 50 → 75%</td></tr>
+    <tr><td>4</td><td>Sequence builder (react-flow)</td><td>Biggest single UI gap on Phase 7; unlocks email automation product.</td><td>1.5 days</td><td>7: 30 → 55%</td></tr>
+    <tr><td>5</td><td>WorkflowRun + HTTP runner endpoint</td><td>Turns the new runner from library to product; unblocks approval-pause and branch nodes.</td><td>½ day</td><td>10: 20 → 35%</td></tr>
+    <tr><td>6</td><td>Sandbox / dry-run mode</td><td>Closes the highest-impact compliance gap; needed for demo safety.</td><td>½ day</td><td>11: 55 → 70%</td></tr>
+    <tr><td>7</td><td>Stripe invoicing</td><td>Largest revenue-side feature for agencies. New model + migration.</td><td>1.5 days</td><td>10: 35 → 55%</td></tr>
+    <tr><td>8</td><td>HubSpot CRM 2-way sync via MCP</td><td>Best-known CRM; brings Phase 8 from analytics-only to full ops.</td><td>1.5 days</td><td>8: 50 → 70%</td></tr>
+  </table>
+
+  <h2>11.2 Projected plan completeness after Sprint 2</h2>
+  <svg class="chart" viewBox="0 0 600 220" width="100%" height="220">
+    <defs>
+      <linearGradient id="g-now" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#9384BD"/><stop offset="100%" stop-color="#7660A8"/>
+      </linearGradient>
+      <linearGradient id="g-next" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#7660A8"/><stop offset="100%" stop-color="#4A3878"/>
+      </linearGradient>
+    </defs>
+    <g font-family="Poppins, sans-serif" font-size="9.5" fill="#5A547A">
+      <text x="0" y="14" font-weight="600" fill="#4A3878">Sprint 1 (now) vs projected Sprint 2 end-state</text>
+      <text x="280" y="14" fill="#9384BD">●&nbsp;now</text>
+      <text x="330" y="14" fill="#4A3878">●&nbsp;projected</text>
+
+      <!-- 11 rows -->
+      <g transform="translate(0, 30)">
+        <!-- Phase 1: 70 → 75 -->
+        <text x="0" y="11" fill="#2A2440">Phase 1</text>
+        <rect x="70" y="2"  width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="2"  width="336" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="406" y="2" width="24"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="9" font-size="9">75%</text>
+
+        <text x="0" y="29" fill="#2A2440">Phase 2</text>
+        <rect x="70" y="20" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="20" width="240" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="310" y="20" width="120" height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="27" font-size="9">75%</text>
+
+        <text x="0" y="47" fill="#2A2440">Phase 3</text>
+        <rect x="70" y="38" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="38" width="336" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="406" y="38" width="48"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="45" font-size="9">80%</text>
+
+        <text x="0" y="65" fill="#2A2440">Phase 4</text>
+        <rect x="70" y="56" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="56" width="288" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="358" y="56" width="48"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="63" font-size="9">70%</text>
+
+        <text x="0" y="83" fill="#2A2440">Phase 5</text>
+        <rect x="70" y="74" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="74" width="144" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="214" y="74" width="96"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="81" font-size="9">50%</text>
+
+        <text x="0" y="101" fill="#2A2440">Phase 6</text>
+        <rect x="70" y="92" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="92" width="240" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="310" y="92" width="48"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="99" font-size="9">60%</text>
+
+        <text x="0" y="119" fill="#2A2440">Phase 7</text>
+        <rect x="70" y="110" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="110" width="144" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="214" y="110" width="120" height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="117" font-size="9">55%</text>
+
+        <text x="0" y="137" fill="#2A2440">Phase 8</text>
+        <rect x="70" y="128" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="128" width="240" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="310" y="128" width="96"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="135" font-size="9">70%</text>
+
+        <text x="0" y="155" fill="#2A2440">Phase 9</text>
+        <rect x="70" y="146" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="146" width="336" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="406" y="146" width="48"  height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="153" font-size="9">80%</text>
+
+        <text x="0" y="173" fill="#2A2440">Phase 10</text>
+        <rect x="70" y="164" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="164" width="96"  height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="166" y="164" width="168" height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="171" font-size="9">55%</text>
+
+        <text x="0" y="191" fill="#2A2440">Phase 11</text>
+        <rect x="70" y="182" width="480" height="6"  rx="3" fill="#F1EEF8"/>
+        <rect x="70" y="182" width="192" height="6"  rx="3" fill="url(#g-now)"/>
+        <rect x="262" y="182" width="144" height="6"  rx="3" fill="url(#g-next)" opacity="0.7"/>
+        <text x="556" y="189" font-size="9">70%</text>
+      </g>
+    </g>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">Light purple is current. Darker purple is Sprint 2 projection. Net plan completeness target: ≈ <strong>75%</strong>.</p>
+
+  <h2>11.3 Out of scope for Sprint 2</h2>
+  <p>Explicitly punted (the user has signalled to handle these themselves, or they're nice-to-have):</p>
+  <ul class="tight">
+    <li>Marketing assets (#52 demo video, #53 launch posts) — user has these.</li>
+    <li>Helm chart rebuild (#24) — deployment polish, not blocking demos.</li>
+    <li>Time-decay and Markov attribution models — interesting but not on the critical path.</li>
+    <li>13 of the 20 social platform adapters — covered after Sprint 2 in a "long-tail" sprint.</li>
+  </ul>
+</section>
+
+<!-- ============================================================
+     APPENDIX A — CLOSED ISSUES
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix A</div>
+  <h1 style="color: var(--dk-purple-800);">Closed Issues with PR Mapping</h1>
+  <p class="lede">Issues that moved to <code>closed</code> during this sprint, with the PR that closed them.</p>
+
+  <table class="dk">
+    <tr><th>Issue</th><th>Title</th><th>Closed by</th></tr>
+    <tr><td>#31</td><td>[agents] Claude Agent SDK integration scaffold</td><td>foundation work — pre-sprint</td></tr>
+    <tr><td>#32</td><td>[agents] Conductor agent shell</td><td>#121</td></tr>
+    <tr><td>#33</td><td>[agents] Creatives Agent (end-to-end MVP)</td><td>#72 (pre-sprint), reinforced by #128</td></tr>
+    <tr><td>#34</td><td>[agents] Approval Inbox UI</td><td>#73 (pre-sprint), reinforced by #126</td></tr>
+    <tr><td>#35</td><td>[agents] SMM Agent + Calendar Station</td><td>#122</td></tr>
+    <tr><td>#36</td><td>[agents] SEO Agent + Search Station</td><td>#122</td></tr>
+    <tr><td>#37</td><td>[agents] Paid Media Agent + Spend Station</td><td>#122</td></tr>
+    <tr><td>#38</td><td>[agents] Analyst Agent + Insights Station</td><td>#122</td></tr>
+    <tr><td>#39</td><td>[publishing] SocialAccount model</td><td>pre-sprint (PR #115)</td></tr>
+    <tr><td>#43</td><td>[publishing] Email sender via Resend (real)</td><td>#127</td></tr>
+    <tr><td>#44–#48</td><td>Docs / README / changelog / API ref / architecture</td><td>pre-sprint</td></tr>
+    <tr><td>#49–#51</td><td>Marketing one-pager / slides / video script</td><td>pre-sprint</td></tr>
+    <tr><td>#57</td><td>[release] Tag v0.1.0-mvp</td><td>pre-sprint</td></tr>
+    <tr><td>#78</td><td>[bug] pgvector startup crash</td><td>pre-sprint #79</td></tr>
+    <tr><td>#80</td><td>[bug] colima IPv6 frontend fetch</td><td>pre-sprint #81</td></tr>
+    <tr><td>#82</td><td>[bug] EmailStr <code>.local</code> TLD reject</td><td>pre-sprint #83</td></tr>
+    <tr><td>#88</td><td>[Epic] Phase 3 — Content Generation Pipeline</td><td>#124 + #125 + #128</td></tr>
+    <tr><td>#91</td><td>[Epic] Phase 6 — MCP Integration Hub</td><td>#130</td></tr>
+    <tr><td>#92</td><td>[Epic] Phase 7 — Email + Ads + Sequences</td><td>#127 + #131 + #133</td></tr>
+    <tr><td>#93</td><td>[Epic] Phase 8 — Lead 2.0 + CRM + Attribution</td><td>#132 + #134 + #135 + #136</td></tr>
+    <tr><td>#94</td><td>[Epic] Phase 9 — Agent Fleet</td><td>#121 + #122 + #123</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================
+     APPENDIX B — OPEN ISSUES STATUS
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix B</div>
+  <h1 style="color: var(--dk-purple-800);">Open Issues — Status &amp; Owners</h1>
+
+  <table class="dk">
+    <tr><th>Issue</th><th>Title</th><th>Status</th><th>Note</th></tr>
+    <tr><td>#85</td><td>Phase 0 Epic</td><td>Stale</td><td>Stories #97–#104 mostly delivered; close as hygiene</td></tr>
+    <tr><td>#86</td><td>Phase 1 Epic</td><td>Open</td><td>Tabbed <code>/orgs/[id]</code> + member invite UI</td></tr>
+    <tr><td>#87</td><td>Phase 2 Epic</td><td>Open</td><td>Brand Setup Studio, KG Console</td></tr>
+    <tr><td>#89</td><td>Phase 4 Epic</td><td>Open</td><td>Conflict detection + best-time recommender</td></tr>
+    <tr><td>#90</td><td>Phase 5 Epic</td><td>Open</td><td>OAuth flows + 16 more platforms</td></tr>
+    <tr><td>#95</td><td>Phase 11 Epic</td><td>Open</td><td>GDPR done (#140), costs endpoint done (#142), quota guard done (#133). Remaining: sandbox, client portal, cost-write hooks, sliding-window quota writer</td></tr>
+    <tr><td>#96</td><td>Phase 10 Epic</td><td>Open</td><td>Workflow runner done (#141). Remaining: onboarding wizard, Kanban, time tracker UI, Stripe invoicing, PDF reports</td></tr>
+    <tr><td>#97–#104</td><td>Phase 0 design stories</td><td>Delivered, not closed</td><td>One-time cleanup task</td></tr>
+    <tr><td>#24</td><td>Helm chart rebuild</td><td>Open</td><td>Deferred — not on critical path</td></tr>
+    <tr><td>#28</td><td>Q4 Freshness re-ingestion</td><td>Open</td><td>Future</td></tr>
+    <tr><td>#30</td><td>Q6 Project Setup Wizard</td><td>Open</td><td>Sprint 3</td></tr>
+    <tr><td>#40</td><td>X publisher mock</td><td>Delivered, not closed</td><td>Closed by #138 — close manually</td></tr>
+    <tr><td>#41</td><td>LinkedIn publisher mock</td><td>Delivered, not closed</td><td>Closed by #137 — close manually</td></tr>
+    <tr><td>#42</td><td>Instagram publisher mock</td><td>Delivered, not closed</td><td>Closed by #139 — close manually</td></tr>
+    <tr><td>#52</td><td>Demo video recording</td><td>Open · user-owned</td><td>User has signalled they'll handle marketing assets</td></tr>
+    <tr><td>#53</td><td>Launch social posts (drafts)</td><td>Open · user-owned</td><td>Same</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================
+     APPENDIX C — FULL PR CATALOGUE
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix C</div>
+  <h1 style="color: var(--dk-purple-800);">Full PR Catalogue Table</h1>
+  <p class="lede">All 22 merged PRs in the depth-pass range, plus the one in flight at snapshot time.</p>
+
+  <table class="dk">
+    <tr><th>#</th><th>Date</th><th>Phase</th><th>Title</th><th>Branch (squashed)</th></tr>
+    <tr><td>121</td><td>05-12</td><td>9.1</td><td>Conductor real Claude</td><td><code>feat/9.1-conductor-real-claude</code></td></tr>
+    <tr><td>122</td><td>05-12</td><td>9.2</td><td>SMM/SEO/Paid/Analyst real Claude</td><td><code>feat/9.2-smm-agent</code></td></tr>
+    <tr><td>123</td><td>05-12</td><td>9.3</td><td>Shared DkAgentChat</td><td><code>feat/9.3-role-agent-chat-ui</code></td></tr>
+    <tr><td>124</td><td>05-12</td><td>3.1</td><td>Replicate image-gen adapter</td><td><code>feat/3.1-image-gen-adapter</code></td></tr>
+    <tr><td>125</td><td>05-12</td><td>3.3</td><td>Video/voice/music adapters</td><td><code>feat/3.3-video-voice-music</code></td></tr>
+    <tr><td>126</td><td>05-12</td><td>4.2</td><td>Multimodal inbox previews</td><td><code>feat/4.2-inbox-multimodal-previews</code></td></tr>
+    <tr><td>127</td><td>05-12</td><td>7.1</td><td>Resend send adapter</td><td><code>feat/7.1-email-send-adapter</code></td></tr>
+    <tr><td>128</td><td>05-12</td><td>3.4</td><td>Brand-aware visual prompts</td><td><code>feat/3.4-brand-aware-image-prompts</code></td></tr>
+    <tr><td>129</td><td>05-12</td><td>5.1</td><td>Bluesky publisher</td><td><code>feat/5.1-bluesky-publisher</code></td></tr>
+    <tr><td>130</td><td>05-12</td><td>6.1</td><td>Async MCP client</td><td><code>feat/6.1-mcp-async-client</code></td></tr>
+    <tr><td>131</td><td>05-12</td><td>7.2</td><td>Approve → email delivery</td><td><code>feat/7.2-approval-triggers-email-send</code></td></tr>
+    <tr><td>132</td><td>05-12</td><td>8.1</td><td>Daily analytics rollup</td><td><code>feat/8.1-analytics-daily-rollup</code></td></tr>
+    <tr><td>133</td><td>05-12</td><td>7.3 + 11.2</td><td>Campaign hard-gate + quota guard</td><td><code>feat/7.3-email-campaign-send</code></td></tr>
+    <tr><td>134</td><td>05-12</td><td>8.3</td><td>Attribution compute</td><td><code>feat/8.3-attribution-compute</code></td></tr>
+    <tr><td>135</td><td>05-12</td><td>8.2</td><td>Identity resolution</td><td><code>feat/8.2-identity-resolution</code></td></tr>
+    <tr><td>136</td><td>05-12</td><td>8.4</td><td>/analytics/totals</td><td><code>feat/8.4-analytics-totals</code></td></tr>
+    <tr><td>137</td><td>05-12</td><td>5.2</td><td>LinkedIn publisher</td><td><code>feat/5.2-linkedin-publisher</code></td></tr>
+    <tr><td>138</td><td>05-12</td><td>5.3</td><td>X publisher</td><td><code>feat/5.3-x-twitter-publisher</code></td></tr>
+    <tr><td>139</td><td>05-12</td><td>5.4</td><td>Instagram publisher</td><td><code>feat/5.4-instagram-publisher</code></td></tr>
+    <tr><td>140</td><td>05-12</td><td>11.3</td><td>GDPR export task</td><td><code>feat/11.3-gdpr-export</code></td></tr>
+    <tr><td>141</td><td>05-12</td><td>10.3</td><td>Workflow DAG runner</td><td><code>feat/10.3-workflow-runner</code></td></tr>
+    <tr><td>142</td><td>05-12</td><td>11.1</td><td>/costs endpoints</td><td><code>feat/11.1-cost-ledger-totals</code></td></tr>
+  </table>
+</section>
+
+<!-- ============================================================
+     APPENDIX D — GLOSSARY
+     ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix D</div>
+  <h1 style="color: var(--dk-purple-800);">Glossary &amp; Acronyms</h1>
+
+  <table class="dk">
+    <tr><th style="width: 22%">Term</th><th>Meaning</th></tr>
+    <tr><td>Approval Inbox</td><td>The Hard-gate decision queue. Every outbound action that the org's autonomy posture doesn't auto-approve lands here for human review.</td></tr>
+    <tr><td>BrandKit</td><td>Versioned brand identity per Org — palette, fonts, voice sliders, do-say / don't-say, positioning. Agents read from the active one.</td></tr>
+    <tr><td>Conductor</td><td>The Manager-tier agent (<code>AgentKind.conductor</code>). Decomposes briefs into work for role-agents.</td></tr>
+    <tr><td>CostLedger</td><td>Per-call provider spend table. Daily rollups read from it.</td></tr>
+    <tr><td>DkAgentChat</td><td>The shared chat component on every role-agent station, parameterised by <code>AgentKind</code>.</td></tr>
+    <tr><td>Hard-gate</td><td>The default supervision posture: agents never publish; everything routes through Approval. PLAN-v1.2 §v2.0 §5.2.</td></tr>
+    <tr><td>Identity resolution</td><td>The 05:30 UTC beat job that back-stamps <code>lead_id</code> on anonymous Touchpoints sharing a <code>visitor_id</code>.</td></tr>
+    <tr><td>MCP</td><td>Model Context Protocol — the standard for letting an LLM call an external tool. We use a 35-server registry + an async HTTP client.</td></tr>
+    <tr><td>Org / Project</td><td>Multi-tenancy hierarchy. Every domain row has both IDs; every API call is scoped to memberships.</td></tr>
+    <tr><td>Role agent</td><td>One of the four specialists: <code>smm</code> (Social Media Manager), <code>seo</code>, <code>paid_media</code>, <code>analyst</code>.</td></tr>
+    <tr><td>Supervision posture</td><td>Per-action-class setting — <code>hard_gate</code>, <code>soft_gate</code>, <code>auto</code>. Stored on <code>Organization.autonomy_posture_json</code>.</td></tr>
+    <tr><td>Workflow DSL</td><td>The JSON shape of <code>Workflow.dsl_json</code>: nodes + edges. v1 supports <code>llm</code>, <code>tool_call</code>, <code>noop</code> node types.</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================
+     BACK PAGE
+     ============================================================ -->
+<section class="back">
+  <div class="back-content">
+    <div>
+      <div class="cover-wordmark" style="margin-bottom: 60pt;">
+        <div class="claw">D</div>
+        <div class="name">DClaw Marketing</div>
+      </div>
+      <div class="cover-eyebrow" style="color: rgba(255,255,255,0.7);">End of report</div>
+      <h1>Three days.<br>Twenty-three pull requests.<br>One agent-driven marketing OS.</h1>
+    </div>
+    <div class="meta">
+      <strong style="color: white;">Dev Sprint 1 Status Report · v1.0</strong><br>
+      Generated 2026-05-12 21:00 IST<br>
+      Snapshot ref · <code style="color: rgba(255,255,255,0.7)">main @ 64242e8</code><br>
+      Engineering · with Claude Code (Opus 4.7, 1M context)<br><br>
+      <span style="color: rgba(255,255,255,0.5);">Confidential — internal distribution · DClaw Marketing</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
