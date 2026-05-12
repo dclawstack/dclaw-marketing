@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     mailchimp_api_key: str = ""
     mailchimp_server_prefix: str = ""
 
+    # CRM sync — Salesforce (Phase 8.7). Both required for real calls.
+    salesforce_access_token: str = ""
+    salesforce_instance_url: str = ""
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""  # for embeddings
