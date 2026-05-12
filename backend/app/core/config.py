@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
+    # Newsletters — Mailchimp (Phase 7.5)
+    mailchimp_api_key: str = ""
+    mailchimp_server_prefix: str = ""
+
     # CRM sync (Phase 8.6+) — HubSpot first.
     hubspot_access_token: str = ""
 
