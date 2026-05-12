@@ -6,7 +6,14 @@ from app.models.user import User
 from app.models.organization import Organization, OrganizationMembership, OrganizationRole
 from app.models.project import Project, ProjectMembership, ProjectStatus
 from app.models.campaign import Campaign, CampaignType, CampaignStatus
-from app.models.lead import Lead, LeadStatus
+from app.models.lead import (
+    Lead,
+    LeadActivity,
+    LeadActivityKind,
+    LeadNote,
+    LeadStage,
+    LeadStatus,
+)
 from app.models.analytics_event import AnalyticsEvent, EventType
 from app.models.job import Job, JobStatus
 from app.models.asset import Asset, AssetKind, AssetStatus
