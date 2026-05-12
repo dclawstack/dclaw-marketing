@@ -34,6 +34,11 @@ from app.services.publishers.discord import (
     DiscordPublishError,
     publish_to_discord,
 )
+from app.services.publishers.facebook import (
+    FacebookAuthError,
+    FacebookPublishError,
+    publish_to_facebook,
+)
 from app.services.publishers.instagram import (
     InstagramAuthError,
     InstagramPublishError,
@@ -58,6 +63,11 @@ from app.services.publishers.reddit import (
     RedditAuthError,
     RedditPublishError,
     publish_to_reddit,
+)
+from app.services.publishers.threads import (
+    ThreadsAuthError,
+    ThreadsPublishError,
+    publish_to_threads,
 )
 from app.services.publishers.tiktok import (
     TikTokAuthError,
@@ -264,6 +274,39 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             video_url=video_url,
         )
 
+    if post.channel == ScheduledPostChannel.facebook:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.facebook
+        )
+        token = account._interim_access_token if account else None
+        page_id = (
+            (account.auth_metadata_json or {}).get("page_id")
+            if account
+            else None
+        )
+        return publish_to_facebook(
+            access_token=token,
+            page_id=page_id,
+            text=post.copy or "",
+        )
+
+    if post.channel == ScheduledPostChannel.threads:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.threads
+        )
+        token = account._interim_access_token if account else None
+        threads_user_id = (
+            (account.auth_metadata_json or {}).get("threads_user_id")
+            if account
+            else None
+        )
+        return publish_to_threads(
+            access_token=token,
+            threads_user_id=threads_user_id,
+            text=post.copy or "",
+            handle=account.handle if account else None,
+        )
+
     if post.channel == ScheduledPostChannel.pinterest:
         account = _find_active_account(
             session, post.organization_id, SocialPlatform.pinterest
@@ -423,6 +466,16 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (YouTubeAuthError, YouTubePublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"youtube: {exc}"
+            session.commit()
+            raise
+        except (FacebookAuthError, FacebookPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"facebook: {exc}"
+            session.commit()
+            raise
+        except (ThreadsAuthError, ThreadsPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"threads: {exc}"
             session.commit()
             raise
         except (XAuthError, XPublishError) as exc:

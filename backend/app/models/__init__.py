@@ -28,6 +28,10 @@ from app.models.ingestion import (
     IngestionStatus,
 )
 from app.models.connection import Connection, ConnectionStatus
+from app.models.sequence_membership import (
+    SequenceMembership,
+    SequenceMembershipStatus,
+)
 from app.models.social_account import (
     ProjectSocialAccount,
     SocialAccount,
@@ -112,6 +116,8 @@ __all__ = [
     "DocumentChunk",
     "Connection",
     "ConnectionStatus",
+    "SequenceMembership",
+    "SequenceMembershipStatus",
     "SocialAccount",
     "SocialAccountStatus",
     "SocialPlatform",
