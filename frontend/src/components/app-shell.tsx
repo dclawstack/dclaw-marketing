@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DkButton, DkAvatar } from "@/components/dk";
+import { DkButton, DkAvatar, DkOrgSwitcher } from "@/components/dk";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/" },
   { label: "Creatives", href: "/agents/creatives" },
   { label: "Inbox", href: "/inbox" },
+  { label: "Library", href: "/library" },
+  { label: "Orgs", href: "/orgs" },
   { label: "Campaigns", href: "/campaigns" },
   { label: "Leads", href: "/leads" },
 ];
@@ -72,6 +74,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
+          {user && (
+            <div className="hidden md:block shrink-0">
+              <DkOrgSwitcher />
+            </div>
+          )}
+
           <div className="flex flex-1 items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <NavLink key={item.href} item={item} pathname={pathname} />
@@ -87,26 +95,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {user && (
             <div className="flex items-center gap-3 shrink-0">
-              <div className="hidden sm:flex flex-col items-end leading-tight">
-                <span className="text-sm font-medium text-ink">
-                  {user.full_name ?? user.email}
-                </span>
-                {user.full_name && (
-                  <span className="text-xs text-[var(--dk-fg-2)]">
-                    {user.email}
+              <Link
+                href="/settings/profile"
+                className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-[var(--dk-gray-50)] transition-colors duration-fast"
+                aria-label="Account settings"
+              >
+                <div className="hidden sm:flex flex-col items-end leading-tight">
+                  <span className="text-sm font-medium text-ink">
+                    {user.full_name ?? user.email}
                   </span>
-                )}
-              </div>
-              <DkAvatar
-                size="sm"
-                name={user.full_name ?? user.email}
-              />
+                  {user.full_name && (
+                    <span className="text-xs text-[var(--dk-fg-2)]">
+                      {user.email}
+                    </span>
+                  )}
+                </div>
+                <DkAvatar
+                  size="sm"
+                  name={user.full_name ?? user.email}
+                />
+              </Link>
               <DkButton
                 variant="secondary"
                 size="sm"
                 onClick={() => logout()}
               >
-                Sign out
+                Sign Out
               </DkButton>
             </div>
           )}

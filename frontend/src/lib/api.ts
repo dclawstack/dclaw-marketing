@@ -236,6 +236,438 @@ export async function getOrg(orgId: string): Promise<Organization> {
   return fetchJson<Organization>(`/api/v1/orgs/${orgId}`);
 }
 
+export async function updateOrg(
+  orgId: string,
+  data: { name?: string; description?: string; is_external?: boolean },
+): Promise<Organization> {
+  return fetchJson<Organization>(`/api/v1/orgs/${orgId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteOrg(orgId: string): Promise<void> {
+  await fetchJson<void>(`/api/v1/orgs/${orgId}`, { method: "DELETE" });
+}
+
+export async function listOrgMembers(orgId: string): Promise<OrgMembership[]> {
+  return fetchJson<OrgMembership[]>(`/api/v1/orgs/${orgId}/memberships`);
+}
+
+export async function addOrgMember(
+  orgId: string,
+  data: { user_id: string; role: OrgRole },
+): Promise<OrgMembership> {
+  return fetchJson<OrgMembership>(`/api/v1/orgs/${orgId}/memberships`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateOrgMemberRole(
+  orgId: string,
+  membershipId: string,
+  role: OrgRole,
+): Promise<OrgMembership> {
+  return fetchJson<OrgMembership>(
+    `/api/v1/orgs/${orgId}/memberships/${membershipId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    },
+  );
+}
+
+export async function removeOrgMember(
+  orgId: string,
+  membershipId: string,
+): Promise<void> {
+  await fetchJson<void>(
+    `/api/v1/orgs/${orgId}/memberships/${membershipId}`,
+    { method: "DELETE" },
+  );
+}
+
+// ============================================================
+// Goals / Constraints / Autonomy Posture (Theme Q5)
+// ============================================================
+
+export interface Goals {
+  objectives?: string[];
+  north_star_metric?: string;
+  target_quarterly_value?: number | null;
+  icps?: string[];
+  channels_of_interest?: string[];
+}
+
+export interface Constraints {
+  brand_safety_lines?: string[];
+  monthly_budget_usd?: number | null;
+  max_daily_posts?: number | null;
+}
+
+export type TrustMode = "autopilot" | "soft_gate" | "hard_gate";
+
+export type AutonomyPosture = Partial<Record<string, TrustMode>>;
+
+export interface GoalsRead {
+  organization_id: string;
+  goals: Goals | null;
+  constraints: Constraints | null;
+  autonomy_posture: AutonomyPosture | null;
+}
+
+export async function getGoals(orgId: string): Promise<GoalsRead> {
+  return fetchJson<GoalsRead>(`/api/v1/orgs/${orgId}/goals`);
+}
+
+export async function updateGoals(
+  orgId: string,
+  data: {
+    goals?: Goals | null;
+    constraints?: Constraints | null;
+    autonomy_posture?: AutonomyPosture | null;
+  },
+): Promise<GoalsRead> {
+  return fetchJson<GoalsRead>(`/api/v1/orgs/${orgId}/goals`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+// ============================================================
+// Ingestion + Knowledge Graph (Theme Q2 / Q3)
+// ============================================================
+
+export type IngestionSourceType = "file" | "url" | "git" | "zip";
+export type IngestionStatus =
+  | "queued"
+  | "fetching"
+  | "parsing"
+  | "chunking"
+  | "embedding"
+  | "ready"
+  | "failed";
+
+export interface IngestionSource {
+  id: string;
+  organization_id: string;
+  source_type: IngestionSourceType;
+  source_reference: string;
+  name: string | null;
+  status: IngestionStatus;
+  document_chunks_created: number;
+  error_message: string | null;
+  metadata_json: Record<string, unknown> | null;
+  job_id: string | null;
+}
+
+export interface DocumentChunk {
+  id: string;
+  source_id: string;
+  position: number;
+  text: string;
+  estimated_tokens: number | null;
+  metadata_json: Record<string, unknown> | null;
+}
+
+export interface IngestResponse {
+  source_id: string;
+  job_id: string;
+  status: IngestionStatus;
+}
+
+export async function listIngestions(
+  orgId: string,
+  limit = 50,
+): Promise<IngestionSource[]> {
+  return fetchJson<IngestionSource[]>(
+    `/api/v1/ingest?organization_id=${orgId}&limit=${limit}`,
+  );
+}
+
+export async function getIngestion(sourceId: string): Promise<IngestionSource> {
+  return fetchJson<IngestionSource>(`/api/v1/ingest/${sourceId}`);
+}
+
+export async function getIngestionChunks(
+  sourceId: string,
+): Promise<DocumentChunk[]> {
+  return fetchJson<DocumentChunk[]>(`/api/v1/ingest/${sourceId}/chunks`);
+}
+
+export async function ingestFile(data: {
+  organization_id: string;
+  asset_id: string;
+  name?: string;
+}): Promise<IngestResponse> {
+  return fetchJson<IngestResponse>(`/api/v1/ingest/files`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export interface KGSearchResultChunk {
+  chunk_id: string;
+  source_id: string;
+  position: number;
+  text: string;
+  score: number;
+  estimated_tokens: number | null;
+  source_name: string | null;
+  source_type: IngestionSourceType;
+  source_reference: string;
+}
+
+export interface KGSearchResponse {
+  query: string;
+  top_k: number;
+  organization_id: string;
+  results: KGSearchResultChunk[];
+}
+
+export async function kgSearch(
+  orgId: string,
+  query: string,
+  topK = 10,
+): Promise<KGSearchResponse> {
+  return fetchJson<KGSearchResponse>(`/api/v1/kg/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ organization_id: orgId, query, top_k: topK }),
+  });
+}
+
+export interface KGStats {
+  organization_id: string;
+  chunk_count: number;
+  embedded_count: number;
+  source_count: number;
+}
+
+export async function kgStats(orgId: string): Promise<KGStats> {
+  return fetchJson<KGStats>(`/api/v1/kg/stats?organization_id=${orgId}`);
+}
+
+// ============================================================
+// Brand Kits (Theme Q1 / B1)
+// ============================================================
+
+export interface BrandPalette {
+  primary?: string;
+  secondary?: string;
+  ink?: string;
+  surface?: string;
+  surface_muted?: string;
+}
+
+export interface BrandFonts {
+  display?: string;
+  body?: string;
+}
+
+export interface BrandVoice {
+  formal_casual?: number; // 0–100
+  technical_witty?: number; // 0–100
+  calm_energetic?: number; // 0–100
+  do_say?: string[];
+  dont_say?: string[];
+}
+
+export interface BrandPositioning {
+  what_we_do?: string;
+  who_we_serve?: string;
+  why_we_matter?: string;
+}
+
+export interface PersonaIn {
+  name: string;
+  description?: string;
+  demographics?: Record<string, unknown>;
+  jobs_to_be_done?: string[];
+  fears?: string[];
+  desires?: string[];
+  traits?: string[];
+}
+
+export interface PersonaRead extends PersonaIn {
+  id: string;
+}
+
+export interface BrandKit {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string | null;
+  version: number;
+  is_active: boolean;
+  logo_asset_id: string | null;
+  logo_dark_asset_id: string | null;
+  palette_json: BrandPalette | null;
+  fonts_json: BrandFonts | null;
+  voice_json: BrandVoice | null;
+  positioning_json: BrandPositioning | null;
+  personas: PersonaRead[];
+}
+
+export async function listBrandKits(orgId: string): Promise<BrandKit[]> {
+  return fetchJson<BrandKit[]>(`/api/v1/orgs/${orgId}/brand-kits`);
+}
+
+export async function getActiveBrandKit(orgId: string): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits/active`);
+}
+
+export async function getBrandKit(
+  orgId: string,
+  kitId: string,
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits/${kitId}`);
+}
+
+export async function createBrandKit(
+  orgId: string,
+  data: {
+    name: string;
+    description?: string;
+    palette?: BrandPalette;
+    fonts?: BrandFonts;
+    voice?: BrandVoice;
+    positioning?: BrandPositioning;
+    personas?: PersonaIn[];
+  },
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBrandKit(
+  orgId: string,
+  kitId: string,
+  data: {
+    name?: string;
+    description?: string;
+    palette?: BrandPalette;
+    fonts?: BrandFonts;
+    voice?: BrandVoice;
+    positioning?: BrandPositioning;
+  },
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(`/api/v1/orgs/${orgId}/brand-kits/${kitId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function activateBrandKit(
+  orgId: string,
+  kitId: string,
+): Promise<BrandKit> {
+  return fetchJson<BrandKit>(
+    `/api/v1/orgs/${orgId}/brand-kits/${kitId}/activate`,
+    { method: "POST" },
+  );
+}
+
+// ============================================================
+// Assets (Theme A3) — presigned PUT upload flow
+// ============================================================
+
+export type AssetKind =
+  | "image"
+  | "video"
+  | "audio"
+  | "document"
+  | "data"
+  | "archive"
+  | "other";
+
+export interface Asset {
+  id: string;
+  organization_id: string | null;
+  created_by_user_id: string | null;
+  kind: AssetKind;
+  mime_type: string;
+  original_filename: string | null;
+  size_bytes: number | null;
+  bucket: string;
+  storage_key: string;
+}
+
+export interface AssetUploadResponse {
+  asset: Asset;
+  presigned_put_url: string;
+  expires_in: number;
+}
+
+export async function startAssetUpload(data: {
+  filename: string;
+  mime_type: string;
+  kind: AssetKind;
+  organization_id?: string;
+}): Promise<AssetUploadResponse> {
+  return fetchJson<AssetUploadResponse>(`/api/v1/assets/upload`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function confirmAssetUpload(assetId: string): Promise<Asset> {
+  return fetchJson<Asset>(`/api/v1/assets/${assetId}/confirm`, {
+    method: "POST",
+  });
+}
+
+export async function listAssets(
+  orgId: string,
+  kind?: AssetKind,
+): Promise<Asset[]> {
+  const q = new URLSearchParams({ organization_id: orgId });
+  if (kind) q.set("kind", kind);
+  return fetchJson<Asset[]>(`/api/v1/assets?${q.toString()}`);
+}
+
+export async function getAssetDownloadUrl(
+  assetId: string,
+): Promise<{ presigned_get_url: string; expires_in: number }> {
+  return fetchJson(`/api/v1/assets/${assetId}/download`);
+}
+
+export async function deleteAsset(assetId: string): Promise<void> {
+  await fetchJson<void>(`/api/v1/assets/${assetId}`, { method: "DELETE" });
+}
+
+export function inferAssetKind(mimeType: string, filename: string): AssetKind {
+  const m = mimeType.toLowerCase();
+  if (m.startsWith("image/")) return "image";
+  if (m.startsWith("video/")) return "video";
+  if (m.startsWith("audio/")) return "audio";
+  if (
+    m === "application/pdf" ||
+    m === "application/msword" ||
+    m === "text/plain" ||
+    m === "text/markdown" ||
+    m.includes("officedocument") ||
+    /\.(md|txt|pdf|docx?|pptx?)$/i.test(filename)
+  )
+    return "document";
+  if (m === "application/zip" || /\.(zip|tar|gz)$/i.test(filename))
+    return "archive";
+  if (m === "text/csv" || m === "application/json" || m === "image/svg+xml")
+    return "data";
+  return "other";
+}
+
 export async function listProjects(orgId: string): Promise<Project[]> {
   return fetchJson<Project[]>(`/api/v1/orgs/${orgId}/projects`);
 }

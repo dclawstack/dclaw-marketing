@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppShell } from "@/components/app-shell";
 import { AuthProvider } from "@/contexts/auth-context";
+import { OrgProvider } from "@/contexts/org-context";
 
 import "./globals.css";
 
@@ -38,9 +39,11 @@ export default function RootLayout({
         style={{ fontFamily: "var(--font-poppins), var(--dk-font-sans)" }}
       >
         <AuthProvider>
-          <AuthGuard>
-            <AppShell>{children}</AppShell>
-          </AuthGuard>
+          <OrgProvider>
+            <AuthGuard>
+              <AppShell>{children}</AppShell>
+            </AuthGuard>
+          </OrgProvider>
         </AuthProvider>
       </body>
     </html>
