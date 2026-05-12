@@ -47,8 +47,11 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "DClaw Marketing <noreply@dclaw.io>"
 
-    # Newsletters (Phase 7.5+) — ConvertKit + Beehiiv. Mailchimp lives
-    # on a separate config block (see #153) once merged.
+    # Newsletters (Phase 7.5+)
+    # mailchimp_server_prefix is the data-centre suffix on the API key
+    # (e.g. "abc123-us21" → "us21"). Both must be set for real sends.
+    mailchimp_api_key: str = ""
+    mailchimp_server_prefix: str = ""
     convertkit_api_secret: str = ""
     beehiiv_api_key: str = ""
     beehiiv_publication_id: str = ""

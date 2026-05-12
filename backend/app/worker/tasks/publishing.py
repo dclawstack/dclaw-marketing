@@ -30,6 +30,10 @@ from app.services.publishers.bluesky import (
     BlueskyPublishError,
     publish_to_bluesky,
 )
+from app.services.publishers.discord import (
+    DiscordPublishError,
+    publish_to_discord,
+)
 from app.services.publishers.instagram import (
     InstagramAuthError,
     InstagramPublishError,
@@ -44,6 +48,16 @@ from app.services.publishers.mastodon import (
     MastodonAuthError,
     MastodonPublishError,
     publish_to_mastodon,
+)
+from app.services.publishers.pinterest import (
+    PinterestAuthError,
+    PinterestPublishError,
+    publish_to_pinterest,
+)
+from app.services.publishers.reddit import (
+    RedditAuthError,
+    RedditPublishError,
+    publish_to_reddit,
 )
 from app.services.publishers.x import (
     XAuthError,
@@ -164,6 +178,60 @@ def _dispatch_publish(post: ScheduledPost, session) -> PublishResult:
             text=post.copy or "",
         )
 
+    if post.channel == ScheduledPostChannel.reddit:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.reddit
+        )
+        token = account._interim_access_token if account else None
+        subreddit = (
+            (account.auth_metadata_json or {}).get("subreddit")
+            if account
+            else None
+        ) or "test"
+        return publish_to_reddit(
+            access_token=token,
+            subreddit=subreddit,
+            text=post.copy or "",
+        )
+
+    if post.channel == ScheduledPostChannel.discord:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.discord
+        )
+        webhook_url = (
+            (account.auth_metadata_json or {}).get("webhook_url")
+            if account
+            else None
+        )
+        return publish_to_discord(
+            webhook_url=webhook_url,
+            text=post.copy or "",
+            username=account.display_name if account else None,
+        )
+
+    if post.channel == ScheduledPostChannel.pinterest:
+        account = _find_active_account(
+            session, post.organization_id, SocialPlatform.pinterest
+        )
+        token = account._interim_access_token if account else None
+        board_id = (
+            (account.auth_metadata_json or {}).get("board_id")
+            if account
+            else None
+        ) or "stub_board"
+        image_url = None
+        if isinstance(post.publisher_response, dict):
+            image_url = post.publisher_response.get("image_url")
+        title = (post.copy or "Untitled").split("\n", 1)[0][:100]
+        description = (post.copy or "").split("\n", 1)[-1] if (post.copy and "\n" in post.copy) else ""
+        return publish_to_pinterest(
+            access_token=token,
+            board_id=board_id,
+            image_url=image_url,
+            title=title,
+            description=description,
+        )
+
     # No adapter for this channel yet — fall back to the v0 stub so
     # the rest of the loop still closes.
     return PublishResult(
@@ -275,6 +343,21 @@ def publish_scheduled_post(self, post_id: str) -> dict:
         except (MastodonAuthError, MastodonPublishError) as exc:
             post.status = ScheduledPostStatus.failed
             post.error_message = f"mastodon: {exc}"
+            session.commit()
+            raise
+        except (RedditAuthError, RedditPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"reddit: {exc}"
+            session.commit()
+            raise
+        except DiscordPublishError as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"discord: {exc}"
+            session.commit()
+            raise
+        except (PinterestAuthError, PinterestPublishError) as exc:
+            post.status = ScheduledPostStatus.failed
+            post.error_message = f"pinterest: {exc}"
             session.commit()
             raise
         except (XAuthError, XPublishError) as exc:
