@@ -37,6 +37,85 @@ const STATUS_TONE: Record<
   expired: "warning",
 };
 
+type AssetKind = "image" | "video" | "voice" | "music";
+
+function inferAssetKind(
+  actionType: string,
+  payload: Record<string, unknown> | null | undefined,
+): AssetKind | null {
+  const stated = payload?.asset_kind as string | undefined;
+  if (stated === "image" || stated === "video" || stated === "voice" || stated === "music") {
+    return stated;
+  }
+  if (actionType.includes("image")) return "image";
+  if (actionType.includes("video")) return "video";
+  if (actionType.includes("voice")) return "voice";
+  if (actionType.includes("music")) return "music";
+  return null;
+}
+
+function AssetPreview({
+  kind,
+  url,
+  provider,
+  aspectRatio,
+  durationS,
+}: {
+  kind: AssetKind;
+  url: string;
+  provider: string | null;
+  aspectRatio: string | null;
+  durationS: number | null;
+}) {
+  const meta: string[] = [];
+  if (provider) meta.push(provider);
+  if (aspectRatio) meta.push(aspectRatio);
+  if (durationS != null) meta.push(`${durationS.toFixed(1)}s`);
+  const metaLine = meta.join(" · ");
+
+  if (kind === "image" || kind === "video") {
+    // Video stubs are animated SVGs, so the <img> tag handles both
+    // image and video stubs. For real Replicate video URLs we'd need
+    // a <video> tag — branched below.
+    const isLikelyVideoFile = /\.(mp4|webm|mov)(\?|$)/i.test(url);
+    return (
+      <div className="rounded-md border border-[var(--dk-border)] bg-white overflow-hidden max-w-md">
+        {isLikelyVideoFile ? (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <video
+            src={url}
+            controls
+            playsInline
+            className="w-full aspect-video object-cover"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={url}
+            alt={`${kind} preview`}
+            className="w-full object-cover"
+          />
+        )}
+        {metaLine && (
+          <p className="px-3 py-2 text-xs text-[var(--dk-fg-2)] font-mono border-t border-[var(--dk-border)]">
+            {metaLine}
+          </p>
+        )}
+      </div>
+    );
+  }
+  // voice / music — both use <audio>
+  return (
+    <div className="rounded-md border border-[var(--dk-border)] bg-white p-3 max-w-md flex flex-col gap-2">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio controls src={url} className="w-full" />
+      {metaLine && (
+        <p className="text-xs text-[var(--dk-fg-2)] font-mono">{metaLine}</p>
+      )}
+    </div>
+  );
+}
+
 export default function InboxPage() {
   const [items, setItems] = useState<ApprovalRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,6 +239,17 @@ export default function InboxPage() {
               (item.payload_json?.channel as string | undefined) ?? null;
             const brief =
               (item.payload_json?.brief as string | undefined) ?? null;
+            const prompt =
+              (item.payload_json?.prompt as string | undefined) ?? null;
+            const url =
+              (item.payload_json?.url as string | undefined) ?? null;
+            const provider =
+              (item.payload_json?.provider as string | undefined) ?? null;
+            const aspectRatio =
+              (item.payload_json?.aspect_ratio as string | undefined) ?? null;
+            const durationS =
+              (item.payload_json?.duration_s as number | undefined) ?? null;
+            const assetKind = inferAssetKind(item.action_type, item.payload_json);
             const decided = item.status !== "pending";
             return (
               <DkCard key={item.id}>
@@ -197,6 +287,23 @@ export default function InboxPage() {
                     <div className="rounded-md border border-[var(--dk-border)] bg-[var(--dk-bg-tint)] p-3 text-sm leading-relaxed text-[var(--dk-fg-1)]">
                       {text}
                     </div>
+                  )}
+                  {url && assetKind && (
+                    <AssetPreview
+                      kind={assetKind}
+                      url={url}
+                      provider={provider}
+                      aspectRatio={aspectRatio}
+                      durationS={durationS}
+                    />
+                  )}
+                  {prompt && !text && (
+                    <p className="text-xs text-[var(--dk-fg-2)]">
+                      <span className="font-semibold text-[var(--dk-fg-1)]">
+                        Prompt:
+                      </span>{" "}
+                      {prompt}
+                    </p>
                   )}
                   {brief && (
                     <p className="text-xs text-[var(--dk-fg-2)]">
