@@ -628,6 +628,25 @@ export async function confirmAssetUpload(assetId: string): Promise<Asset> {
   });
 }
 
+export async function listAssets(
+  orgId: string,
+  kind?: AssetKind,
+): Promise<Asset[]> {
+  const q = new URLSearchParams({ organization_id: orgId });
+  if (kind) q.set("kind", kind);
+  return fetchJson<Asset[]>(`/api/v1/assets?${q.toString()}`);
+}
+
+export async function getAssetDownloadUrl(
+  assetId: string,
+): Promise<{ presigned_get_url: string; expires_in: number }> {
+  return fetchJson(`/api/v1/assets/${assetId}/download`);
+}
+
+export async function deleteAsset(assetId: string): Promise<void> {
+  await fetchJson<void>(`/api/v1/assets/${assetId}`, { method: "DELETE" });
+}
+
 export function inferAssetKind(mimeType: string, filename: string): AssetKind {
   const m = mimeType.toLowerCase();
   if (m.startsWith("image/")) return "image";
