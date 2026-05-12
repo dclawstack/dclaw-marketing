@@ -33,7 +33,7 @@ def test_build_url_linkedin_includes_state_and_scopes():
         account_id="00000000-0000-0000-0000-000000000001",
         redirect_uri="https://app.example/cb",
     )
-    assert "linkedin.com/oauth/v2/authorize" in out.url
+    assert "linkedin.com/oauth/v2/authorization" in out.url
     assert "client_id=client_id_xyz" in out.url
     assert "redirect_uri=https" in out.url
     assert "scope=w_member_social" in out.url
