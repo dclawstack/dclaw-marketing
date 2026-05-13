@@ -1,5 +1,5 @@
 # Build + push container images and cut a GitHub Release on every
-# semver tag push (v0.1.0, v0.1.0-mvp, v1.2.3, …). Images go to GHCR.
+# semver tag push (v1.0.0, v1.0.0, v1.2.3, …). Images go to GHCR.
 #
 # Triggered automatically by `git tag v0.x.y && git push origin v0.x.y`.
 name: Release on tag

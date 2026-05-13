@@ -41,7 +41,7 @@ class Lead(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
 
-    # Tenancy (A1). Nullable in v0.1.0 — see Campaign for rationale.
+    # Tenancy (A1). Nullable in v1.0.0 — see Campaign for rationale.
     organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=True,

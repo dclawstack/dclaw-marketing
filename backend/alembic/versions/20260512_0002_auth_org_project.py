@@ -28,7 +28,7 @@ Existing tables get tenancy columns:
 For fresh installs starting from 0001 the existing tables are empty, so
 NOT NULL adds are safe with no backfill. Production paths from any
 populated v1.0 baseline would need a data migration step before
-running this — leaving that as a TODO; v0.1.0 ships with empty tables.
+running this — leaving that as a TODO; v1.0.0 ships with empty tables.
 """
 
 from typing import Sequence, Union
@@ -237,7 +237,7 @@ def upgrade() -> None:
     )
 
     # --- add tenancy FKs to existing tables ------------------------------
-    # campaigns. NULLABLE in v0.1.0 — see model rationale. v0.2.0 will
+    # campaigns. NULLABLE in v1.0.0 — see model rationale. v1.1.0 will
     # tighten to NOT NULL once all routes are scoped under /orgs/{id}/...
     op.add_column(
         "campaigns",
@@ -288,7 +288,7 @@ def upgrade() -> None:
     op.create_index("ix_leads_organization_id", "leads", ["organization_id"])
     op.create_index("ix_leads_project_id", "leads", ["project_id"])
 
-    # analytics_events — NULLABLE in v0.1.0
+    # analytics_events — NULLABLE in v1.0.0
     op.add_column(
         "analytics_events",
         sa.Column(

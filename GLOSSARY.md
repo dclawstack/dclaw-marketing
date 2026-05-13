@@ -68,6 +68,6 @@ Terms used throughout the planning docs and code. See [[PLAN-v1.2]] for full con
 
 **Phase 4 — Multi-channel Publishing** — `SocialAccount` model, per-platform adapters, real Resend email integration.
 
-**Phase 5 — Docs + Marketing** — README, USER-GUIDE, ARCHITECTURE, API ref, slides, one-pager, demo video, `v0.1.0-mvp` tag.
+**Phase 5 — Docs + Marketing** — README, USER-GUIDE, ARCHITECTURE, API ref, slides, one-pager, demo video, `v1.0.0` tag.
 
 **Phase 6 — Polish + External Clients** — Tier 3 role UI, Client Portal (when `is_external=true` flips on), white-label. Post-deadline.

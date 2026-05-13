@@ -28,7 +28,7 @@ class Campaign(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
 
-    # Tenancy (A1). Nullable in v0.1.0 because the legacy v1 routes
+    # Tenancy (A1). Nullable in v1.0.0 because the legacy v1 routes
     # (POST /api/v1/campaigns/) don't yet require Org/Project context.
     # Will tighten to NOT NULL in v0.2 once all routes are scoped under
     # /orgs/{org_id}/projects/{project_id}/.

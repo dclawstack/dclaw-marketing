@@ -10,11 +10,11 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ---
 
-## [0.2.0] — 2026-05-13 — *Sprint 2 closeout*
+## [1.1.0] — 2026-05-13 — *Sprint 2 closeout*
 
-> **Naming note.** The roadmap doc is titled `PLAN-v1.2.md` (carried over from the original spec); this release is `v0.2.0` per the post-MVP versioning. Future plan-doc revisions will be retitled to remove the confusion.
+> **Naming note.** The roadmap doc is titled `PLAN-v1.2.md` (carried over from the original spec); this release is `v1.1.0` per the post-MVP versioning. Future plan-doc revisions will be retitled to remove the confusion.
 
-Sixty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + Theme H SEO depth + a complete A.11 auth-roadmap doc. Everything except the explicitly user-owned marketing collaterals (#52 demo video, #53 launch posts) is in. Builds on `v0.1.0-mvp` (the first end-to-end demo flow).
+Sixty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + Theme H SEO depth + a complete A.11 auth-roadmap doc. Everything except the explicitly user-owned marketing collaterals (#52 demo video, #53 launch posts) is in. Builds on `v1.0.0` (the first end-to-end demo flow).
 
 ### Added — backend (post-rc1 stretch, #194–#210)
 - **§6.2 KG write-back loop** — `BrandKitInsight` model + CRUD (`#194`); composer that injects top-K insights into the Creatives Agent system prompt (`#197`).
@@ -89,7 +89,7 @@ Sixty-plus PRs across Phases 2 / 5 / 6 / 7 / 8 / 9 / 10 / 11 plus Theme D4 + The
 
 ---
 
-## [0.1.0-mvp] — *MVP*
+## [1.0.0] — *MVP*
 
 The first release. End-to-end demo flow works: log in → set brand → ingest context → generate content → approve in Inbox.
 
@@ -151,5 +151,5 @@ The first release. End-to-end demo flow works: log in → set brand → ingest c
 - Conductor agent (multi-agent orchestration) is v0.2 / Phase 3.
 - Legacy v1.0 `/api/v1/campaigns`, `/leads`, `/analytics` routes don't yet require Org/Project context.
 
-[0.2.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v0.2.0
-[0.1.0-mvp]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v0.1.0-mvp
+[1.1.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v1.1.0
+[1.0.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v1.0.0
