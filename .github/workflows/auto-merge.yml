@@ -133,7 +133,13 @@ jobs:
             fi
 
             echo "  → merging (squash)"
-            if gh pr merge "$NUM" --repo "$REPO" --squash --delete-branch --auto=false 2>&1; then
+            # Pull the PR body into a temp file and pass via --body-file so
+            # closing-keywords (Closes #N / Fixes #N) land in the squash
+            # commit message. Without this, GitHub's auto-close on merge
+            # never fires because the squash defaults exclude the PR body.
+            BODY_FILE="$(mktemp)"
+            gh pr view "$NUM" --repo "$REPO" --json body --jq '.body // ""' > "$BODY_FILE"
+            if gh pr merge "$NUM" --repo "$REPO" --squash --body-file "$BODY_FILE" --delete-branch --auto=false 2>&1; then
               MERGED=$((MERGED+1))
               echo "  merged ✓"
             else
