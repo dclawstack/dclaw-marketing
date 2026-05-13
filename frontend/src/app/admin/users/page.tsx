@@ -79,6 +79,14 @@ export default function AdminUsersPage() {
   const [fullName, setFullName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Initial-org section state.
+  type OrgMode = "none" | "existing" | "new";
+  const [orgMode, setOrgMode] = useState<OrgMode>("none");
+  const [pickedOrgId, setPickedOrgId] = useState<string>("");
+  const [newOrgName, setNewOrgName] = useState("");
+  const [newOrgDesc, setNewOrgDesc] = useState("");
+  const [initialRole, setInitialRole] = useState<OrgRole>("viewer");
+
   // Per-user memberships indexed by user id, populated on list load.
   const [memberships, setMemberships] = useState<Record<string, UserMembership[]>>({});
   // All orgs, for the manage-orgs dialog.
@@ -184,15 +192,50 @@ export default function AdminUsersPage() {
     setCreating(true);
     setError(null);
     try {
-      const response = await adminCreateUser({
-        email,
-        full_name: fullName || undefined,
-        is_superuser: isAdmin,
+      // Build the org payload per the mode selection.
+      let orgPayload: Record<string, unknown> | null = null;
+      if (orgMode === "existing" && pickedOrgId) {
+        orgPayload = {
+          mode: "existing",
+          org_id: pickedOrgId,
+          role: initialRole,
+        };
+      } else if (orgMode === "new" && newOrgName.trim()) {
+        orgPayload = {
+          mode: "new",
+          name: newOrgName.trim(),
+          description: newOrgDesc.trim() || undefined,
+          role: initialRole,
+        };
+      }
+
+      const res = await fetch("/api/v1/admin/users/with-org", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          full_name: fullName || undefined,
+          is_superuser: isAdmin,
+          org: orgPayload,
+        }),
       });
-      setTempPassword(response.temp_password);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail ?? `Create failed (${res.status})`);
+      }
+      const data = await res.json();
+      setTempPassword(data.temp_password);
       setEmail("");
       setFullName("");
       setIsAdmin(false);
+      setOrgMode("none");
+      setPickedOrgId("");
+      setNewOrgName("");
+      setNewOrgDesc("");
+      setInitialRole("viewer");
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Create failed.");
@@ -416,9 +459,121 @@ export default function AdminUsersPage() {
                   onChange={(e) => setIsAdmin(e.target.checked)}
                 />
                 <span className="text-sm text-ink">
-                  Make admin (can create other users)
+                  Make superadmin (full-platform access)
                 </span>
               </label>
+
+              {/* Initial org section */}
+              <div className="flex flex-col gap-2 rounded-md border border-[var(--dk-border)] p-3 bg-[var(--dk-gray-50)]">
+                <DkLabel>Initial organization</DkLabel>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="orgmode"
+                      checked={orgMode === "none"}
+                      onChange={() => setOrgMode("none")}
+                    />
+                    <span>No org yet — assign later</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="orgmode"
+                      checked={orgMode === "existing"}
+                      onChange={() => setOrgMode("existing")}
+                      disabled={allOrgs.length === 0}
+                    />
+                    <span>
+                      Assign to existing org{" "}
+                      {allOrgs.length === 0 && (
+                        <span className="text-xs text-[var(--dk-fg-2)]">
+                          (no orgs yet)
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="orgmode"
+                      checked={orgMode === "new"}
+                      onChange={() => setOrgMode("new")}
+                    />
+                    <span>Create new org + assign</span>
+                  </label>
+                </div>
+
+                {orgMode === "existing" && (
+                  <div className="flex flex-col gap-2 pt-2">
+                    <DkLabel htmlFor="picked-org">Org</DkLabel>
+                    <DkSelect
+                      id="picked-org"
+                      value={pickedOrgId}
+                      onChange={(e) => setPickedOrgId(e.target.value)}
+                    >
+                      <option value="">Select an org…</option>
+                      {allOrgs.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.name} ({o.slug})
+                        </option>
+                      ))}
+                    </DkSelect>
+                    <DkLabel htmlFor="initial-role">Role</DkLabel>
+                    <DkSelect
+                      id="initial-role"
+                      value={initialRole}
+                      onChange={(e) =>
+                        setInitialRole(e.target.value as OrgRole)
+                      }
+                    >
+                      {ROLE_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </DkSelect>
+                  </div>
+                )}
+
+                {orgMode === "new" && (
+                  <div className="flex flex-col gap-2 pt-2">
+                    <DkLabel htmlFor="new-org-name" required>
+                      Org name
+                    </DkLabel>
+                    <DkInput
+                      id="new-org-name"
+                      value={newOrgName}
+                      onChange={(e) => setNewOrgName(e.target.value)}
+                      placeholder="Acme Inc."
+                    />
+                    <DkLabel htmlFor="new-org-desc">Description</DkLabel>
+                    <DkInput
+                      id="new-org-desc"
+                      value={newOrgDesc}
+                      onChange={(e) => setNewOrgDesc(e.target.value)}
+                    />
+                    <p className="text-xs text-[var(--dk-fg-2)]">
+                      Slug auto-generated as <code>{newOrgName ? `${newOrgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "org"}` : "name"}-XXXXXX</code> (XXXXXX = new user&apos;s 6-hex code)
+                    </p>
+                    <DkLabel htmlFor="new-org-role">Role</DkLabel>
+                    <DkSelect
+                      id="new-org-role"
+                      value={initialRole}
+                      onChange={(e) =>
+                        setInitialRole(e.target.value as OrgRole)
+                      }
+                    >
+                      {ROLE_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </DkSelect>
+                  </div>
+                )}
+              </div>
+
               {error && (
                 <div
                   role="alert"
