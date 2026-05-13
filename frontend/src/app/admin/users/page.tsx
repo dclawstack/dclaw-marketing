@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Trash2, UserPlus } from "lucide-react";
+import { Building2, Copy, Trash2, UserPlus } from "lucide-react";
+
+import { getToken } from "@/lib/auth";
 
 import { useAuth } from "@/contexts/auth-context";
 
@@ -21,6 +23,7 @@ import {
   DkInput,
   DkLabel,
   DkPageHeader,
+  DkSelect,
   DkTable,
   DkTableBody,
   DkTableCell,
@@ -30,11 +33,38 @@ import {
 } from "@/components/dk";
 import {
   AdminUser,
+  OrgRole,
+  Organization,
   adminCreateUser,
   adminDeleteUser,
   adminListUsers,
   adminResetUserPassword,
+  addOrgMember,
+  listOrgs,
+  listOrgMembers,
+  removeOrgMember,
+  updateOrgMemberRole,
 } from "@/lib/api";
+
+interface UserMembership {
+  org_id: string;
+  org_slug: string;
+  org_name: string;
+  role: OrgRole;
+}
+
+const ROLE_OPTIONS: OrgRole[] = [
+  "admin",
+  "manager",
+  "creatives",
+  "social_media_manager",
+  "seo_specialist",
+  "paid_media_specialist",
+  "reviewer",
+  "analyst",
+  "viewer",
+  "client",
+];
 
 const BOOTSTRAP_ADMIN_EMAIL = "admin@dclaw.io";
 
@@ -48,6 +78,14 @@ export default function AdminUsersPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Per-user memberships indexed by user id, populated on list load.
+  const [memberships, setMemberships] = useState<Record<string, UserMembership[]>>({});
+  // All orgs, for the manage-orgs dialog.
+  const [allOrgs, setAllOrgs] = useState<Organization[]>([]);
+  // Which user's manage-orgs dialog is open (null = closed).
+  const [managingUser, setManagingUser] = useState<AdminUser | null>(null);
+  const [managingBusy, setManagingBusy] = useState(false);
   const [creating, setCreating] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
@@ -56,10 +94,31 @@ export default function AdminUsersPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  async function loadMembershipsFor(userId: string): Promise<UserMembership[]> {
+    const r = await fetch(`/api/v1/admin/users/${userId}/memberships`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!r.ok) return [];
+    return (await r.json()) as UserMembership[];
+  }
+
   async function refresh() {
     setLoading(true);
     try {
-      setUsers(await adminListUsers());
+      const us = await adminListUsers();
+      setUsers(us);
+      // Hydrate memberships in parallel — best effort.
+      const all = await Promise.all(
+        us.map(async (u) => [u.id, await loadMembershipsFor(u.id)] as const),
+      );
+      setMemberships(Object.fromEntries(all));
+      // Also fetch all orgs for the manage-orgs dialog.
+      try {
+        setAllOrgs(await listOrgs());
+      } catch {
+        // If user lacks visibility into all orgs (e.g., org-admin), they'll
+        // see only the orgs they belong to via /orgs anyway.
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load users.");
     } finally {
@@ -70,6 +129,56 @@ export default function AdminUsersPage() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  async function addToOrg(user: AdminUser, orgId: string, role: OrgRole) {
+    setManagingBusy(true);
+    try {
+      await addOrgMember(orgId, { user_id: user.id, role });
+      setMemberships({
+        ...memberships,
+        [user.id]: await loadMembershipsFor(user.id),
+      });
+    } finally {
+      setManagingBusy(false);
+    }
+  }
+
+  async function changeRoleInOrg(
+    user: AdminUser,
+    orgId: string,
+    role: OrgRole,
+  ) {
+    // Need the membership id for the existing /orgs/{org_id}/memberships/{id} PATCH.
+    const members = await listOrgMembers(orgId);
+    const m = members.find((x) => x.user_id === user.id);
+    if (!m) return;
+    setManagingBusy(true);
+    try {
+      await updateOrgMemberRole(orgId, m.id, role);
+      setMemberships({
+        ...memberships,
+        [user.id]: await loadMembershipsFor(user.id),
+      });
+    } finally {
+      setManagingBusy(false);
+    }
+  }
+
+  async function removeFromOrg(user: AdminUser, orgId: string) {
+    const members = await listOrgMembers(orgId);
+    const m = members.find((x) => x.user_id === user.id);
+    if (!m) return;
+    setManagingBusy(true);
+    try {
+      await removeOrgMember(orgId, m.id);
+      setMemberships({
+        ...memberships,
+        [user.id]: await loadMembershipsFor(user.id),
+      });
+    } finally {
+      setManagingBusy(false);
+    }
+  }
 
   async function handleCreate() {
     setCreating(true);
@@ -175,6 +284,7 @@ export default function AdminUsersPage() {
                 <DkTableHead>Name</DkTableHead>
                 <DkTableHead>Status</DkTableHead>
                 <DkTableHead>Role</DkTableHead>
+                <DkTableHead>Orgs</DkTableHead>
                 <DkTableHead className="text-right">Actions</DkTableHead>
               </DkTableRow>
             </DkTableHeader>
@@ -197,9 +307,33 @@ export default function AdminUsersPage() {
                       )}
                     </div>
                   </DkTableCell>
-                  <DkTableCell>{u.is_superuser ? "Admin" : "User"}</DkTableCell>
+                  <DkTableCell>
+                    {u.is_superuser ? "Superadmin" : "User"}
+                  </DkTableCell>
+                  <DkTableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {(memberships[u.id] ?? []).map((m) => (
+                        <DkBadge key={m.org_id} tone="brand">
+                          {m.org_slug}:{m.role}
+                        </DkBadge>
+                      ))}
+                      {(memberships[u.id] ?? []).length === 0 && (
+                        <span className="text-xs text-[var(--dk-fg-2)]">
+                          none
+                        </span>
+                      )}
+                    </div>
+                  </DkTableCell>
                   <DkTableCell className="text-right">
                     <div className="inline-flex items-center gap-2">
+                      <DkButton
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setManagingUser(u)}
+                      >
+                        <Building2 className="h-4 w-4" />
+                        Orgs
+                      </DkButton>
                       <DkButton
                         size="sm"
                         variant="secondary"
@@ -367,6 +501,116 @@ export default function AdminUsersPage() {
             </DkDialogFooter>
           </>
         )}
+      </DkDialog>
+
+      {/* Manage orgs dialog — assign / change role / remove a user from any org */}
+      <DkDialog
+        open={managingUser !== null}
+        onClose={() => !managingBusy && setManagingUser(null)}
+        size="lg"
+      >
+        <DkDialogHeader
+          title={managingUser ? `Org memberships — ${managingUser.email}` : ""}
+          description="Add the user to one or more orgs, change their role per-org, or remove them. Superadmins are implicit admins of every org and don't need explicit memberships."
+          onClose={() => setManagingUser(null)}
+        />
+        <DkDialogContent>
+          {managingUser && (
+            <div className="flex flex-col gap-2">
+              {allOrgs.map((org) => {
+                const userMs = memberships[managingUser.id] ?? [];
+                const existing = userMs.find((m) => m.org_id === org.id);
+                return (
+                  <div
+                    key={org.id}
+                    className="flex items-center justify-between gap-3 rounded-md border border-[var(--dk-border)] px-3 py-2"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{org.name}</span>
+                      <span className="text-xs font-mono text-[var(--dk-fg-2)]">
+                        {org.slug}
+                      </span>
+                    </div>
+                    {existing ? (
+                      <div className="flex items-center gap-2">
+                        <DkSelect
+                          value={existing.role}
+                          disabled={managingBusy}
+                          onChange={(e) =>
+                            changeRoleInOrg(
+                              managingUser,
+                              org.id,
+                              e.target.value as OrgRole,
+                            )
+                          }
+                          className="w-44"
+                        >
+                          {ROLE_OPTIONS.map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                        </DkSelect>
+                        <DkButton
+                          size="sm"
+                          variant="danger"
+                          disabled={managingBusy}
+                          onClick={() =>
+                            removeFromOrg(managingUser, org.id)
+                          }
+                        >
+                          Remove
+                        </DkButton>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <DkSelect
+                          defaultValue="viewer"
+                          disabled={managingBusy}
+                          id={`role-${org.id}`}
+                          className="w-44"
+                        >
+                          {ROLE_OPTIONS.map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                        </DkSelect>
+                        <DkButton
+                          size="sm"
+                          disabled={managingBusy}
+                          onClick={() => {
+                            const sel = document.getElementById(
+                              `role-${org.id}`,
+                            ) as HTMLSelectElement | null;
+                            const role = (sel?.value ?? "viewer") as OrgRole;
+                            addToOrg(managingUser, org.id, role);
+                          }}
+                        >
+                          Add
+                        </DkButton>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {allOrgs.length === 0 && (
+                <p className="text-sm text-[var(--dk-fg-2)]">
+                  No orgs visible. Create an org first.
+                </p>
+              )}
+            </div>
+          )}
+        </DkDialogContent>
+        <DkDialogFooter>
+          <DkButton
+            variant="secondary"
+            onClick={() => setManagingUser(null)}
+            disabled={managingBusy}
+          >
+            Close
+          </DkButton>
+        </DkDialogFooter>
       </DkDialog>
     </div>
   );

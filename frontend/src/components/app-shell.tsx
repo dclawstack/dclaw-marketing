@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { getToken } from "@/lib/auth";
 import {
   BarChart3,
   Bot,
@@ -39,7 +42,9 @@ interface NavItem {
 interface NavGroup {
   label: string;
   items: NavItem[];
-  superuserOnly?: boolean;
+  /** Visible only if the user is a superadmin OR an org-admin on at least one
+   * org. Org-level admin status is detected via the auth context. */
+  adminOnly?: boolean;
 }
 
 const NAV_GROUPS: NavGroup[] = [
@@ -82,18 +87,13 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Settings",
+    label: "Admin",
+    adminOnly: true,
     items: [
       { label: "Integrations", href: "/integrations", icon: Plug },
       { label: "Orgs", href: "/orgs", icon: Settings },
-    ],
-  },
-  {
-    label: "Admin",
-    superuserOnly: true,
-    items: [
       {
-        label: "Admin Console",
+        label: "Users",
         href: "/admin/users",
         icon: Shield,
         matchPrefix: "/admin",
@@ -102,9 +102,32 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+interface AdminOrgStatus {
+  is_superuser: boolean;
+  admin_org_ids: string[];
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [adminStatus, setAdminStatus] = useState<AdminOrgStatus | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setAdminStatus(null);
+      return;
+    }
+    fetch("/api/v1/me/admin-orgs", {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setAdminStatus)
+      .catch(() => setAdminStatus(null));
+  }, [user]);
+
+  const isAdmin =
+    !!user?.is_superuser ||
+    (adminStatus?.admin_org_ids?.length ?? 0) > 0;
 
   if (AUTH_PATHS.has(pathname)) {
     return (
@@ -187,9 +210,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="Primary navigation"
         >
           <nav className="flex flex-col gap-5 px-3">
-            {NAV_GROUPS.filter(
-              (g) => !g.superuserOnly || user?.is_superuser,
-            ).map((group) => (
+            {NAV_GROUPS.filter((g) => !g.adminOnly || isAdmin).map((group) => (
               <div key={group.label} className="flex flex-col gap-1">
                 <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[var(--dk-fg-2)]">
                   {group.label}
