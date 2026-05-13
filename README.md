@@ -1,109 +1,261 @@
+<div align="center">
+
+<img src="frontend/public/brand/dclaw-icon-purple.svg" width="72" alt="DClaw" />
+
 # DClaw Marketing
 
-> **An agent-driven marketing operating system.**
-> Set the brand once. Ingest your context. The agents do the work; you supervise.
+**An agent-driven marketing operating system.**  
+Set the brand once. Ingest your context. The agents run the operation — you supervise.
 
-DClaw Marketing turns a small team (or one operator + AI agents) into a full marketing function. Humans set the brand kit and feed in source material; AI agents draft content, schedule posts, run ads, and surface analytics. Humans supervise their **Station** and approve outbound actions in an **Approval Inbox** — agents never publish without consent.
+[![CI](https://github.com/dclawstack/dclaw-marketing/actions/workflows/ci.yml/badge.svg)](https://github.com/dclawstack/dclaw-marketing/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/dclawstack/dclaw-marketing?label=release&color=7660A8)](https://github.com/dclawstack/dclaw-marketing/releases)
+[![Backend image](https://ghcr-badge.egpl.dev/dclawstack/dclaw-marketing-backend/size?label=backend)](https://github.com/dclawstack/dclaw-marketing/pkgs/container/dclaw-marketing-backend)
+[![Frontend image](https://ghcr-badge.egpl.dev/dclawstack/dclaw-marketing-frontend/size?label=frontend)](https://github.com/dclawstack/dclaw-marketing/pkgs/container/dclaw-marketing-frontend)
+[![License](https://img.shields.io/badge/license-TBD-lightgrey)](LICENSE)
+
+</div>
 
 ---
 
-## Quickstart (5 minutes)
+## What it is
+
+DClaw Marketing turns a small team — or one operator working with AI agents — into a full marketing function. Humans configure the brand, feed in source material, and supervise a fleet of specialist agents from their **Station**. Every outbound action clears an **Approval Inbox** before it fires. Agents never publish without consent.
+
+The platform ships as a **Helm chart + container images** you install on your own Kubernetes cluster. No vendor lock-in, no SaaS dependency, no data leaving your perimeter.
+
+---
+
+## Capabilities
+
+### Foundation
+
+| Capability | Status |
+|---|---|
+| Multi-tenant **Organization → Project → Campaign → Asset** hierarchy | ✅ v0.1 |
+| Role-based access — 10 supervision scopes (Admin, Manager, Creatives, SMM, SEO, Paid Media, Reviewer, Analyst, Viewer, Client) | ✅ v0.1 |
+| Two-tier admin model — superadmin (platform-wide) + org-admin (org-scoped) | ✅ v0.2 |
+| Admin-only user provisioning — temp password + mandatory first-login reset + TOTP 2FA | ✅ v0.2 |
+| **Brand Kit** — versioned palette, fonts, voice sliders, do/don't-say lists, audience personas | ✅ v0.1 |
+| **Knowledge Graph** — ingest URLs, files, Git repos, ZIP archives → pgvector semantic search | ✅ v0.2 |
+| Background workers — Celery + Redis, SSE progress streams, dead-letter handling | ✅ v0.1 |
+| Object storage — S3-compatible (MinIO in dev, S3/R2/Spaces in prod) with presigned uploads | ✅ v0.1 |
+| Approval Inbox — 4-eye rule, per-action reasoning trace, full audit log | ✅ v0.1 |
+| Goals + Autonomy Posture — Autopilot / Soft-gate / Hard-gate per action class | ✅ v0.1 |
+
+### Content & Publishing
+
+| Capability | Status |
+|---|---|
+| **Creatives Agent** — brief in, N variants out (text + image), brand-voice linted | ✅ v0.1 |
+| **SEO Agent** — keyword pipeline (Ahrefs MCP), internal-link suggester, ranking-delta tracker | ✅ v0.2 |
+| **Analyst Agent** — 3σ anomaly detection, Monday-morning narrative reports | ✅ v0.2 |
+| Asset Library (DAM) — filters by kind / source / brand-kit / status, presigned download | ✅ v0.2 |
+| Multi-channel publishing — X, LinkedIn, Instagram, TikTok, YouTube, Facebook, Threads, Reddit, Pinterest, Bluesky, Discord, Mastodon, Substack, WordPress, Ghost | ✅ v0.2 |
+| OAuth 2.0 flows — LinkedIn, X (PKCE), Instagram, Reddit, Pinterest (PKCE), Discord, Mastodon | ✅ v0.2 |
+| Email sequences — Resend / Postmark / SendGrid; drip flows with delay + branch conditions | ✅ v0.2 |
+| Ads publisher — Meta, LinkedIn, Google Ads (draft + submit; human approves launch) | ✅ v0.2 |
+| Conductor agent (multi-agent orchestration) | 🔜 v0.3 |
+| SMM / Paid Media agents + Stations | 🔜 v0.3 |
+
+### MCP Integration Hub
+
+| Category | Adapters |
+|---|---|
+| **CRM** | HubSpot · Salesforce · Pipedrive · Attio |
+| **Analytics** | GA4 · Mixpanel · PostHog |
+| **Productivity** | Slack · Notion · Google Drive · Discord |
+| **SEO** | Ahrefs |
+| **CMS** | Webflow · WordPress · Ghost |
+| **Payments** | Stripe · QuickBooks Online |
+| **AI / Generation** | Anthropic Claude · OpenAI |
+
+### Leads, CRM & Attribution
+
+| Capability | Status |
+|---|---|
+| Lead 2.0 — identity, enrichment, scoring, lifecycle stage (new → mql → sql → customer) | ✅ v0.2 |
+| CRM two-way sync — HubSpot, Salesforce, Pipedrive, Attio | ✅ v0.2 |
+| Segment builder — AND/OR filter DSL, nightly materializer, ad-platform audience sync | ✅ v0.2 |
+| Attribution — first-touch, last-touch, time-decay; Sankey view | ✅ v0.2 |
+
+### Agency Operations
+
+| Capability | Status |
+|---|---|
+| Visual Workflow Builder — LLM-step chains + approval gates + branching nodes | ✅ v0.2 |
+| Client reporting — weekly + monthly HTML reports, delivered via MinIO | ✅ v0.2 |
+| Rate-limit & quota manager — sliding-window counters, circuit breaker, live UI gauge | ✅ v0.2 |
+| Cost tracking — per-org LLM / image / video spend; daily soft + hard caps | ✅ v0.2 |
+| GDPR export — full workspace data export (ZIP) + right-to-delete | ✅ v0.2 |
+
+---
+
+## Architecture
+
+```
+                           Browser
+                              │
+                    ┌─────────▼──────────┐
+                    │   Next.js 14       │  :3015
+                    │   (App Router)     │
+                    └─────────┬──────────┘
+                              │  JWT bearer
+                    ┌─────────▼──────────┐
+                    │   FastAPI          │  :8102
+                    │   (async Python)   │
+                    └──┬──┬──┬───────────┘
+                       │  │  │
+          ┌────────────┘  │  └──────────────┐
+          ▼               ▼                 ▼
+     Postgres 16       Redis            MinIO
+     + pgvector                        (S3 API)
+                          │
+                 ┌────────▼────────┐        Anthropic
+                 │  Celery worker  │◄──────  / OpenAI
+                 │  + Celery Beat  │
+                 │                 │
+                 │  jobs · agents  │
+                 │  sequences      │
+                 │  publishing     │
+                 │  analytics      │
+                 └────────┬────────┘
+                          │
+                 ┌────────▼────────┐
+                 │   MCP Hub       │
+                 │   20+ provider  │
+                 │   adapters      │
+                 └─────────────────┘
+```
+
+Full topology, auth flow, and endpoint reference: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+---
+
+## Quickstart
+
+**Prerequisites:** Docker, Docker Compose v2.
 
 ```bash
 # 1. Clone
 git clone https://github.com/dclawstack/dclaw-marketing.git
 cd dclaw-marketing
 
-# 2. Configure environment
+# 2. Configure
 cp .env.example .env
-# Optional: edit .env to set ANTHROPIC_API_KEY, OPENAI_API_KEY for real
-# LLM calls. Without them, the agents and embeddings fall back to
-# deterministic stubs so you can still run the full demo flow.
+# Add ANTHROPIC_API_KEY for live agent runs.
+# Without it, agents fall back to deterministic stubs — the full UI still works.
 
-# 3. Bring up the stack
+# 3. Start
 docker compose up -d
-# Starts: Postgres (pgvector) · Redis · MinIO · backend · celery-worker · celery-beat · frontend
+# Brings up: Postgres (pgvector) · Redis · MinIO
+#            backend · celery-worker · celery-beat · frontend
 
-# 4. Open the app
+# 4. Open
 open http://localhost:3015
-# Default admin: admin@dclaw.io / ChangeMeOnFirstLogin!
-# (You'll be forced to set a new password on first login.)
 ```
 
-→ Full walkthrough in [docs/USER-GUIDE.md](docs/USER-GUIDE.md).
+**Default credentials:** `admin@dclaw.io` / `ChangeMeOnFirstLogin!`  
+A mandatory password reset runs on first login.
+
+End-to-end walkthrough: [docs/USER-GUIDE.md](docs/USER-GUIDE.md)
 
 ---
 
-## What's inside
+## Stack
 
-| Capability | Status |
+| Layer | Technology |
 |---|---|
-| **Multi-tenant Org / Project hierarchy** with role-based access | ✅ v0.1 |
-| **Admin-only user creation** with temp passwords + mandatory first-login reset | ✅ v0.1 |
-| **Brand Kit** (versioned palette / fonts / voice / personas) | ✅ v0.1 |
-| **File ingestion** → text chunks → semantic embeddings → Knowledge Graph | ✅ v0.1 |
-| **Creatives Agent** — brief in, N variants out, each routed to Approval Inbox | ✅ v0.1 |
-| **Approval Inbox** with audit log + 4-eye rule | ✅ v0.1 |
-| **Background workers** (Celery + Redis) for long-running jobs + SSE progress streams | ✅ v0.1 |
-| **Object storage** (S3-compatible; MinIO in dev) with presigned uploads | ✅ v0.1 |
-| **Goals + Constraints + Autonomy Posture** per Org for agent guard-rails | ✅ v0.1 |
-| Multi-channel publishing (X, LinkedIn, IG, …) | 🔜 v0.2 |
-| SMM / SEO / Paid Media / Analyst agents | 🔜 v0.2 |
-| Conductor agent (multi-agent orchestration) | 🔜 v0.2 |
+| **API** | FastAPI · SQLAlchemy 2.0 async · Pydantic v2 · FastAPI-Users |
+| **Database** | Postgres 16 + pgvector |
+| **Cache / Queue** | Redis · Celery · Celery Beat |
+| **Storage** | MinIO (dev) · S3 / R2 / Spaces (prod) via `aiobotocore` |
+| **Frontend** | Next.js 14 App Router · Tailwind CSS · `--dk-*` design tokens · Poppins |
+| **AI** | Anthropic Claude (agents) · OpenAI (embeddings) |
+| **Migrations** | Alembic |
+| **Testing** | pytest · pytest-asyncio 0.24.0 |
+| **Packaging** | Docker · Helm chart · GHCR container registry |
 
 ---
 
-## Architecture at a glance
+## Deployment
 
-```
-Browser  ─►  Next.js 14 (frontend, :3015)
-                    │
-                    ▼  JWT bearer
-              FastAPI (backend, :8102)
-                    │
-            ┌───────┼──────────┬─────────┬──────────┐
-            ▼       ▼          ▼         ▼          ▼
-       Postgres   Redis     MinIO   Anthropic    OpenAI
-       (+pgvector)         (S3 API)  (Claude)  (embeddings)
-                    │
-                    ▼  task queue
-              Celery worker + Celery Beat
-              (ingestion, agent runs, scheduled jobs)
+One Helm install supports N Organizations. Postgres, Redis, and MinIO are bundled as subcharts by default — swap to managed services via values flags.
+
+```bash
+helm install dclaw-marketing oci://ghcr.io/dclawstack/charts/dclaw-marketing \
+  -f values.yaml
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
+Alembic migrations run automatically in a pre-upgrade Hook Job — no manual steps on upgrade.
+
+Full chart shape, TLS modes, secrets management, and multi-tenant isolation: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ---
 
-## Critical rules for agents (humans + AI) working in this repo
+## Documentation
 
-1. **DO NOT install shadcn CLI** — pre-built UI components in `frontend/src/components/ui/`. Installing the CLI breaks the Tailwind v3 build.
-2. **DO NOT change the Postgres test port** — `conftest.py` and `ci.yml` both use `localhost:5432`.
-3. **DO NOT delete `.github/workflows/ci.yml`** — kills CI on every push.
-4. **DO NOT upgrade `pytest-asyncio`** — pinned at `==0.24.0`; later versions break fixture scoping.
-5. **All UI work uses `--dk-*` brand tokens.** Light mode only. No hard-coded hex. No `dark:` variants. See `frontend/src/styles/brand.css`.
-
----
-
-## Key files
-
-| File | Purpose |
-|------|---------|
-| [PLAN-v1.2.md](PLAN-v1.2.md) | Roadmap (v1.2 + v2.0 Vision + Appendix A tech choices) |
-| [AGENTS.md](AGENTS.md) | Architecture rules + anti-patterns |
-| [docs/USER-GUIDE.md](docs/USER-GUIDE.md) | How to use the platform end-to-end |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture deep-dive |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Branch / commit / PR conventions |
+| Document | What's in it |
+|---|---|
+| [AGENTS.md](AGENTS.md) | Architecture lock — stack choices, anti-patterns, brand rules for coding agents |
+| [PLAN-v1.2.md](PLAN-v1.2.md) | Full feature roadmap: themes A–Q, v2.0 vision, tech choices (Appendix A), phase breakdown (Appendix B) |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System topology, auth flow, API surface, agent runtime, Helm chart shape |
+| [docs/USER-GUIDE.md](docs/USER-GUIDE.md) | Operator walkthrough — brand setup → ingest → generate → approve → publish |
+| [docs/api/README.md](docs/api/README.md) | API reference index — live Swagger at `:8102/docs`, ReDoc at `:8102/redoc` |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |
-| `backend/app/core/config.py` | All env-driven config |
-| `frontend/src/styles/brand.css` | DClaw design-kit tokens (single source of truth) |
+| [scripts/RESTORE_RUNBOOK.md](scripts/RESTORE_RUNBOOK.md) | Disaster recovery — Postgres, MinIO, and credential restore |
 
 ---
 
-## Port Registry (across the DClaw vertical-app family)
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit style, and PR conventions.  
+See [GLOSSARY.md](GLOSSARY.md) for domain terminology.
+
+**Rules that apply to all contributors (human and AI):**
+
+1. **Do not install the shadcn CLI** — pre-built components live in `frontend/src/components/ui/`. The CLI breaks the Tailwind v3 build.
+2. **Do not change the Postgres test port** — `conftest.py` and `ci.yml` both pin `localhost:5432`.
+3. **Do not delete `.github/workflows/ci.yml`** — kills CI on every push.
+4. **Do not upgrade `pytest-asyncio`** — pinned at `==0.24.0`; later versions break fixture scoping.
+5. **All UI uses `--dk-*` brand tokens** — light mode only, no `dark:` variants, no hardcoded hex. See `frontend/src/styles/brand.css`.
+
+---
+
+## Repository layout
+
+```
+dclaw-marketing/
+├── backend/               FastAPI app, Celery workers, Alembic migrations
+│   ├── app/
+│   │   ├── api/v1/        REST endpoints (auth, orgs, users, admin, …)
+│   │   ├── auth/          FastAPI-Users config + schemas
+│   │   ├── core/          Config, DB session, lifespan
+│   │   ├── models/        SQLAlchemy 2.0 models
+│   │   ├── services/      Business logic (slugs, email, generation, MCP, …)
+│   │   └── workers/       Celery tasks
+│   └── tests/
+├── frontend/              Next.js 14 App Router
+│   ├── public/brand/      DClaw logo SVGs and brand assets
+│   └── src/
+│       ├── app/           Pages (orgs, admin, settings, agents, …)
+│       ├── components/dk/ Canonical DK component library
+│       ├── contexts/      Auth + Org React contexts
+│       ├── lib/           API client, auth helpers, utils
+│       └── styles/        brand.css — single source of truth for --dk-* tokens
+├── design/
+│   └── source/project/    DKube brand system (guidelines, SKILL.md, slide masters, UI kit)
+├── docs/                  ARCHITECTURE.md · USER-GUIDE.md · api/README.md
+├── helm/                  Kubernetes Helm chart
+├── scripts/               RESTORE_RUNBOOK.md + ops helpers
+└── .github/workflows/     CI · auto-merge · release · project automation
+```
+
+---
+
+## Port registry
 
 | App | Backend | Frontend | Database |
-|-----|---------|----------|----------|
+|---|---|---|---|
 | dclaw-chat | 8090 | 3000 | dclaw_chat |
 | dclaw-med | 8092 | 3004 | dclaw_med |
 | dclaw-learn | 8093 | 3003 | dclaw_learn |
