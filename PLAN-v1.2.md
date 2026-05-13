@@ -9,32 +9,113 @@ DClaw Marketing is an **end-to-end product-marketing operating system**: one pla
 
 **North star:** _from a single PRD, this app produces a launch — copy, visuals, video clips, ads, landing pages, an email sequence, a scheduled posting plan, and a closed-loop attribution view — with a human approving every external action._
 
-## Pre-Flight Checklist — Do This First
+## Pre-Flight Checklist — Done
 
-Before implementing any v1.2 feature, verify:
+These were the green-light items before v1.2 implementation could start. All locked in by v1.1.0.
 
-- [ ] `frontend/package-lock.json` is committed after any `npm install` / dependency change
-- [ ] `frontend/next-env.d.ts` exists and is committed (required for Next.js TypeScript builds)
-- [ ] `frontend/.gitignore` excludes `node_modules/` and `.next/`
-- [ ] `docker-compose.yml` healthchecks use `python urllib.request.urlopen()` (backend) and `wget -q --spider` (frontend)
-- [ ] `frontend/Dockerfile` declares `ARG NEXT_PUBLIC_API_URL` before `RUN npm run build`
-- [ ] All new UI uses `--dk-*` tokens or remapped shadcn vars — no hardcoded hex; no `dark:` variants
-- [ ] All long-running jobs (generation, posting, scraping) run via background workers (Celery/RQ + Redis), NOT inline in request handlers
-- [ ] Every MCP/3rd-party credential is stored encrypted in `Connection` (see model below) — NEVER in env vars per-tenant
+- [x] `frontend/package-lock.json` committed after any `npm install` / dependency change
+- [x] `frontend/next-env.d.ts` exists and is committed
+- [x] `frontend/.gitignore` excludes `node_modules/` and `.next/`
+- [x] `docker-compose.yml` healthchecks use `python urllib.request.urlopen()` (backend) and `wget -q --spider` (frontend)
+- [x] `frontend/Dockerfile` declares `ARG NEXT_PUBLIC_API_URL` before `RUN npm run build`; `BACKEND_INTERNAL_URL` added in v1.1.1 so the in-container rewrite proxy resolves the backend service
+- [x] All new UI uses `--dk-*` tokens or remapped shadcn vars — no hardcoded hex; no `dark:` variants
+- [x] All long-running jobs (generation, posting, scraping) run via background workers (Celery + Redis), NOT inline in request handlers
+- [x] Every MCP / 3rd-party credential is stored Fernet-encrypted in `Connection` (per-Org data key) — NEVER in env vars per-tenant
 
-## v1.0 Feature Inventory (Current)
+## Current Feature Inventory (post-v1.1.1)
 
-- [x] Backend scaffolded: FastAPI, async SQLAlchemy 2.0, Pydantic v2, repository pattern
-- [x] Models: `Lead`, `Campaign`, `AnalyticsEvent` (placeholders — extend per v1.2)
-- [x] Schemas + repositories + tests for all three entities
-- [x] Frontend: Next.js 14 App Router, brand-themed Tailwind, pre-built UI components
-- [x] Pages: Dashboard (`/`), Campaigns (`/campaigns`), Leads (`/leads`)
-- [x] Docker + docker-compose + Helm chart
-- [x] Alembic migrations setup
-- [x] GitHub Actions CI
-- [ ] Real CRUD wired to forms (verify with `docker compose up`)
-- [ ] Auth (no auth in v1.0 — add in v1.2 P0)
-- [ ] Background worker (no Celery/RQ in v1.0 — add in v1.2 P0)
+> **Legend.** `✅ Shipped` = merged and in the current `main`. `🟡 Partial` = some sub-parts shipped, others pending. `⬜ Pending` = not yet started. Releases referenced: **v1.0.0** (Sprint 1 closeout, formerly `v0.1.0-mvp`), **v1.1.0** (Sprint 2 closeout, formerly `v0.2.0`), **v1.1.1** (Sprint 3 closeout). Renamed in PR #278 so the version line aligns with this doc.
+
+### Foundations (Theme A)
+- [x] **A1 — Multi-tenant + Auth** ✅ Shipped (v1.0.0 + v1.1.1 hardening): `User`, `Organization`, `Project`, `Membership` models; fastapi-users JWT; admin-only user creation with temp passwords; mandatory first-login reset; two-tier admin model (bootstrap superadmin + per-org admins) added in v1.1.1; universal slug scheme (`u-/o-/s-` + 6-hex); centralized guards + last-admin protection + audit + notify.
+- [x] **A2 — Background worker (Celery + Redis)** ✅ Shipped (v1.0.0): `Job` model with status / progress / result_url / error; SSE stream at `/api/v1/jobs/{id}/stream`; `<JobStatus>` component.
+- [x] **A3 — Object storage** ✅ Shipped (v1.0.0): MinIO in dev, S3/R2 in prod; presigned PUT/GET; `Asset` model.
+- [x] **A4 — Audit + Approvals** ✅ Shipped (v1.0.0): `AuditEvent` (with UUID-coerce fix in v1.1.1), `ApprovalRequest`, `/inbox` Approval queue with 4-eye rule; `/admin/audit` browser shipped in v1.1.0.
+
+### Content Generation Pipeline (Theme B)
+- [x] **B1 — Brand Kit & Voice Profile** ✅ Shipped backend (v1.0.0); Brand Setup Studio polish is Sprint 4 P0.
+- [x] **B2 — Briefs & Campaigns** ✅ Shipped (v1.0.0).
+- 🟡 **B3 — Multimodal Generation** Backend scaffold + Creatives Agent text path shipped (v1.0.0); **image / video / voice / music providers are pending — Sprint 4 P0** (this is the headline of next sprint).
+- [x] **B4 — Repurposing Engine** ✅ Shipped (v1.1.0, SP3-11 in v1.1.1 polish lane).
+- [x] **B5 — Variant A/B Studio** ✅ Shipped models + API (v1.1.1, SP3-10); auto-promote bandit is Sprint 4 (Auto-Optimizer G5).
+- [x] **B6 — Hook & Headline Lab** ✅ Shipped (v1.1.1, SP3-9).
+- ⬜ **B7 — Brand-Safe Image Editor** Pending — P2 / Sprint 5+.
+
+### Scheduling, Publishing & Channels (Theme C)
+- [x] **C1 — Calendar & Scheduler** ✅ Shipped (v1.0.0).
+- 🟡 **C2 — Multi-Channel Publisher** Adapters live for ~13 channels (X, LinkedIn, IG, FB, YouTube, TikTok, Threads, Substack, Bluesky, Reddit, Pinterest, Discord, Mastodon). **OAuth scaffold shipped (v1.1.0); real client credentials are Sprint 4 P0.**
+- [x] **C3 — Email & Newsletter** ✅ Shipped (v1.1.0): Resend / Postmark / SendGrid + sequences.
+- 🟡 **C4 — Ads Publisher** Meta + LinkedIn + Google Ads paused-campaign create shipped (v1.1.0); UI dashboard is partial.
+- ⬜ **C5 — SMS / WhatsApp** Pending — P2.
+- ⬜ **C6 — Push & In-App** Pending — P2.
+
+### MCP Integration Hub (Theme D)
+- [x] **D1 — MCP Connection Registry** ✅ Shipped (v1.1.0): Fernet-encrypted tokens via per-Org data key.
+- [x] **D2 — Multimedia MCP Servers** 14 adapters shipped (HubSpot, GA4, Stripe, Ahrefs, Webflow, WordPress, Ghost, Slack, Discord, Notion, Google Drive, Salesforce, Mixpanel, PostHog). **Generation MCPs (Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram) are Sprint 4 P0** — they unblock B3 image/video/voice.
+- [x] **D3 — BYO MCP marketplace** ✅ Shipped (v1.1.1, SP3-15).
+- [x] **D4 — Webhook Hub (inbound)** ✅ Shipped (v1.1.0): generic receiver + `Automation` rules.
+
+### Audience, Lead & CRM (Theme E)
+- [x] **E1 — Lead 2.0** ✅ Shipped (v1.1.0).
+- [x] **E2 — Enrichment & ID Resolution** ✅ Shipped (v1.1.1, SP3-12).
+- [x] **E3 — Segments & Audiences** ✅ Shipped (v1.1.0).
+- [x] **E4 — Sequences** ✅ Shipped (v1.1.0).
+- [x] **E5 — CRM Sync** ✅ Shipped (v1.1.0): Pipedrive + Attio + HubSpot adapters.
+- [x] **E6 — Attribution & Revenue Tie-Back** ✅ Shipped (v1.1.0): time-decay + `/analytics/sankey`.
+
+### Analytics & Insights (Theme F)
+- [x] **F1 — Unified Analytics Dashboard** ✅ Shipped (v1.1.0): per-campaign drill-down added v1.1.1.
+- [x] **F2 — Content Performance Heatmap** ✅ Shipped (v1.1.1, SP3-13).
+- ⬜ **F3 — Competitor Tracker** Pending — P2.
+- ⬜ **F4 — Customer-Voice Mining** Pending — P2.
+
+### AI Agents & Automation (Theme G)
+- 🟡 **G1 — Marketing Agent (chat surface)** Conductor scaffold + chat dock shipped (v1.1.1, SP3-14). **Real Claude Agent SDK runtime, tool-calls into all MCPs, "every aspect of the platform" controllability — Sprint 4 P0** (this is the headline of next sprint).
+- ⬜ **G2 — Inbox Agent (replies & DMs)** Sprint 4.
+- ⬜ **G3 — Trend Radar** Sprint 4.
+- ⬜ **G4 — Comment Sentiment & Triage** Sprint 4 / 5.
+- ⬜ **G5 — Auto-Optimizer (bandit)** Sprint 4 / 5.
+
+### Sites, SEO & Long-Form (Theme H)
+- [x] **H1 — Landing-Page Builder** ✅ Shipped minimal HTML-body (v1.1.1, SP3-16).
+- [x] **H2 — SEO Blog Pipeline** ✅ Shipped (v1.1.1, SP3-17) + Theme H site-audit / internal-link / ranking-delta (v1.1.0).
+- ⬜ **H3 — Topic Cluster Map** Pending — P2.
+
+### Compliance, Reliability, Polish (Theme I)
+- [x] **I1 — Rate-Limit & Quota Manager** ✅ Shipped (v1.1.0).
+- 🟡 **I2 — Sandbox / Preview Mode** Sandbox flag exists; full "dry-run" UI is Sprint 4 / 5.
+- [x] **I3 — Cost Tracking** ✅ Shipped (v1.1.0): per-org daily budgets + soft/hard caps + `/admin/costs`.
+- [x] **I4 — Export / GDPR** ✅ Shipped (v1.1.0).
+
+### v2.0-track themes (J–P)
+- [x] **J — Client Operations** ✅ Org CRUD + per-Org retainer + budgets (v1.1.0); onboarding wizard via Project Setup Wizard (SP3-5, v1.1.1).
+- 🟡 **K — Project Management** Kanban shipped (v1.1.1, SP3-20); Gantt + capacity planning pending.
+- [x] **L — Time Tracking & Billing** ✅ Shipped time logs (v1.1.1, SP3-21), retainer burn-down (v1.1.1, SP3-22), invoices CRUD + actions (v1.1.1, SP3-23). QuickBooks export shipped (v1.1.0).
+- [x] **M — Client Reporting** ✅ Weekly + monthly HTML reports → MinIO (v1.1.0); signed-JWT embeddable dashboards (v1.1.1, SP3-19).
+- [x] **N — Knowledge Base & SOPs** ✅ Playbook search + CRUD (v1.1.1, SP3-18).
+- ⬜ **O — Client Portal** Activates on `is_external=true`. Pending — P2 / future.
+- ⬜ **P — Workflow Builder** Visual no-code chain. Workflow runner backend exists (v1.1.0); **visual builder UI + agentic-step nodes are Sprint 4 / 5**.
+
+### Theme Q (Brand & Context Ingestion — foundational)
+- 🟡 **Q1 — Brand Setup Studio** Backend BrandKit + KG write-back insights shipped; **end-to-end Studio UX (guidelines-PDF → palette → fonts → voice → personas → live preview) is Sprint 4 P0**.
+- [x] **Q2 — Input Channel Hub** ✅ File / URL / git-repo / zip ingestion (v1.0.0 + v1.1.0 URL + v1.1.1 git, SP3-8).
+- [x] **Q3 — Knowledge Graph** ✅ Shipped (v1.0.0); per-source drill-down (v1.1.1, SP3-7).
+- [x] **Q4 — Freshness & Re-ingestion** ✅ Schedulers + diff highlights (v1.1.0).
+- [x] **Q5 — Goal & Constraint Setup** ✅ Shipped (v1.0.0).
+- [x] **Q6 — Project Setup Wizard** ✅ Shipped (v1.1.1, SP3-5).
+
+### Identity / admin (post-v2.0-§2 additions, Sprint 3)
+- [x] **Two-tier admin model** ✅ Shipped (v1.1.1): bootstrap superadmin + per-org admins, centralized guards, last-admin protection, self-demote refusal, audit + notify.
+- [x] **Universal slug scheme** ✅ Shipped (v1.1.1): `u-{first4}-{6hex}`, `o-{first4}-{6hex}`, bootstrap `s-admn-000000`; migration re-slugs all rows.
+- [x] **Left-sidebar navigation** ✅ Shipped (v1.1.1): replaces overflowing top bar; admin group collapses.
+- [x] **Auto-merge + auto-close pipeline** ✅ Shipped (v1.1.1): squash carries PR body; workflow has `issues: write`; queue drains itself.
+
+### Pending blocks summary (what's left for v1.2.0)
+- ⬜ **Sprint 4 P0** — Brand Setup Studio polish (Q1) · real OAuth client credentials wired (C2, all platforms) · TOTP enrollment UI (A.11.6) · observability dashboards (Grafana + Sentry tags + `/admin/health` queue depth) · user-guide refresh.
+- ⬜ **Sprint 4 P0 — Agent runtime headline** — Claude Agent SDK integration · real model connections · Conductor as all-in-one chat controller · end-to-end live workflow execution. See "Sprint 4 Plan" below.
+- ⬜ **Sprint 4 P1** — Audit retention pruner · v1 legacy router consolidation · per-tenant LLM provider override · BrandKitInsight bandit ranking.
+- ⬜ **Sprint 5+ P2** — Brand-Safe Image Editor (B7) · SMS / WhatsApp (C5) · Push / In-App (C6) · Competitor Tracker (F3) · Customer-Voice Mining (F4) · Topic Cluster Map (H3) · Client Portal (O) · Visual Workflow Builder (P) · Trend Radar / Comment Triage / Auto-Optimizer (G3-G5) · Sandbox dry-run UI polish.
+- ⬜ **Marketing collateral** — Issues #49–#53 (one-pager / slides / demo script / demo video / launch posts). **Operator-owned, out-of-band, off-limits to engineering** unless explicitly asked.
 
 ---
 
@@ -331,14 +412,170 @@ Every new table gets `workspace_id` (except `User`/`Workspace`/`MCPServer` regis
 /settings/team, /settings/billing, /settings/quotas
 ```
 
-## Implementation Priority
+## Implementation Priority — sprint-by-sprint (as actually executed)
 
-Recommended sequencing for the next ~3 sprints:
+1. **Sprint 1 — Foundations.** ✅ Shipped (v1.0.0, 2026-05-12). A1 (Auth + Org/Project), A2 (Celery + Redis), A3 (MinIO + Assets), A4 (Audit + Approvals). Theme Q backend (BrandKit, ingestion, KG, goals). Phase 4 (Creatives Agent scaffold). Frontend baseline: top-nav, Approval Inbox, Brand Kit page, Knowledge Sources, Agents, Library, Calendar. ~150 PRs · 52 % of plan.
+2. **Sprint 2 — Feature-complete.** ✅ Shipped (v1.1.0, 2026-05-13). Phase 5 (multi-channel publishing across all 8 v1.2 channels + OAuth scaffold for 7 providers), Phase 6 (MCP Hub with 14 concrete adapters), Phase 7 (Email + Ads + Sequences), Phase 8 (Lead 2.0 + CRM sync + Sankey attribution), Phase 9 (Analyst agent + KG write-back), Phase 10 (agency ops: retainer, invoices, time, share tokens, weekly + monthly client reports), Phase 11 (QuotaCounter, cost-cap, GDPR export, audit browser). Theme D4 (webhooks + Automation). Theme H (SEO depth). ~60 PRs · 90 % of plan.
+3. **Sprint 3 — Operator-ready.** ✅ Shipped (v1.1.1, 2026-05-14). Two-tier admin model (bootstrap superadmin + per-org admins + last-admin protection + audit + notify). Universal slug scheme. Combined create-user-with-org dialog. Left-sidebar navigation. End-to-end auto-merge + auto-close pipeline. SP3-1 → SP3-24 polish lane (Q6 wizard, Fernet-encrypted social tokens, knowledge drill-down, hooks lab, A/B variants, repurpose, heatmap, BYO MCP, kanban, time tracker, retainer + invoices, Pydantic v2 sweep, etc.). Release rename (`v0.1.0-mvp` → `v1.0.0`, `v0.2.0` → `v1.1.0`). 44 PRs · 95 % of plan.
+4. **Sprint 4 — Agents go live + v1.2 demo posture.** ⬜ Pending. See **"Sprint 4 Plan"** below — this is the next sprint and the headline focus is: real agents calling real models doing real workflows on the platform, with the Conductor as a single all-in-one chat controller for every aspect of DClaw.
 
-1. **Sprint 1 — Foundations:** A1 (auth + workspaces), A2 (worker), A3 (storage), A4 (audit/approval). Migrate existing models to be `workspace_id`-scoped.
-2. **Sprint 2 — Generation + Publishing core:** B1 (brand kit), B2 (campaign 2.0), B3 (text + image generation only), C1 (calendar), C2 (X + LinkedIn + Instagram only), D1 (MCP registry), D2 (Replicate + ElevenLabs + Anthropic).
-3. **Sprint 3 — Loop closure:** B4 (repurposing), B5 (A/B), C3 (email), E1–E3 (lead 2.0 + enrichment + segments), F1 (dashboard), G1 (agent chat), I1–I3 (rate limits, sandbox, cost).
-4. **Sprint 4+ (P1/P2 backlog):** ads, attribution, landing pages, SEO pipeline, competitor tracker, optimizer, etc.
+---
+
+## Sprint 4 Plan — "Agents go live, run the platform from one chat"
+
+> **Target release:** `v1.2.0` — the demo build the stakeholder is expecting (the plan doc is `PLAN-v1.2.md`, so this aligns the version line).
+> **Headline.** Stop scaffolding agents. Start running them. By the end of Sprint 4, the Conductor agent can read a brief, pick the right role-Agent, call the right MCP tools against the right real model, draft a multi-channel campaign, queue it through the Approval Inbox, and report back — all from a single chat surface that controls every aspect of the platform.
+> **Posture.** Sprint 4 is **build + integrate + test**, not new scaffolding. Almost every backend exists; the work is wiring real models / real credentials / real flows into the runtime.
+
+### Sprint 4 themes (P0 → P2)
+
+#### S4-A. Agent runtime — real Claude Agent SDK integration **(P0, headline)**
+The current Conductor is a chat scaffold. Sprint 4 turns it into a working multi-agent fleet.
+
+**Stories**
+- **S4-A1** Swap inline LLM calls for Claude Agent SDK runtime. Per-agent system prompts + tool list + memory. Sub-agent pattern: Conductor calls role-Agents as tools.
+- **S4-A2** Conductor agent: brief → decomposition → dispatch → watch → escalate → report. Reads `Goal`, `Constraint`, `Budget`, and `BrandKit` from the KG. Writes its reasoning trace to `AuditEvent` with confidence + cost.
+- **S4-A3** Role-agents end-to-end (no more deterministic stubs): Creatives · SMM · SEO · Paid Media · Analyst · Inbox · Reviewer. Each agent has a typed tool list and a Station UI surface.
+- **S4-A4** Trust-mode resolver wired into every tool call: `Org default → Project override → Channel override → Action-level override`. UI shows the resolved mode before the action fires.
+- **S4-A5** 4-eye approval upgrade in the Approval Inbox: cannot approve your own request; per-action reasoning trace; side-by-side variant compare.
+- **S4-A6** Reasoning trace replay UI (`/audit/{event_id}/replay`) — view any past agent decision: inputs / alternatives considered / confidence / tool calls / cost.
+
+**Definition of done**
+- Conductor can take a one-paragraph brief and produce a queued multi-channel rollout with all assets in the Approval Inbox.
+- Every action is auditable end-to-end (input → reasoning → output → tool calls → cost → approver).
+- Tests cover Conductor decomposition, role-Agent tool-call paths, trust-mode resolution, and approval gate enforcement.
+
+---
+
+#### S4-B. Real model connections — generation MCPs go live **(P0)**
+B3 backend was scaffolded in v1.0.0 but image / video / voice / music providers were stubbed. Sprint 4 wires the real ones.
+
+**Stories**
+- **S4-B1** Generation MCP adapters: **Replicate** (image / Flux / Imagen) · **Runway** (video) · **Suno** + **Udio** (music) · **ElevenLabs** + **Cartesia** (voice) · **Deepgram** + **Whisper** (transcription). Each conforms to the uniform tool set (`generate / edit / export`).
+- **S4-B2** Cost-tracking integration: every generation call writes a cost-ledger row tagged with `(org, project, agent, model, kind)`. QuotaCounter pre-check refuses if over budget.
+- **S4-B3** `dont_say` lint pass on text outputs; auto-retry once with `[refine]` prompt before surfacing to reviewer.
+- **S4-B4** Model selection per-action: Opus (Conductor) · Sonnet (role-Agents) · Haiku (fast-path: classification, anomaly, simple drafting). Per-Org override.
+- **S4-B5** Embedding model decision + pin: OpenAI `text-embedding-3-large` (default) or Voyage AI. Migration to re-embed existing KG corpus.
+- **S4-B6** Per-tenant LLM provider override — agencies want to scope provider per-client.
+
+**Definition of done**
+- Creatives Agent can produce a text + image + short video draft in one run.
+- Cost ledger reflects each call within ~1s.
+- Switching an Org's model preference takes effect on the next agent run with no restart.
+
+---
+
+#### S4-C. Conductor as all-in-one chat controller **(P0)**
+The dock UI shipped (SP3-14). Sprint 4 makes it actually control the platform.
+
+**Stories**
+- **S4-C1** Conductor chat dock surfaces on every authenticated page. Context-aware: pre-fills the current Org / Project / record into the conversation so `summarise this lead` works without restating IDs.
+- **S4-C2** Tool fleet exposed to the Conductor — read + write across the whole platform: `list_orgs · create_user · invite_member · search_kg · create_brief · launch_generation · queue_post · publish_now · approve_request · run_seo_audit · enrich_lead · build_segment · draft_email_sequence · export_gdpr · view_quota · rotate_oauth · ...`. Every tool goes through the existing centralized guard + audit + trust-mode resolver.
+- **S4-C3** Full-screen mode `/conductor` with conversation history, dispatched-task tree, escalation queue, budget burn-down side panel.
+- **S4-C4** Streaming responses (SSE). Tool calls render inline as cards with status (pending / running / approved / done / failed) + click-through to the actual record.
+- **S4-C5** Cross-platform navigation: "show me last week's underperforming LinkedIn posts" returns a list with deep links into `/calendar` and `/heatmap`.
+- **S4-C6** Conductor remembers across sessions per `(user, org)`; threads listed in `/conductor/threads`; pinning + sharing within Org.
+
+**Definition of done**
+- An operator can do every routine action from the Conductor chat without touching another page (besides eyeballing previews).
+- "Drive the platform by chat alone" demo runs end-to-end in under 10 minutes.
+
+---
+
+#### S4-D. Live workflow execution + testing **(P0)**
+Workflows shipped in v1.1.0 but they ran on stubs. Sprint 4 runs them for real.
+
+**Stories**
+- **S4-D1** Workflow runner: real tool calls (not stubs); approval-node pause/resume verified end-to-end; branch-node evaluator with KG-aware predicates.
+- **S4-D2** Workflow templates: Product Launch · SEO Refresh · Brand Revamp · Newsletter Reboot · Lead-Nurture Cascade. Each ships with a real example run that lands a real (sandboxed) campaign.
+- **S4-D3** **End-to-end smoke harness** — `pytest` suite that boots the full stack, runs each workflow template against `Org.dry_run=true`, and asserts the expected Approval Inbox entries / cost-ledger rows / audit events appear.
+- **S4-D4** **Live workflow runs in production-shaped sandbox** — staging Org with real OAuth credentials for 3 channels (LinkedIn / X / Bluesky), real model keys (Anthropic + OpenAI + Replicate + ElevenLabs at minimum). Operator can flip a flag to publish for real or dry-run.
+- **S4-D5** Failure playbook — workflow stalls / model timeouts / OAuth expiry are handled with structured retry + Conductor escalation rather than 500s.
+- **S4-D6** Visual workflow builder UI (P) — simplest viable version: list of templates + ability to clone + edit step sequence + save as new template. Drag-graph builder is Sprint 5+.
+
+**Definition of done**
+- All 5 workflow templates run end-to-end in dry-run mode and produce the expected artefacts.
+- One template (Product Launch) runs end-to-end **live** against the staging Org and posts to a real LinkedIn / X / Bluesky test account.
+- Documented runbook in `docs/USER-GUIDE.md`.
+
+---
+
+#### S4-E. Brand Setup Studio polish (Q1) **(P0)**
+The studio UX was scaffolded; Sprint 4 finishes the flow so an operator can complete Theme Q in one sitting.
+
+**Stories**
+- **S4-E1** Upload-guidelines-PDF flow: parse text + extract palette + extract fonts + extract voice fragments → preview → confirm → versioned BrandKit.
+- **S4-E2** Live-preview pane: a generated post sample re-renders as the operator tweaks voice sliders / palette / fonts.
+- **S4-E3** Persona builder: cards with name + JTBD + fears + desires; clone + version.
+- **S4-E4** "Set Active" with diff view between versions.
+- **S4-E5** BrandKitInsight bandit ranking — replace FIFO injection with a small bandit so agents converge on the brand voice fastest.
+
+---
+
+#### S4-F. Real OAuth credentials wired **(P0)**
+**Stories**
+- **S4-F1** LinkedIn / X / Instagram operator-supplied `client_id` + `client_secret` (env var per provider).
+- **S4-F2** OAuth dance verified end-to-end against staging accounts; auto-reconnect prompts when tokens expire.
+- **S4-F3** Per-account health monitoring rolls up to `/admin/health`.
+
+---
+
+#### S4-G. TOTP enrollment UI **(P0)**
+Backend columns shipped (v1.1.1, PR #252). Sprint 4 surfaces them.
+
+**Stories**
+- **S4-G1** `/settings/2fa` page: QR code · scratch / recovery codes · verify-on-enable.
+- **S4-G2** Login-time TOTP challenge.
+- **S4-G3** Admin override (disable for a user) with audit row.
+
+---
+
+#### S4-H. Observability dashboards **(P1)**
+**Stories**
+- **S4-H1** Grafana board for request latency / error rate / quota usage / cost.
+- **S4-H2** Sentry wired with org/user tags so reports filter by tenant.
+- **S4-H3** `/admin/health` shows worker queue depth + last-beat time.
+- **S4-H4** OpenTelemetry → OTLP endpoint configurable for tenant observability.
+
+---
+
+#### S4-I. Documentation + user-guide refresh **(P1)**
+**Stories**
+- **S4-I1** `docs/USER-GUIDE.md` walks an operator end-to-end from clean stack to first published post via the Conductor.
+- **S4-I2** PDF export of the user guide.
+- **S4-I3** ARCHITECTURE.md updated with the agent fleet + Conductor tool list + workflow runner.
+
+---
+
+#### S4-J. Tech-debt cleanup **(P1 / P2)**
+**Stories**
+- **S4-J1** v1 legacy router consolidation — fold under v2 surface, deprecate old paths.
+- **S4-J2** Audit retention pruner — Celery beat task that prunes `audit_events` older than N days (per-org config).
+- **S4-J3** Webhook signature key-id versioning.
+- **S4-J4** Playwright frontend smoke test suite (golden-path coverage of the Conductor demo flow).
+
+---
+
+### Sprint 4 — out of scope (defer to Sprint 5+)
+- B7 Brand-Safe Image Editor
+- C5 SMS / WhatsApp
+- C6 Push / In-App
+- F3 Competitor Tracker
+- F4 Customer-Voice Mining
+- H3 Topic Cluster Map
+- O Client Portal
+- G3 Trend Radar / G4 Comment Triage / G5 Auto-Optimizer (advanced bandit)
+- Full visual drag-graph Workflow Builder (P) — Sprint 4 ships template clone/edit; full builder is Sprint 5+
+- Sandbox / dry-run UI polish (mechanism exists; full UX is Sprint 5)
+
+### Sprint 4 — exit criteria for `v1.2.0`
+- Conductor controls the platform end-to-end from one chat.
+- ≥ 3 channels publish real posts via real OAuth against a staging Org.
+- ≥ 4 generation MCPs (text · image · video · voice) wired with real keys + cost ledger reconciliation.
+- 5 workflow templates run dry-run and 1 runs live.
+- TOTP enrollment surfaced.
+- Observability dashboards exposed to the operator.
+- Marketing collateral (operator-owned) ready alongside.
 
 ## What "Done" Looks Like for v1.2
 
@@ -916,6 +1153,8 @@ Reference materials in `design/source/project/`:
 
 Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up into their Epic.
 
+> **Sprint cadence (as executed).** Phase 0 + Phase 1 backend + Phase 2 backend + Phase 3 (Creatives Agent) + Phase 4 + parts of Phase 11 landed in **Sprint 1 (v1.0.0)**. Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10 + most of Phase 11 + Theme D4 + Theme H landed in **Sprint 2 (v1.1.0)**. The SP3-* polish lane (all 24 themes) + two-tier admin model + universal slug scheme + left-sidebar nav + auto-merge / auto-close pipeline landed in **Sprint 3 (v1.1.1)**. **Phase 9 (Agent Fleet — real runtime) + Q1 Brand Studio polish + S4-B real generation MCPs + S4-C Conductor controller + S4-D live workflow runs are Sprint 4 (v1.2.0).** See the "Sprint 4 Plan" section above for the breakdown.
+
 ### Phase 0 — Design Ground Truth & Component Library
 **Why first:** every Phase 1+ screen should be born using the design vocabulary. Retrofitting later is wasteful.
 
@@ -932,8 +1171,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 1 — Multi-Tenant Foundation (Theme A1, v2.0 §1-2)
-**Backend status:** done.
-**UI status:** partial (only admin/users + login).
+**Backend status:** ✅ Done (v1.0.0); hardened in v1.1.1 (two-tier admin, slug scheme, last-admin guard).
+**UI status:** ✅ Done — `/admin/users`, `/orgs`, `/orgs/[id]` tabbed detail, Project Setup Wizard, left-sidebar nav.
 
 **Stories:**
 - 1.1 Org switcher in top nav; org context wired into client + every API call
@@ -951,8 +1190,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 2 — Theme Q: Brand & Context Ingestion
-**Backend status:** done (brand-kits, ingest, kg, goals).
-**UI status:** none.
+**Backend status:** ✅ Done (brand-kits, ingest, KG, goals).
+**UI status:** 🟡 Partial — Q2 / Q3 / Q4 / Q6 shipped. **Q1 Brand Setup Studio polish is Sprint 4 P0.**
 
 **Stories:**
 - 2.1 **Q1 Brand Setup Studio** — `/orgs/[id]/brand`
@@ -989,8 +1228,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 3 — Content Generation Pipeline (Theme B)
-**Backend status:** partial (Creatives Agent + Assets done; image/video/voice/music providers NOT done).
-**UI status:** partial (Creatives Station basic — needs upgrade).
+**Backend status:** 🟡 Partial — Creatives Agent + Assets + B4 Repurpose + B5 A/B Variants + B6 Hook Lab shipped (v1.0.0–v1.1.1). **Image / video / voice / music providers are Sprint 4 P0 (S4-B).**
+**UI status:** 🟡 Partial — `/repurpose`, `/variants`, `/hooks`, `/heatmap`, `/library` shipped. Studio Station polish + live preview pane are Sprint 4.
 
 **Stories:**
 - 3.1 **B2 Brief editor** — `/projects/[id]/briefs/new`
@@ -1036,8 +1275,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 4 — Calendar & Scheduling (Theme C1)
-**Backend status:** NOT done.
-**UI status:** NOT done.
+**Backend status:** ✅ Done (v1.0.0): ScheduledPost + Celery beat dispatcher + conflict detection.
+**UI status:** ✅ Done — `/calendar`.
 
 **Stories:**
 - 4.1 `ScheduledPost(workspace_id, channel_id, asset_ids[], copy, scheduled_at, status, parent_campaign_id, tags[])` model + repository
@@ -1049,8 +1288,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 5 — Multi-Account Multi-Channel Publishing (Theme C2, v2.0 §6)
-**Backend status:** NOT done.
-**UI status:** NOT done.
+**Backend status:** ✅ Done (v1.1.0): SocialAccount + per-account rate limits + 7-provider OAuth scaffold + 13 channel adapters (X / LinkedIn / IG / FB / YouTube / TikTok / Threads / Substack / Bluesky / Reddit / Pinterest / Discord / Mastodon). Fernet-encrypted tokens via per-Org data key (v1.1.1, SP3-6).
+**UI status:** ✅ Done — `/channels` connect/disconnect + status. **Real OAuth client credentials are Sprint 4 P0 (S4-F).**
 
 **Stories:**
 - 5.1 `SocialAccount` model — multi-account per platform per Org; `(organization_id, platform, handle)` uniqueness; OAuth-grant per account
@@ -1087,8 +1326,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 6 — MCP Integration Hub (Theme D)
-**Backend status:** NOT done.
-**UI status:** NOT done.
+**Backend status:** ✅ Done (v1.1.0): Connection registry, async MCP client, Fernet-encrypted secrets, 14 concrete adapters (HubSpot / GA4 / Stripe / Ahrefs / Webflow / WordPress / Ghost / Slack / Discord / Notion / Google Drive / Salesforce / Mixpanel / PostHog) + BYO marketplace (v1.1.1, SP3-15) + Theme D4 webhook hub + Automation rules.
+**UI status:** ✅ Done — `/integrations` grid + `/integrations/byo`. **Generation MCPs (Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram) are Sprint 4 P0 (S4-B).**
 
 **Stories:**
 - 6.1 `Connection(workspace_id, server_id, name, kind, auth_type, encrypted_secret_blob, scopes[], status, last_health_at)` + `MCPServer` registry
@@ -1111,8 +1350,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 7 — Email + Ads + Sequences (Themes C3, C4, E4)
-**Backend status:** NOT done.
-**UI status:** NOT done.
+**Backend status:** ✅ Done (v1.1.0): Resend / Postmark / SendGrid + open/click/reply webhooks · Meta + LinkedIn paused-campaign create · Google Ads two-step · SequenceMembership runner + segment evaluator + nightly materializer.
+**UI status:** 🟡 Partial — `/admin/email` test send + sequences API. Visual react-flow sequence builder pending.
 
 **Stories:**
 - 7.1 `EmailTemplate`, `Audience`, `EmailCampaign`, `EmailSequence` models
@@ -1130,8 +1369,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 8 — Lead 2.0 + CRM Sync + Attribution + Analytics (Themes E + F)
-**Backend status:** partial (legacy Lead + analytics stubs).
-**UI status:** partial (legacy lead list).
+**Backend status:** ✅ Done (v1.1.0–v1.1.1): Lead 2.0 + LeadActivity + enrichment fan-out (SP3-12) + Pipedrive / Attio / HubSpot sync + daily rescore beat · Touchpoint + Conversion + time-decay attribution + `/analytics/sankey` · AnalyticsRollup + daily roll-up · F2 Content Performance Heatmap (SP3-13). **F3 / F4 deferred to Sprint 5+.**
+**UI status:** ✅ Done — `/leads`, `/segments`, `/sequences`, `/analytics/attribution`, `/heatmap`, `/admin/analytics`.
 
 **Stories:**
 - 8.1 Extend `Lead` — `email`, `phone`, `domain`, `linkedin_url`, `enrichment_json`, `score`, `stage (new|mql|sql|customer|churned)`, `source`, `utm_*`, `last_activity_at`
@@ -1150,9 +1389,9 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 
 ---
 
-### Phase 9 — Agent Fleet (v2.0 §4)
-**Backend status:** partial (one agent — Creatives, deterministic-stub fallback).
-**UI status:** partial (one station — Creatives basic).
+### Phase 9 — Agent Fleet (v2.0 §4) — *Sprint 4 headline*
+**Backend status:** 🟡 Partial — Conductor scaffold + Creatives + Analyst (weekly narrative) + SEO (depth: site audit / internal-link / ranking delta) shipped (v1.0.0–v1.1.0). **Real Claude Agent SDK runtime + tool fleet + role-Agent end-to-end is Sprint 4 P0 (S4-A, S4-B, S4-C).**
+**UI status:** 🟡 Partial — `/agents/seo` + global Conductor chat dock (SP3-14). Stations and full-screen `/conductor` + reasoning-trace replay are Sprint 4.
 
 **Stories:**
 - 9.1 Swap inline LLM calls for **Claude Agent SDK** runtime; per-agent system prompts + tool list + memory
@@ -1173,8 +1412,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 10 — Themes J–P Agency Operations
-**Backend status:** NOT done.
-**UI status:** NOT done.
+**Backend status:** ✅ Mostly done — J (Org CRUD + retainer + budgets) · K (Kanban via `Project.kanban_json`, SP3-20) · L (time logs SP3-21 + retainer burn-down SP3-22 + invoices SP3-23 + QuickBooks export) · M (weekly + monthly client HTML reports + signed-JWT embeddable dashboards SP3-19) · N (Playbook search + CRUD SP3-18) · P (WorkflowRun resume + branch/approval nodes). **P visual builder UI + O Client Portal are Sprint 4–5.**
+**UI status:** ✅ Done — `/time`, `/retainer`, `/invoices`, `/playbooks`, `/kanban` (per-project), `/reports`.
 
 **Stories:**
 - 10.1 **J — Client Operations** — Client / Org CRUD, onboarding wizard (collect brand assets / social accounts / persona / goals), per-Org retainers + budgets, per-Org approval workflows
@@ -1187,8 +1426,8 @@ Each Phase = one **Epic issue** on the project board. Stories and Tasks roll up 
 ---
 
 ### Phase 11 — Compliance, Reliability, Polish (Theme I) + Theme O Client Portal + Release
-**Backend status:** NOT done.
-**UI status:** NOT done.
+**Backend status:** 🟡 Mostly done — I1 QuotaCounter + circuit breaker · I3 cost-cap + `/admin/costs` + `/admin/quotas` · I4 GDPR export. **I2 Sandbox UI polish + O Client Portal + Sentry / Prometheus / OTLP observability dashboards are Sprint 4 (S4-H).**
+**UI status:** 🟡 Partial — `/admin/costs`, `/admin/quotas`, `/admin/audit`, `/admin/health` shipped. Observability dashboards + Client Portal pending.
 
 **Stories:**
 - 11.1 **I1 Rate-Limit & Quota Manager** — per-channel and per-provider sliding-window quotas + circuit breaker; UI shows "Twitter: 47/300 today"
