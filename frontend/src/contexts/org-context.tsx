@@ -23,13 +23,19 @@ import { Organization, listOrgs } from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context";
 
 const STORAGE_KEY = "dclaw_current_org_id";
+export const ALL_ORGS_ID = "*";
 
 interface OrgContextValue {
   orgs: Organization[];
+  /** The currently-selected org, or null when "All Orgs" is active (or no
+   * orgs are visible at all). */
   currentOrg: Organization | null;
+  /** True when the superadmin has picked "All Orgs" in the switcher. */
+  isAllOrgs: boolean;
   loading: boolean;
   error: string | null;
   setCurrentOrg: (org: Organization) => void;
+  selectAllOrgs: () => void;
   refresh: () => Promise<void>;
 }
 
@@ -55,13 +61,20 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       const list = await listOrgs();
       setOrgs(list);
 
-      // Pick: stored choice if still valid; else first org; else null.
+      // Pick: stored choice if still valid; All-Orgs is valid for superadmin;
+      // else first org; else null.
       const stored =
         typeof window !== "undefined"
           ? localStorage.getItem(STORAGE_KEY)
           : null;
-      const valid = list.find((o) => o.id === stored);
-      const next = valid?.id ?? list[0]?.id ?? null;
+      const isSuperadmin = !!user?.is_superuser;
+      let next: string | null;
+      if (stored === ALL_ORGS_ID && isSuperadmin && list.length > 1) {
+        next = ALL_ORGS_ID;
+      } else {
+        const valid = list.find((o) => o.id === stored);
+        next = valid?.id ?? list[0]?.id ?? null;
+      }
       setCurrentOrgId(next);
       if (next && typeof window !== "undefined") {
         localStorage.setItem(STORAGE_KEY, next);
@@ -84,14 +97,42 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const selectAllOrgs = useCallback(() => {
+    setCurrentOrgId(ALL_ORGS_ID);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, ALL_ORGS_ID);
+    }
+  }, []);
+
+  const isAllOrgs = currentOrgId === ALL_ORGS_ID;
+
   const currentOrg = useMemo(
-    () => orgs.find((o) => o.id === currentOrgId) ?? null,
-    [orgs, currentOrgId],
+    () =>
+      isAllOrgs ? null : orgs.find((o) => o.id === currentOrgId) ?? null,
+    [orgs, currentOrgId, isAllOrgs],
   );
 
   const value = useMemo<OrgContextValue>(
-    () => ({ orgs, currentOrg, loading, error, setCurrentOrg, refresh }),
-    [orgs, currentOrg, loading, error, setCurrentOrg, refresh],
+    () => ({
+      orgs,
+      currentOrg,
+      isAllOrgs,
+      loading,
+      error,
+      setCurrentOrg,
+      selectAllOrgs,
+      refresh,
+    }),
+    [
+      orgs,
+      currentOrg,
+      isAllOrgs,
+      loading,
+      error,
+      setCurrentOrg,
+      selectAllOrgs,
+      refresh,
+    ],
   );
 
   return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
