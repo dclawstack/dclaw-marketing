@@ -164,6 +164,12 @@ export default function MembersPage() {
     (u) => u.is_active && !memberUserIds.has(u.id),
   );
 
+  // Caller is allowed to admin actions on this org if superadmin OR
+  // an explicit admin-role member of the org.
+  const canAdminThisOrg =
+    !!me?.is_superuser ||
+    members.some((m) => m.user_id === me?.id && m.role === "admin");
+
   async function handleAdd() {
     if (!pickUserId) return;
     setAdding(true);
@@ -178,6 +184,35 @@ export default function MembersPage() {
       setError(err instanceof Error ? err.message : "Add failed.");
     } finally {
       setAdding(false);
+    }
+  }
+
+  const [resetPwTemp, setResetPwTemp] = useState<string | null>(null);
+  const [resetPwBusy, setResetPwBusy] = useState<string | null>(null);
+
+  async function handleResetPassword(m: OrgMembership) {
+    const u = userMap.get(m.user_id);
+    const label = u ? u.full_name ?? u.email : m.user_id;
+    if (!confirm(`Reset password for ${label}? They'll be forced to set a new one on next login.`)) return;
+    setResetPwBusy(m.id);
+    try {
+      const res = await fetch(
+        `/api/v1/orgs/${orgId}/members/${m.user_id}/reset-password`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail ?? `Reset failed (${res.status})`);
+      }
+      const data = await res.json();
+      setResetPwTemp(data.temp_password);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Reset failed.");
+    } finally {
+      setResetPwBusy(null);
     }
   }
 
@@ -370,15 +405,27 @@ export default function MembersPage() {
                         )}
                       </DkTableCell>
                       <DkTableCell className="text-right">
-                        {me?.is_superuser && !self && (
-                          <DkButton
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleRemove(m)}
-                          >
-                            Remove
-                          </DkButton>
-                        )}
+                        <div className="inline-flex items-center gap-2">
+                          {canAdminThisOrg && !self && (
+                            <DkButton
+                              size="sm"
+                              variant="secondary"
+                              disabled={resetPwBusy === m.id}
+                              onClick={() => handleResetPassword(m)}
+                            >
+                              Reset password
+                            </DkButton>
+                          )}
+                          {me?.is_superuser && !self && (
+                            <DkButton
+                              size="sm"
+                              variant="danger"
+                              onClick={() => handleRemove(m)}
+                            >
+                              Remove
+                            </DkButton>
+                          )}
+                        </div>
                       </DkTableCell>
                     </DkTableRow>
                   );
@@ -568,6 +615,39 @@ export default function MembersPage() {
               Add to Organization
             </DkButton>
           )}
+        </DkDialogFooter>
+      </DkDialog>
+
+      {/* Reset-password result dialog — shown once with the one-shot temp password */}
+      <DkDialog
+        open={resetPwTemp !== null}
+        onClose={() => setResetPwTemp(null)}
+        size="sm"
+      >
+        <DkDialogHeader
+          title="Temp Password Issued"
+          description="Copy this now — it's shown once. The user must reset it on first login."
+          onClose={() => setResetPwTemp(null)}
+        />
+        <DkDialogContent>
+          {resetPwTemp && (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-md border border-[var(--dk-border-strong)] bg-[var(--dk-bg-muted)] px-3 py-3 font-mono text-md text-ink break-all">
+                {resetPwTemp}
+              </div>
+              <DkButton
+                variant="secondary"
+                onClick={() =>
+                  navigator.clipboard.writeText(resetPwTemp ?? "")
+                }
+              >
+                Copy to Clipboard
+              </DkButton>
+            </div>
+          )}
+        </DkDialogContent>
+        <DkDialogFooter>
+          <DkButton onClick={() => setResetPwTemp(null)}>Done</DkButton>
         </DkDialogFooter>
       </DkDialog>
     </div>

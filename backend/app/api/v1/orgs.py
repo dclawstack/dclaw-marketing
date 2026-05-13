@@ -20,6 +20,7 @@ from app.auth import (
     current_active_user,
     current_superuser,
     ensure_not_last_admin_demotion,
+    user_is_admin_of_org,
 )
 from app.services.audit import write_audit_event as _audit
 from app.services.email_send import send_user_added_to_org_email
@@ -510,6 +511,87 @@ async def invite_member_by_email(
         membership=MembershipRead.model_validate(membership),
         user_created=user_created,
         temp_password=temp_password,
+    )
+
+
+class MemberResetPasswordResponse(BaseModel):
+    user_id: UUID
+    temp_password: str
+
+
+@router.post(
+    "/{org_id}/members/{user_id}/reset-password",
+    response_model=MemberResetPasswordResponse,
+)
+async def org_admin_reset_member_password(
+    org_id: UUID,
+    user_id: UUID,
+    actor: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> MemberResetPasswordResponse:
+    """Reset the password of a member of `org_id`.
+
+    Permission: caller must be superadmin OR an explicit admin of `org_id`.
+    Target user must be a member of `org_id`. Issues a new one-shot temp
+    password and flips password_reset_required=True on the target user.
+    """
+    if not await user_is_admin_of_org(session, actor, org_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Superadmin or organization admin required.",
+        )
+
+    # Target must actually belong to this org.
+    membership = (
+        await session.execute(
+            select(OrganizationMembership).where(
+                OrganizationMembership.user_id == user_id,
+                OrganizationMembership.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="That user is not a member of this organization.",
+        )
+
+    target = await session.get(User, user_id)
+    if target is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+
+    # Bootstrap admin can't be reset from this endpoint — recovery path only.
+    from app.core.config import settings as _settings
+    from app.auth.manager import generate_temp_password
+    from fastapi_users.password import PasswordHelper
+
+    if target.email == _settings.bootstrap_admin_email:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "The bootstrap admin's password is the recovery path and "
+                "cannot be reset via the org-admin endpoint."
+            ),
+        )
+
+    temp_password = generate_temp_password()
+    target.hashed_password = PasswordHelper().hash(temp_password)
+    target.password_reset_required = True
+    await session.flush()
+    await _audit(
+        session,
+        action_type="org.member.password_reset",
+        organization_id=org_id,
+        actor_user_id=actor.id,
+        target_type="user",
+        target_id=target.id,
+    )
+    await session.commit()
+
+    return MemberResetPasswordResponse(
+        user_id=target.id, temp_password=temp_password
     )
 
 
