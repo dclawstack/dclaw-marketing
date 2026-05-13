@@ -75,6 +75,38 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 
 ---
 
+## Repository layout
+
+```
+dclaw-marketing/
+├── backend/               FastAPI app, Celery workers, Alembic migrations
+│   ├── app/
+│   │   ├── api/v1/        REST endpoints (auth, orgs, users, admin, …)
+│   │   ├── auth/          FastAPI-Users config + schemas
+│   │   ├── core/          Config, DB session, lifespan
+│   │   ├── models/        SQLAlchemy 2.0 models
+│   │   ├── services/      Business logic (slugs, email, generation, …)
+│   │   └── workers/       Celery tasks
+│   └── tests/
+├── frontend/              Next.js 14 App Router
+│   ├── public/brand/      DClaw logo SVGs and brand assets
+│   └── src/
+│       ├── app/           Pages (orgs, admin, settings, …)
+│       ├── components/dk/ Canonical DK component library
+│       ├── contexts/      Auth + Org React contexts
+│       ├── lib/           API client, auth helpers, utils
+│       └── styles/        brand.css — single source of truth for --dk-* tokens
+├── design/
+│   └── source/project/    DKube brand system (guidelines, SKILL.md, slide masters, UI kit)
+├── docs/                  ARCHITECTURE.md · USER-GUIDE.md · api/README.md
+├── helm/                  Kubernetes Helm chart
+├── scripts/               RESTORE_RUNBOOK.md + ops helpers
+├── obsidian/              Vault sub-directories (reports, etc.)
+└── .github/workflows/     CI · auto-merge · release · project automation
+```
+
+---
+
 ## Critical rules for agents (humans + AI) working in this repo
 
 1. **DO NOT install shadcn CLI** — pre-built UI components in `frontend/src/components/ui/`. Installing the CLI breaks the Tailwind v3 build.
