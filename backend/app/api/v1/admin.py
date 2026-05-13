@@ -109,12 +109,28 @@ async def admin_get_user(
 async def admin_update_user(
     user_id: UUID,
     body: AdminUserUpdate,
+    actor: User = Depends(current_superuser),
     session: AsyncSession = Depends(get_db),
 ) -> User:
     user = await session.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
-    for field, value in body.model_dump(exclude_unset=True).items():
+
+    patch = body.model_dump(exclude_unset=True)
+
+    # Self-demote guard — a superadmin cannot toggle off their own flag.
+    if (
+        actor.id == user.id
+        and "is_superuser" in patch
+        and patch["is_superuser"] is False
+        and user.is_superuser
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A superadmin cannot revoke their own superadmin flag.",
+        )
+
+    for field, value in patch.items():
         setattr(user, field, value)
     await session.flush()
     await session.commit()

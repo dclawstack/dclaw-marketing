@@ -239,4 +239,60 @@ async def send_email(
     return _stub_send(to, subject, html)
 
 
-__all__ = ["send_email", "SendResult", "SendProvider"]
+async def send_user_added_to_org_email(
+    session,
+    *,
+    recipient,
+    org_id,
+    role: str,
+    invited_by=None,
+    temp_password: str | None = None,
+) -> SendResult | None:
+    """Notify a user that they've been added to an organization.
+
+    Best-effort — callers should swallow exceptions. Returns None if the
+    recipient has no email address.
+    """
+    if not getattr(recipient, "email", None):
+        return None
+
+    # Pull org name for the email subject — single query, no joins.
+    from sqlalchemy import select
+    from app.models.organization import Organization
+
+    org = (
+        await session.execute(select(Organization).where(Organization.id == org_id))
+    ).scalar_one_or_none()
+    org_name = org.name if org is not None else "your team"
+    inviter = (
+        invited_by.full_name or invited_by.email if invited_by is not None else "your administrator"
+    )
+
+    subject = f"You've been added to {org_name} on DClaw Marketing"
+    creds_block = ""
+    if temp_password:
+        creds_block = (
+            f"<p style='margin:16px 0;padding:12px;background:#f3eaff;"
+            f"border-radius:6px;font-family:monospace;font-size:13px;'>"
+            f"<strong>First-time login</strong><br>"
+            f"Email: {recipient.email}<br>"
+            f"Temporary password: {temp_password}<br>"
+            f"<em>You'll be asked to change this on first login.</em></p>"
+        )
+
+    html = f"""
+    <p>Hi {recipient.full_name or recipient.email},</p>
+    <p>You've been added to <strong>{org_name}</strong> as a <strong>{role}</strong> by {inviter}.</p>
+    {creds_block}
+    <p>Open the app to get started: <a href="https://dclaw.local">DClaw Marketing</a>.</p>
+    """.strip()
+
+    return await send_email(to=[recipient.email], subject=subject, html=html)
+
+
+__all__ = [
+    "send_email",
+    "send_user_added_to_org_email",
+    "SendResult",
+    "SendProvider",
+]

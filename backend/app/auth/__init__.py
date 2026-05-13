@@ -16,15 +16,31 @@ from app.auth.deps import (
     get_user_db,
     get_user_manager,
 )
+from app.auth.guards import (
+    admin_org_ids_for,
+    ensure_not_last_admin_demotion,
+    ensure_not_self_superadmin_demote,
+    require_org_admin_or_superuser,
+    require_org_member_or_superuser,
+    user_is_admin_of_org,
+    user_is_member_of_org,
+)
 
 __all__ = [
+    "admin_org_ids_for",
     "auth_backend",
     "current_active_user",
     "current_optional_user",
     "current_superuser",
     "current_user",
+    "ensure_not_last_admin_demotion",
+    "ensure_not_self_superadmin_demote",
     "fastapi_users",
     "get_user_db",
     "get_user_manager",
     "jwt_strategy",
+    "require_org_admin_or_superuser",
+    "require_org_member_or_superuser",
+    "user_is_admin_of_org",
+    "user_is_member_of_org",
 ]
