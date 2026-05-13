@@ -55,7 +55,7 @@ async def get_job(
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
     # Authorization: user must have access to the Org that owns the Job.
-    # For v0.1.0 we allow access if the user is the initiator, the Org's
+    # For v1.0.0 we allow access if the user is the initiator, the Org's
     # member, or a superuser. Per-Org membership check skipped here for
     # brevity; will tighten in A4 (audit + approval) when authz patterns
     # consolidate.

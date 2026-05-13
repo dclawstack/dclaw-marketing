@@ -42,7 +42,7 @@ class Job(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
 
-    # Tenancy — both nullable for v0.1.0 because some jobs (system-level
+    # Tenancy — both nullable for v1.0.0 because some jobs (system-level
     # health checks, bootstrap) won't have an Org context yet. Most
     # user-initiated work WILL have org_id set; routes enforce it.
     organization_id: Mapped[UUID | None] = mapped_column(

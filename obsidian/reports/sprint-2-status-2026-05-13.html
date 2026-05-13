@@ -537,7 +537,7 @@
       <p class="cover-subtitle">
         One unsupervised day. Sixty pull requests. Multi-account publishing across all eight v0.2 channels,
         the full MCP integration hub, Lead 2.0 + CRM sync, the Analyst agent, the agency operations layer, the
-        compliance + observability stack — shipped, merged, and tagged as <strong>v0.2.0</strong>.
+        compliance + observability stack — shipped, merged, and tagged as <strong>v1.1.0</strong>.
       </p>
 
       <div class="cover-meta">
@@ -556,7 +556,7 @@
       </div>
 
       <div style="margin-top: 22pt;">
-        <span class="cover-badge">Sprint 2 · DELIVERED · v0.2.0 TAGGED</span>
+        <span class="cover-badge">Sprint 2 · DELIVERED · v1.1.0 TAGGED</span>
       </div>
     </div>
 
@@ -581,7 +581,7 @@
   <h2>About this report</h2>
   <p class="lede">
     This is the official engineering and product status report for DClaw Marketing's second development sprint —
-    the one that took us from a working scaffold to a feature-complete v0.2.0 release. It is intended for three
+    the one that took us from a working scaffold to a feature-complete v1.1.0 release. It is intended for three
     audiences: <strong>operators</strong> (TL;DR), <strong>executives</strong> (Executive Summary), and
     <strong>engineers</strong> (Phase-by-Phase Status and onward).
   </p>
@@ -592,8 +592,8 @@
     <tr><td>Sprint number</td><td>Sprint 2 (open-ended cadence; Sprint 1 closed 2026-05-12)</td></tr>
     <tr><td>Sprint window</td><td>2026-05-13 — single intensive day, mostly an 8-hour autonomous stretch</td></tr>
     <tr><td>Sprint kick-off PR</td><td><code>#152</code> (immediately after #151, which carried the Sprint 1 status PDF)</td></tr>
-    <tr><td>Sprint closing PR</td><td><code>#211</code> · <em>chore(release): v0.2.0 — Sprint 2 closeout</em></td></tr>
-    <tr><td>Snapshot ref</td><td><code>main @ d881f6c</code> · tag <code>v0.2.0</code></td></tr>
+    <tr><td>Sprint closing PR</td><td><code>#211</code> · <em>chore(release): v1.1.0 — Sprint 2 closeout</em></td></tr>
+    <tr><td>Snapshot ref</td><td><code>main @ d881f6c</code> · tag <code>v1.1.0</code></td></tr>
     <tr><td>Document version</td><td>2.0 — frozen at report-generation time</td></tr>
     <tr><td>Generated</td><td>2026-05-13 03:30 IST via Chrome headless from <code>sprint-2-status-2026-05-13.html</code></td></tr>
     <tr><td>Location</td><td><code>obsidian/reports/</code> in the dclaw-marketing repo</td></tr>
@@ -653,7 +653,7 @@
   <h1 style="color: var(--dk-purple-800);">TL;DR</h1>
   <p class="lede">
     One unsupervised day. Sixty pull requests opened, sixty merged, zero left in the runway. The platform that closed
-    Sprint 1 at <strong>≈ 52 %</strong> of the plan now sits at <strong>≈ 90 %</strong> — feature-complete for v0.2.0
+    Sprint 1 at <strong>≈ 52 %</strong> of the plan now sits at <strong>≈ 90 %</strong> — feature-complete for v1.1.0
     in every functional area except the explicitly user-owned marketing collaterals.
   </p>
 
@@ -778,7 +778,7 @@
   <h1 style="color: var(--dk-purple-800);">Where Sprint 1 left off — a brief recap</h1>
   <p class="lede">
     Sprint 2 didn't start from zero. Sprint 1 had already turned the v1.0 contact-form scaffold into a working
-    agent-driven marketing OS — multi-tenant, multi-agent, multi-channel — and tagged it as <code>v0.1.0-mvp</code>.
+    agent-driven marketing OS — multi-tenant, multi-agent, multi-channel — and tagged it as <code>v1.0.0</code>.
     This chapter exists so a reader new to the project (or revisiting after a break) has the context to make sense
     of every number that follows.
   </p>
@@ -788,7 +788,7 @@
     <tr><th style="width: 35%">Field</th><th>Value</th></tr>
     <tr><td>Window</td><td>09 May – 12 May 2026 (≈ 3 days 5 h)</td></tr>
     <tr><td>PR range</td><td>#121 → #151 — 22 merged, 1 in runway</td></tr>
-    <tr><td>Closing tag</td><td><code>v0.1.0-mvp</code></td></tr>
+    <tr><td>Closing tag</td><td><code>v1.0.0</code></td></tr>
     <tr><td>Plan completion (end of S1)</td><td>≈ 52 % of v1.2 / v2.0</td></tr>
     <tr><td>Headline outcome</td><td>End-to-end demo flow works: log in → set brand → ingest context → generate content → approve in Inbox</td></tr>
   </table>
@@ -822,7 +822,7 @@
   </ul>
 
   <div class="callout">
-    <strong>Sprint 2's job, in one sentence.</strong> Close every backend gap above, ship every UI surface above, fold in the §6 addendum end-to-end, and tag a feature-complete v0.2.0 release — all while obeying a continuous-commit cadence and the Hard-gate-outbound rule. That is what the rest of this document reports on.
+    <strong>Sprint 2's job, in one sentence.</strong> Close every backend gap above, ship every UI surface above, fold in the §6 addendum end-to-end, and tag a feature-complete v1.1.0 release — all while obeying a continuous-commit cadence and the Hard-gate-outbound rule. That is what the rest of this document reports on.
   </div>
 </section>
 
@@ -895,7 +895,7 @@
 
   <h2>3.4 What "v0.2 done" looks like — and where we landed</h2>
   <p>
-    Per <code>PLAN-v1.2.md</code> (titled v1.2 for legacy reasons; the released artefact is <code>v0.2.0</code>),
+    Per <code>PLAN-v1.2.md</code> (titled v1.2 for legacy reasons; the released artefact is <code>v1.1.0</code>),
     the platform is considered v0.2-complete when the eight criteria below pass. The right-hand column captures
     where Sprint 2 ended.
   </p>
@@ -1190,7 +1190,7 @@
   <h1 style="color: var(--dk-purple-800);">The Original Plan (PLAN-v1.2)</h1>
   <p class="lede">
     The blueprint Sprint 2 was measured against. Sourced from <code>PLAN-v1.2.md</code> (titled v1.2 for legacy
-    reasons; the v0.2.0 tag is the released artefact) and the §6 addendum from the Sprint 1 closing snapshot.
+    reasons; the v1.1.0 tag is the released artefact) and the §6 addendum from the Sprint 1 closing snapshot.
   </p>
 
   <h2>5.1 The 12-phase map</h2>
@@ -1299,8 +1299,8 @@
     <tr><th style="width: 30%">Marker</th><th>Time (IST)</th><th>Reference</th></tr>
     <tr><td>Sprint kick-off</td><td>2026-05-13 (morning)</td><td>PR #152 — first merge after Sprint 1 closed at #151</td></tr>
     <tr><td>Mid-sprint surge begins</td><td>2026-05-13 (afternoon)</td><td>8-hour unsupervised autonomous stretch begins — PR #194 onward</td></tr>
-    <tr><td>Release commit</td><td>2026-05-13 (late evening)</td><td>PR #211 — <code>chore(release): v0.2.0 — Sprint 2 closeout</code></td></tr>
-    <tr><td>Sprint freeze</td><td>2026-05-13 03:30 (next day IST)</td><td>this report's snapshot ref (<code>main @ d881f6c</code>) · tag <code>v0.2.0</code></td></tr>
+    <tr><td>Release commit</td><td>2026-05-13 (late evening)</td><td>PR #211 — <code>chore(release): v1.1.0 — Sprint 2 closeout</code></td></tr>
+    <tr><td>Sprint freeze</td><td>2026-05-13 03:30 (next day IST)</td><td>this report's snapshot ref (<code>main @ d881f6c</code>) · tag <code>v1.1.0</code></td></tr>
   </table>
 
   <h2>6.2 Cumulative PR burn-up</h2>
@@ -1348,7 +1348,7 @@
       <text x="240" y="200" text-anchor="middle">13 May AM</text>
       <text x="380" y="200" text-anchor="middle">13 May noon</text>
       <text x="480" y="200" text-anchor="middle">13 May PM</text>
-      <text x="560" y="200" text-anchor="middle">tag v0.2.0</text>
+      <text x="560" y="200" text-anchor="middle">tag v1.1.0</text>
 
       <text x="100" y="170" text-anchor="middle" font-size="8" fill="#8A85A0">0</text>
       <text x="240" y="92"  text-anchor="middle" font-size="8" fill="#8A85A0">30</text>
@@ -1385,7 +1385,7 @@
     (#199), "Authorize via OAuth" button + error surface (#200), workflow-templates UI (#201), MCP batch 4 (#202),
     /admin/health (#203), audit-event API + /admin/audit (#204), URL ingestion (#205), Knowledge Console (#206),
     real /admin/costs + /admin/quotas (#207), drag-and-drop file upload (#208), top-nav surfaces new pages (#209),
-    CHANGELOG capture (#210), release commit + v0.2.0 tag (#211).
+    CHANGELOG capture (#210), release commit + v1.1.0 tag (#211).
   </p>
 
   <h3>Velocity numbers</h3>
@@ -1946,7 +1946,7 @@
       <li><strong>§6.13 Backup / restore</strong> (#192) — <code>scripts/backup_postgres.sh</code> + <code>backup_minio.sh</code> + <code>RESTORE_RUNBOOK.md</code>.</li>
       <li><strong>A4 Audit-event browser</strong> (#204) — <code>GET /api/v1/orgs/{org}/audit-events</code> paginated + filtered; <code>/admin/audit</code> page with When / Actor / Action / Target / Result.</li>
       <li><strong>O Client Portal v1</strong> (#188) — read-only <code>/client/*</code> surface with white-label hero cards (deeper polish in Sprint 3).</li>
-      <li><strong>Release polish</strong> — <code>v0.2.0</code> tag pushed (#211), <code>release.yml</code> builds + pushes container images to <code>ghcr.io</code>, GitHub Release created.</li>
+      <li><strong>Release polish</strong> — <code>v1.1.0</code> tag pushed (#211), <code>release.yml</code> builds + pushes container images to <code>ghcr.io</code>, GitHub Release created.</li>
     </ul>
 
   </div>
@@ -2033,7 +2033,7 @@
     <tr><td>203</td><td>/admin/health page</td><td>Re-probe + per-dep cards + aggregate banner</td></tr>
     <tr><td>204</td><td>Audit-event browser API + /admin/audit</td><td>Paginated, filtered by action_type + actor_kind</td></tr>
     <tr><td>207</td><td>Real /admin/costs + /admin/quotas + quotas API</td><td>Live counters; cost cards w/ trend chips</td></tr>
-    <tr><td>211</td><td>Release v0.2.0 commit + tag</td><td>release.yml builds ghcr.io images</td></tr>
+    <tr><td>211</td><td>Release v1.1.0 commit + tag</td><td>release.yml builds ghcr.io images</td></tr>
   </table>
 
   <h2>8.8 Phase 2 / Q + Theme H + Frontend (15 PRs)</h2>
@@ -2046,14 +2046,14 @@
     <tr><td>187</td><td>8 frontend pages</td><td>workflows / invoices / time / playbooks / analytics</td></tr>
     <tr><td>188</td><td>Client Portal (5 pages)</td><td>/client/* read-only surface</td></tr>
     <tr><td>189</td><td>4 editor pages</td><td>segments/new · sequences/new · ads/[id] · briefs/new</td></tr>
-    <tr><td>193</td><td>release: 1.2.0-rc1 commit</td><td>Retitled to v0.2.0 in #211</td></tr>
+    <tr><td>193</td><td>release: 1.2.0-rc1 commit</td><td>Retitled to v1.1.0 in #211</td></tr>
     <tr><td>195</td><td>Theme H SEO depth backend</td><td>Audit + ranking-delta + internal-link + 2 beat tasks</td></tr>
     <tr><td>198</td><td>Real SEO Station UI</td><td>3-tab Search Station on /agents/seo</td></tr>
     <tr><td>205</td><td>URL ingestion (Theme Q2 follow-up)</td><td>HTML→text stripper + ingest_url task</td></tr>
     <tr><td>206</td><td>Knowledge Console UI</td><td>Source list + add URL + KG search + auto-refresh</td></tr>
     <tr><td>208</td><td>Drag-and-drop file upload on /knowledge</td><td>4-step presigned PUT flow</td></tr>
     <tr><td>209</td><td>Top-nav surfaces new pages</td><td>Knowledge / SEO / Workflows / Analytics</td></tr>
-    <tr><td>210</td><td>CHANGELOG capture (docs)</td><td>Folded into 0.2.0 entry</td></tr>
+    <tr><td>210</td><td>CHANGELOG capture (docs)</td><td>Folded into 1.1.0 entry</td></tr>
   </table>
 
   <p style="font-size: 9pt; color: var(--dk-fg-3);">Total: <strong>60 PRs merged</strong> (#152 → #211). Total new backend tests this sprint: <strong>≈ 140</strong> across 30+ new test files. "—" indicates a row with no notable single-line headline.</p>
@@ -2114,7 +2114,7 @@
 <section class="chapter">
   <div class="eyebrow">Chapter 9</div>
   <h1 style="color: var(--dk-purple-800);">Architecture Snapshot</h1>
-  <p class="lede">High-level shape of the system as of <code>main @ d881f6c · tag v0.2.0</code>.</p>
+  <p class="lede">High-level shape of the system as of <code>main @ d881f6c · tag v1.1.0</code>.</p>
 
   <h2>8.1 System diagram</h2>
   <svg class="chart" viewBox="0 0 600 380" width="100%" height="380">
@@ -2240,7 +2240,7 @@
     <tr><td>test_storage.py</td><td class="num">13</td><td>—</td><td>pre-sprint</td></tr>
     <tr><td><strong>test_workflow_runner.py</strong></td><td class="num">10</td><td>✓</td><td>Phase 10.3</td></tr>
     <tr><td><strong>test_x_publisher.py</strong></td><td class="num">6</td><td>✓</td><td>Phase 5.3</td></tr>
-    <tr><th>Sprint 1 total</th><th class="num">221</th><th>—</th><th>frozen at v0.1.0-mvp</th></tr>
+    <tr><th>Sprint 1 total</th><th class="num">221</th><th>—</th><th>frozen at v1.0.0</th></tr>
     <tr><th>Sprint 2 new files (sample)</th><th></th><th></th><th></th></tr>
     <tr><td>test_mcp_adapters_batch1.py … batch4.py</td><td class="num">~40</td><td>✓</td><td>4 batches × ~10 tests for 14 adapters (#182, #183, #184, #202)</td></tr>
     <tr><td>test_oauth_scaffold.py</td><td class="num">~10</td><td>✓</td><td>Phase 5.7 (#186)</td></tr>
@@ -2260,7 +2260,7 @@
     <tr><td>test_workflow_runner_resume.py</td><td class="num">~6</td><td>✓</td><td>Approval-pause + branch nodes (#176)</td></tr>
     <tr><td>(plus ~10 more publisher / CRM / freshness / live-poller files)</td><td class="num">~30</td><td>✓</td><td>Sprint 2 publishers + #155 + #165 + #179 + #185</td></tr>
     <tr><th>Sprint 2 total added</th><th class="num">~140</th><th></th><th></th></tr>
-    <tr><th>Project total</th><th class="num">~361</th><th></th><th>all green at v0.2.0</th></tr>
+    <tr><th>Project total</th><th class="num">~361</th><th></th><th>all green at v1.1.0</th></tr>
   </table>
 
   <h2>10.2 CI status</h2>
@@ -2270,7 +2270,7 @@
     <tr><td>frontend-build (Next.js)</td><td><span class="badge ok">Green</span></td><td>~50 s; production build with type-check</td></tr>
     <tr><td>claude-review</td><td><span class="badge ok">Green / Informational</span></td><td>Runs on every PR; some PRs merged before it completed (advisory check)</td></tr>
     <tr><td>poll-and-merge</td><td><span class="badge ok">Green</span></td><td>Sprint 2 fully validated: every PR merged via the bot once <code>auto-merge</code> label + green checks landed. 60 / 60 PRs merged hands-off.</td></tr>
-    <tr><td>release.yml (tag push)</td><td><span class="badge ok">Green</span></td><td>Triggered by <code>v0.2.0</code> tag (#211); builds + pushes ghcr.io images and creates the GitHub Release.</td></tr>
+    <tr><td>release.yml (tag push)</td><td><span class="badge ok">Green</span></td><td>Triggered by <code>v1.1.0</code> tag (#211); builds + pushes ghcr.io images and creates the GitHub Release.</td></tr>
   </table>
 
   <h2>10.3 What's NOT covered by tests yet</h2>
@@ -2498,7 +2498,7 @@
   <div class="eyebrow">Appendix B</div>
   <h1 style="color: var(--dk-purple-800);">Open Issues — Status &amp; Owners</h1>
 
-  <p class="lede">Two issues remain open at v0.2.0 — both are <code>track:marketing</code>, user-owned, and explicitly deferred per the autonomous Sprint 2 directive.</p>
+  <p class="lede">Two issues remain open at v1.1.0 — both are <code>track:marketing</code>, user-owned, and explicitly deferred per the autonomous Sprint 2 directive.</p>
 
   <table class="dk">
     <tr><th>Issue</th><th>Title</th><th>Owner</th><th>Note</th></tr>
@@ -2573,9 +2573,9 @@
     <tr><td>208</td><td>Frontend</td><td>Drag-and-drop file upload on /knowledge</td></tr>
     <tr><td>209</td><td>Frontend</td><td>Top-nav surfaces Knowledge / SEO / Workflows / Analytics</td></tr>
     <tr><td>210</td><td>Docs</td><td>CHANGELOG capture (post-rc1 stretch enumeration)</td></tr>
-    <tr><td>211</td><td>Release</td><td><strong>v0.2.0 release commit + tag</strong></td></tr>
+    <tr><td>211</td><td>Release</td><td><strong>v1.1.0 release commit + tag</strong></td></tr>
   </table>
-  <p style="font-size: 9pt; color: var(--dk-fg-3);">Gaps in numbering (e.g. #156, #153, #152) were closed without merge or are tracker-housekeeping issues — not user-facing PRs. Source: <code>git log v0.1.0-mvp..v0.2.0 --oneline</code>.</p>
+  <p style="font-size: 9pt; color: var(--dk-fg-3);">Gaps in numbering (e.g. #156, #153, #152) were closed without merge or are tracker-housekeeping issues — not user-facing PRs. Source: <code>git log v1.0.0..v1.1.0 --oneline</code>.</p>
 </section>
 
 <!-- ============================================================
@@ -2616,12 +2616,12 @@
         <div class="name">DClaw Marketing</div>
       </div>
       <div class="cover-eyebrow" style="color: rgba(255,255,255,0.7);">End of report</div>
-      <h1>One day.<br>Sixty pull requests.<br>Feature-complete, tagged <span style="color: var(--dk-purple-200);">v0.2.0</span>.</h1>
+      <h1>One day.<br>Sixty pull requests.<br>Feature-complete, tagged <span style="color: var(--dk-purple-200);">v1.1.0</span>.</h1>
     </div>
     <div class="meta">
       <strong style="color: white;">Dev Sprint 2 Status Report · v2.0</strong><br>
       Generated 2026-05-13 03:30 IST<br>
-      Snapshot ref · <code style="color: rgba(255,255,255,0.7)">main @ d881f6c · tag v0.2.0</code><br>
+      Snapshot ref · <code style="color: rgba(255,255,255,0.7)">main @ d881f6c · tag v1.1.0</code><br>
       Engineering · with Claude Code (Opus 4.7, 1M context)<br><br>
       <span style="color: rgba(255,255,255,0.5);">Confidential — internal distribution · DClaw Marketing</span>
     </div>
