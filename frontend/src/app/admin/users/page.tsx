@@ -325,6 +325,7 @@ export default function AdminUsersPage() {
               <DkTableRow>
                 <DkTableHead>Email</DkTableHead>
                 <DkTableHead>Name</DkTableHead>
+                <DkTableHead>Slug</DkTableHead>
                 <DkTableHead>Status</DkTableHead>
                 <DkTableHead>Role</DkTableHead>
                 <DkTableHead>Orgs</DkTableHead>
@@ -338,6 +339,9 @@ export default function AdminUsersPage() {
                     {u.email}
                   </DkTableCell>
                   <DkTableCell>{u.full_name ?? "—"}</DkTableCell>
+                  <DkTableCell className="font-mono text-xs text-[var(--dk-fg-2)]">
+                    {u.slug ?? "—"}
+                  </DkTableCell>
                   <DkTableCell>
                     <div className="flex items-center gap-2">
                       {u.is_active ? (

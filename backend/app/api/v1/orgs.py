@@ -39,7 +39,8 @@ router = APIRouter(prefix="/orgs", tags=["orgs"])
 # ---------- schemas -----------------------------------------------------
 
 class OrganizationCreate(BaseModel):
-    slug: str = Field(min_length=2, max_length=64, pattern=r"^[a-z0-9](-?[a-z0-9])*$")
+    # Slug is auto-generated server-side as o-{first4(name)}-{random6hex}.
+    # Client cannot supply it.
     name: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=1024)
     is_external: bool = False
@@ -134,17 +135,12 @@ async def _require_org_role(
 @router.post("", response_model=OrganizationRead, status_code=status.HTTP_201_CREATED)
 async def create_org(
     body: OrganizationCreate,
-    user: User = Depends(current_superuser),  # Only Admin can create Orgs
+    user: User = Depends(current_superuser),  # Only the superadmin creates orgs.
     session: AsyncSession = Depends(get_db),
 ) -> Organization:
-    existing = await session.execute(select(Organization).where(Organization.slug == body.slug))
-    if existing.scalar_one_or_none() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Org with slug '{body.slug}' already exists.",
-        )
+    from app.services.slugs import make_slug
 
-    org = Organization(**body.model_dump())
+    org = Organization(slug=make_slug("o", body.name), **body.model_dump())
     session.add(org)
     await session.flush()
     # The creating Admin becomes the Org's first Admin member
@@ -444,7 +440,7 @@ async def invite_member_by_email(
     if target is None:
         import secrets
         from fastapi_users.password import PasswordHelper
-        from app.services.user_codes import next_display_code
+        from app.services.slugs import make_slug
 
         temp_password = secrets.token_urlsafe(12)
         helper = PasswordHelper()
@@ -455,7 +451,7 @@ async def invite_member_by_email(
             is_active=True,
             is_verified=False,
             is_superuser=False,
-            display_code=await next_display_code(session),
+            slug=make_slug("u", body.full_name or email.split("@")[0]),
         )
         session.add(target)
         await session.flush()

@@ -66,21 +66,19 @@ async def init_db() -> None:
                 is_active=True,
                 is_superuser=True,
                 is_verified=True,
-                full_name="Bootstrap Admin",
+                full_name="DClaw SuperAdmin",
                 password_reset_required=False,
-                display_code="000000",
+                slug="s-admn-000000",
             )
             session.add(admin)
         else:
-            # Re-assert the hardcoded credentials. Keeps the password in
-            # sync with whatever's currently in bootstrap_admin_temp_password
-            # so a config change + restart is a safe recovery path.
+            # Re-assert the hardcoded credentials + identity. Keeps the
+            # bootstrap superadmin's row stable across redeploys.
             admin.hashed_password = hashed
             admin.is_active = True
             admin.is_superuser = True
             admin.is_verified = True
             admin.password_reset_required = False
-            # Re-assert the bootstrap admin's display_code in case the column
-            # was just added or somehow drifted.
-            admin.display_code = "000000"
+            admin.full_name = "DClaw SuperAdmin"
+            admin.slug = "s-admn-000000"
         await session.commit()

@@ -57,14 +57,16 @@ async def test_superuser_creates_org_and_becomes_admin(client):
     admin = await _seed_user("admin@example.com", "AdminPwd123!", is_superuser=True)
     token = await _login(client, "admin@example.com", "AdminPwd123!")
 
+    # Slug is server-generated now (o-{first4(name)}-{random6hex}).
     res = await client.post(
         "/api/v1/orgs",
-        json={"slug": "acme", "name": "Acme Inc"},
+        json={"name": "Acme Inc"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 201, res.text
     body = res.json()
-    assert body["slug"] == "acme"
+    assert body["slug"].startswith("o-acme-")
+    assert len(body["slug"]) == len("o-acme-") + 6
     assert body["name"] == "Acme Inc"
     assert body["is_external"] is False
 
@@ -89,29 +91,34 @@ async def test_non_superuser_cannot_create_org(client):
 
     res = await client.post(
         "/api/v1/orgs",
-        json={"slug": "stealth", "name": "Stealth"},
+        json={"name": "Stealth"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_duplicate_slug_rejected(client):
+async def test_two_orgs_same_name_get_distinct_slugs(client):
+    """Sprint 4: slug is auto-suffixed with a random 6-hex, so same-name
+    orgs collide on UI label but never on slug."""
     await _seed_user("admin@example.com", "AdminPwd123!", is_superuser=True)
     token = await _login(client, "admin@example.com", "AdminPwd123!")
 
     r1 = await client.post(
         "/api/v1/orgs",
-        json={"slug": "acme", "name": "Acme"},
+        json={"name": "Acme"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r1.status_code == 201
     r2 = await client.post(
         "/api/v1/orgs",
-        json={"slug": "acme", "name": "Acme Duplicate"},
+        json={"name": "Acme"},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert r2.status_code == 409
+    assert r2.status_code == 201
+    assert r1.json()["slug"] != r2.json()["slug"]
+    assert r1.json()["slug"].startswith("o-acme-")
+    assert r2.json()["slug"].startswith("o-acme-")
 
 
 @pytest.mark.asyncio
