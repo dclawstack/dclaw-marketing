@@ -77,15 +77,23 @@ export default function AdminUsersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Initial-org section state.
-  type OrgMode = "none" | "existing" | "new";
+  // Organization(s) section — multi-row.
+  type OrgMode = "none" | "assign";
   const [orgMode, setOrgMode] = useState<OrgMode>("none");
-  const [pickedOrgId, setPickedOrgId] = useState<string>("");
+  // Each row: { rowId, org_id (empty = unset), role }
+  interface OrgRow { rowId: string; org_id: string; role: OrgRole }
+  const [orgRows, setOrgRows] = useState<OrgRow[]>([
+    { rowId: crypto.randomUUID(), org_id: "", role: "viewer" },
+  ]);
+
+  // New-org popup
+  const [newOrgOpen, setNewOrgOpen] = useState(false);
+  const [newOrgRowId, setNewOrgRowId] = useState<string | null>(null);
   const [newOrgName, setNewOrgName] = useState("");
   const [newOrgDesc, setNewOrgDesc] = useState("");
-  const [initialRole, setInitialRole] = useState<OrgRole>("viewer");
+  const [newOrgExternal, setNewOrgExternal] = useState(false);
+  const [newOrgBusy, setNewOrgBusy] = useState(false);
 
   // Per-user memberships indexed by user id, populated on list load.
   const [memberships, setMemberships] = useState<Record<string, UserMembership[]>>({});
@@ -192,22 +200,12 @@ export default function AdminUsersPage() {
     setCreating(true);
     setError(null);
     try {
-      // Build the org payload per the mode selection.
-      let orgPayload: Record<string, unknown> | null = null;
-      if (orgMode === "existing" && pickedOrgId) {
-        orgPayload = {
-          mode: "existing",
-          org_id: pickedOrgId,
-          role: initialRole,
-        };
-      } else if (orgMode === "new" && newOrgName.trim()) {
-        orgPayload = {
-          mode: "new",
-          name: newOrgName.trim(),
-          description: newOrgDesc.trim() || undefined,
-          role: initialRole,
-        };
-      }
+      const orgsPayload =
+        orgMode === "assign"
+          ? orgRows
+              .filter((r) => r.org_id)
+              .map((r) => ({ org_id: r.org_id, role: r.role }))
+          : [];
 
       const res = await fetch("/api/v1/admin/users/with-org", {
         method: "POST",
@@ -218,8 +216,7 @@ export default function AdminUsersPage() {
         body: JSON.stringify({
           email,
           full_name: fullName || undefined,
-          is_superuser: isAdmin,
-          org: orgPayload,
+          orgs: orgsPayload,
         }),
       });
       if (!res.ok) {
@@ -230,17 +227,56 @@ export default function AdminUsersPage() {
       setTempPassword(data.temp_password);
       setEmail("");
       setFullName("");
-      setIsAdmin(false);
       setOrgMode("none");
-      setPickedOrgId("");
-      setNewOrgName("");
-      setNewOrgDesc("");
-      setInitialRole("viewer");
+      setOrgRows([
+        { rowId: crypto.randomUUID(), org_id: "", role: "viewer" },
+      ]);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Create failed.");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleCreateNewOrg() {
+    if (!newOrgName.trim() || !newOrgRowId) return;
+    setNewOrgBusy(true);
+    try {
+      const res = await fetch("/api/v1/orgs", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newOrgName.trim(),
+          description: newOrgDesc.trim() || undefined,
+          is_external: newOrgExternal,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail ?? `Org create failed (${res.status})`);
+      }
+      const created: Organization = await res.json();
+      // Refresh org list and auto-select the new one in the row.
+      const orgs = await listOrgs();
+      setAllOrgs(orgs);
+      setOrgRows((rows) =>
+        rows.map((r) =>
+          r.rowId === newOrgRowId ? { ...r, org_id: created.id } : r,
+        ),
+      );
+      setNewOrgOpen(false);
+      setNewOrgName("");
+      setNewOrgDesc("");
+      setNewOrgExternal(false);
+      setNewOrgRowId(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Org create failed.");
+    } finally {
+      setNewOrgBusy(false);
     }
   }
 
@@ -457,19 +493,9 @@ export default function AdminUsersPage() {
                   onChange={(e) => setFullName(e.target.value)}
                 />
               </div>
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <DkCheckbox
-                  checked={isAdmin}
-                  onChange={(e) => setIsAdmin(e.target.checked)}
-                />
-                <span className="text-sm text-ink">
-                  Make superadmin (full-platform access)
-                </span>
-              </label>
-
-              {/* Initial org section */}
-              <div className="flex flex-col gap-2 rounded-md border border-[var(--dk-border)] p-3 bg-[var(--dk-gray-50)]">
-                <DkLabel>Initial organization</DkLabel>
+              {/* Organization(s) — multi-row */}
+              <div className="flex flex-col gap-3 rounded-md border border-[var(--dk-border)] p-3 bg-[var(--dk-gray-50)]">
+                <DkLabel>Organization(s)</DkLabel>
                 <div className="flex flex-col gap-2">
                   <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input
@@ -478,102 +504,105 @@ export default function AdminUsersPage() {
                       checked={orgMode === "none"}
                       onChange={() => setOrgMode("none")}
                     />
-                    <span>No org yet — assign later</span>
+                    <span>No org — assign later</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input
                       type="radio"
                       name="orgmode"
-                      checked={orgMode === "existing"}
-                      onChange={() => setOrgMode("existing")}
-                      disabled={allOrgs.length === 0}
+                      checked={orgMode === "assign"}
+                      onChange={() => setOrgMode("assign")}
                     />
-                    <span>
-                      Assign to existing org{" "}
-                      {allOrgs.length === 0 && (
-                        <span className="text-xs text-[var(--dk-fg-2)]">
-                          (no orgs yet)
-                        </span>
-                      )}
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-sm">
-                    <input
-                      type="radio"
-                      name="orgmode"
-                      checked={orgMode === "new"}
-                      onChange={() => setOrgMode("new")}
-                    />
-                    <span>Create new org + assign</span>
+                    <span>Assign to org(s)</span>
                   </label>
                 </div>
 
-                {orgMode === "existing" && (
-                  <div className="flex flex-col gap-2 pt-2">
-                    <DkLabel htmlFor="picked-org">Org</DkLabel>
-                    <DkSelect
-                      id="picked-org"
-                      value={pickedOrgId}
-                      onChange={(e) => setPickedOrgId(e.target.value)}
-                    >
-                      <option value="">Select an org…</option>
-                      {allOrgs.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.name} ({o.slug})
-                        </option>
-                      ))}
-                    </DkSelect>
-                    <DkLabel htmlFor="initial-role">Role</DkLabel>
-                    <DkSelect
-                      id="initial-role"
-                      value={initialRole}
-                      onChange={(e) =>
-                        setInitialRole(e.target.value as OrgRole)
+                {orgMode === "assign" && (
+                  <div className="flex flex-col gap-2 pt-1">
+                    {orgRows.map((row, idx) => (
+                      <div
+                        key={row.rowId}
+                        className="flex items-center gap-2"
+                      >
+                        <DkSelect
+                          value={row.org_id}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === "__new__") {
+                              setNewOrgRowId(row.rowId);
+                              setNewOrgOpen(true);
+                              return;
+                            }
+                            setOrgRows((rs) =>
+                              rs.map((r) =>
+                                r.rowId === row.rowId
+                                  ? { ...r, org_id: v }
+                                  : r,
+                              ),
+                            );
+                          }}
+                          className="flex-1"
+                        >
+                          <option value="">Select an org…</option>
+                          <option value="__new__">+ Create new org…</option>
+                          <option disabled>──────────</option>
+                          {allOrgs.map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.name} — {o.slug}
+                            </option>
+                          ))}
+                        </DkSelect>
+                        <DkSelect
+                          value={row.role}
+                          onChange={(e) =>
+                            setOrgRows((rs) =>
+                              rs.map((r) =>
+                                r.rowId === row.rowId
+                                  ? { ...r, role: e.target.value as OrgRole }
+                                  : r,
+                              ),
+                            )
+                          }
+                          className="w-40"
+                        >
+                          {ROLE_OPTIONS.map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                        </DkSelect>
+                        {orgRows.length > 1 && (
+                          <button
+                            type="button"
+                            aria-label="Remove org row"
+                            onClick={() =>
+                              setOrgRows((rs) =>
+                                rs.filter((r) => r.rowId !== row.rowId),
+                              )
+                            }
+                            className="rounded p-1 text-[var(--dk-fg-2)] hover:bg-[var(--dk-danger-bg)] hover:text-[var(--dk-danger)] transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <DkButton
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        setOrgRows((rs) => [
+                          ...rs,
+                          {
+                            rowId: crypto.randomUUID(),
+                            org_id: "",
+                            role: "viewer",
+                          },
+                        ])
                       }
                     >
-                      {ROLE_OPTIONS.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </DkSelect>
-                  </div>
-                )}
-
-                {orgMode === "new" && (
-                  <div className="flex flex-col gap-2 pt-2">
-                    <DkLabel htmlFor="new-org-name" required>
-                      Org name
-                    </DkLabel>
-                    <DkInput
-                      id="new-org-name"
-                      value={newOrgName}
-                      onChange={(e) => setNewOrgName(e.target.value)}
-                      placeholder="Acme Inc."
-                    />
-                    <DkLabel htmlFor="new-org-desc">Description</DkLabel>
-                    <DkInput
-                      id="new-org-desc"
-                      value={newOrgDesc}
-                      onChange={(e) => setNewOrgDesc(e.target.value)}
-                    />
-                    <p className="text-xs text-[var(--dk-fg-2)]">
-                      Slug auto-generated as <code>{newOrgName ? `${newOrgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "org"}` : "name"}-XXXXXX</code> (XXXXXX = new user&apos;s 6-hex code)
-                    </p>
-                    <DkLabel htmlFor="new-org-role">Role</DkLabel>
-                    <DkSelect
-                      id="new-org-role"
-                      value={initialRole}
-                      onChange={(e) =>
-                        setInitialRole(e.target.value as OrgRole)
-                      }
-                    >
-                      {ROLE_OPTIONS.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </DkSelect>
+                      + Add another org
+                    </DkButton>
                   </div>
                 )}
               </div>
@@ -768,6 +797,63 @@ export default function AdminUsersPage() {
             disabled={managingBusy}
           >
             Close
+          </DkButton>
+        </DkDialogFooter>
+      </DkDialog>
+
+      {/* New-org popup launched from the org dropdown */}
+      <DkDialog
+        open={newOrgOpen}
+        onClose={() => !newOrgBusy && setNewOrgOpen(false)}
+        size="md"
+      >
+        <DkDialogHeader
+          title="Create organization"
+          description="Slug is auto-generated as o-{first4(name)}-{random6hex}."
+          onClose={() => setNewOrgOpen(false)}
+        />
+        <DkDialogContent className="flex flex-col gap-3">
+          <div>
+            <DkLabel htmlFor="no-name" required>
+              Name
+            </DkLabel>
+            <DkInput
+              id="no-name"
+              value={newOrgName}
+              onChange={(e) => setNewOrgName(e.target.value)}
+              placeholder="Acme Inc."
+            />
+          </div>
+          <div>
+            <DkLabel htmlFor="no-desc">Description</DkLabel>
+            <DkInput
+              id="no-desc"
+              value={newOrgDesc}
+              onChange={(e) => setNewOrgDesc(e.target.value)}
+            />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
+            <DkCheckbox
+              checked={newOrgExternal}
+              onChange={(e) => setNewOrgExternal(e.target.checked)}
+            />
+            <span>External / client organization</span>
+          </label>
+        </DkDialogContent>
+        <DkDialogFooter>
+          <DkButton
+            variant="secondary"
+            onClick={() => setNewOrgOpen(false)}
+            disabled={newOrgBusy}
+          >
+            Cancel
+          </DkButton>
+          <DkButton
+            onClick={handleCreateNewOrg}
+            disabled={!newOrgName.trim() || newOrgBusy}
+            loading={newOrgBusy}
+          >
+            Create
           </DkButton>
         </DkDialogFooter>
       </DkDialog>
