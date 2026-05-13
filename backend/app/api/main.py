@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import health
-from app.api.v1 import admin, agent_threads, agents, approvals, assets, audit_events, auth, brand_insights, brand_kits, campaigns_router, leads_router, analytics_router, costs, email_send, gdpr, goals, hooks, ingest, integrations, jobs, kg, me, oauth, orgs, projects, quotas, scheduled_posts, seo, seo_pipeline, social_accounts, time_entries, variants, webhooks_email, webhooks_generic, workflows
+from app.api.v1 import admin, agent_threads, agents, analytics_router, approvals, assets, audit_events, auth, brand_insights, brand_kits, campaigns_router, costs, email_send, gdpr, goals, heatmap, hooks, ingest, integrations, jobs, kg, leads_router, me, oauth, orgs, projects, quotas, scheduled_posts, seo, seo_pipeline, social_accounts, time_entries, variants, webhooks_email, webhooks_generic, workflows
 from app.core.config import settings
 from app.core.database import get_db, init_db
 from app.models.analytics_event import AnalyticsEvent, EventType
@@ -137,6 +137,10 @@ app.include_router(variants.router, prefix="/api/v1")
 
 # Theme B6 — Hook & Headline Lab
 app.include_router(hooks.router, prefix="/api/v1")
+
+
+# Theme F2 — Content Performance Heatmap
+app.include_router(heatmap.router, prefix="/api/v1")
 
 # Legacy v1 routers (will be made Org/Project-scoped in a follow-up commit)
 app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaigns"])
