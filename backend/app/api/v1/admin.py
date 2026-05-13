@@ -86,6 +86,203 @@ async def admin_create_user(
     return AdminUserCreateResponse(user=UserRead.model_validate(user), temp_password=temp_password)
 
 
+class CreateOrgInline(BaseModel):
+    """Org-create payload inside the combined endpoint."""
+    mode: str = Field(pattern=r"^(existing|new)$")
+    org_id: UUID | None = None
+    name: str | None = Field(default=None, max_length=255)
+    description: str | None = Field(default=None, max_length=1024)
+    is_external: bool = False
+    role: str
+
+
+class AdminUserWithOrgCreate(BaseModel):
+    email: EmailStr
+    full_name: str | None = None
+    is_superuser: bool = False
+    org: CreateOrgInline | None = None
+
+
+class CreatedOrgRead(BaseModel):
+    id: UUID
+    slug: str
+    name: str
+
+
+class CreatedMembershipRead(BaseModel):
+    id: UUID
+    organization_id: UUID
+    user_id: UUID
+    role: str
+
+
+class AdminUserWithOrgResponse(BaseModel):
+    user: UserRead
+    temp_password: str
+    org: CreatedOrgRead | None = None
+    membership: CreatedMembershipRead | None = None
+
+
+def _slugify(name: str) -> str:
+    """Lowercase, replace non-alnum with hyphens, collapse, trim, cap 48."""
+    s = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
+    while "--" in s:
+        s = s.replace("--", "-")
+    return s[:48] or "org"
+
+
+@router.post(
+    "/users/with-org",
+    response_model=AdminUserWithOrgResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def admin_create_user_with_org(
+    body: AdminUserWithOrgCreate,
+    actor: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> AdminUserWithOrgResponse:
+    """Transactional combined create:
+    - mode=existing: user + membership in given org
+    - mode=new: org (slug = slugify(name)-{display_code}) + actor-admin + user + membership
+    - None: just user
+    Any failure rolls back the whole thing.
+    """
+    from app.models.organization import (
+        Organization,
+        OrganizationMembership,
+        OrganizationRole,
+    )
+    from app.services.audit import write_audit_event
+    from app.services.user_codes import next_display_code
+
+    if (
+        await session.execute(select(User).where(User.email == body.email))
+    ).scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User with email {body.email} already exists.",
+        )
+
+    if body.org is not None:
+        try:
+            OrganizationRole(body.org.role)
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid role: {body.org.role}"
+            )
+        if body.org.mode == "existing" and body.org.org_id is None:
+            raise HTTPException(
+                status_code=400, detail="mode=existing requires org_id."
+            )
+        if body.org.mode == "new" and not body.org.name:
+            raise HTTPException(
+                status_code=400, detail="mode=new requires name."
+            )
+
+    temp_password = generate_temp_password()
+    user = User(
+        email=body.email,
+        hashed_password=_password_helper.hash(temp_password),
+        is_active=True,
+        is_superuser=body.is_superuser,
+        is_verified=True,
+        full_name=body.full_name,
+        password_reset_required=True,
+        display_code=await next_display_code(session),
+    )
+    session.add(user)
+    await session.flush()
+
+    created_org: Organization | None = None
+    membership: OrganizationMembership | None = None
+
+    if body.org is not None:
+        role_enum = OrganizationRole(body.org.role)
+
+        if body.org.mode == "existing":
+            target_org = await session.get(Organization, body.org.org_id)
+            if target_org is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Organization {body.org.org_id} not found.",
+                )
+            membership = OrganizationMembership(
+                user_id=user.id,
+                organization_id=target_org.id,
+                role=role_enum,
+            )
+            session.add(membership)
+            created_org = target_org
+
+        else:  # mode == "new"
+            new_org = Organization(
+                slug=f"{_slugify(body.org.name)}-{user.display_code}",
+                name=body.org.name,
+                description=body.org.description,
+                is_external=body.org.is_external,
+            )
+            session.add(new_org)
+            await session.flush()
+            session.add(
+                OrganizationMembership(
+                    user_id=actor.id,
+                    organization_id=new_org.id,
+                    role=OrganizationRole.admin,
+                )
+            )
+            membership = OrganizationMembership(
+                user_id=user.id,
+                organization_id=new_org.id,
+                role=role_enum,
+            )
+            session.add(membership)
+            created_org = new_org
+
+        await session.flush()
+        await write_audit_event(
+            session,
+            action_type=(
+                "admin.user.create_with_existing_org"
+                if body.org.mode == "existing"
+                else "admin.user.create_with_new_org"
+            ),
+            organization_id=created_org.id,
+            actor_user_id=actor.id,
+            target_type="user",
+            target_id=user.id,
+            payload={"role": body.org.role},
+        )
+
+    await session.commit()
+    await session.refresh(user)
+    if created_org is not None:
+        await session.refresh(created_org)
+    if membership is not None:
+        await session.refresh(membership)
+
+    return AdminUserWithOrgResponse(
+        user=UserRead.model_validate(user),
+        temp_password=temp_password,
+        org=(
+            CreatedOrgRead(
+                id=created_org.id, slug=created_org.slug, name=created_org.name
+            )
+            if created_org is not None
+            else None
+        ),
+        membership=(
+            CreatedMembershipRead(
+                id=membership.id,
+                organization_id=membership.organization_id,
+                user_id=membership.user_id,
+                role=membership.role.value,
+            )
+            if membership is not None
+            else None
+        ),
+    )
+
+
 @router.get("/users", response_model=list[UserRead])
 async def admin_list_users(
     session: AsyncSession = Depends(get_db),
