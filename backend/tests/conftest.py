@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pytest_asyncio
+from fastapi import Request
 from fastapi_users.password import PasswordHelper
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
@@ -32,12 +33,38 @@ async def override_get_db():
             await session.close()
 
 
-async def override_current_active_user() -> User:
-    """Return a pre-seeded superuser; bypasses fastapi-users JWT checks.
+async def override_current_active_user(request: "Request") -> User:
+    """Resolve the calling user.
 
-    Tests that need a non-superuser identity should re-override this
-    dependency in their own scope.
+    - If the request carries an Authorization: Bearer <jwt> header, decode
+      the token via the configured JWT strategy and return that user.
+      This is the path the pre-existing tests rely on — they log in as
+      alice/bob/admin and expect per-role responses.
+    - Otherwise, return the seeded test superuser. This is the fallback
+      for the new SP3-1 tests that don't bring their own JWT.
     """
+    auth = request.headers.get("authorization")
+    if auth and auth.lower().startswith("bearer "):
+        token = auth.split(" ", 1)[1].strip()
+        from app.auth.backend import get_jwt_strategy
+        from app.auth.manager import get_user_manager
+
+        strategy = get_jwt_strategy()
+        async with AsyncSession(test_engine, expire_on_commit=False) as session:
+            from app.auth.db import get_user_db
+
+            user_db_gen = get_user_db(session).__aiter__()
+            user_db = await user_db_gen.__anext__()
+            user_mgr_gen = get_user_manager(user_db).__aiter__()
+            user_mgr = await user_mgr_gen.__anext__()
+            try:
+                user = await strategy.read_token(token, user_mgr)
+            except Exception:
+                user = None
+            if user is not None and user.is_active:
+                # Detach + reattach in a clean session so the route can use it.
+                return user
+
     user = _TEST_SUPERUSER["user"]
     if user is None:
         raise RuntimeError(
@@ -65,7 +92,7 @@ async def setup_db():
         helper = PasswordHelper()
         u = User(
             id=uuid4(),
-            email="test-superuser@dclaw.local",
+            email="test-superuser@example.com",
             hashed_password=helper.hash("test-pw"),
             is_active=True,
             is_verified=True,
