@@ -353,6 +353,7 @@ export default function MembersPage() {
                 {members.map((m) => {
                   const u = userMap.get(m.user_id);
                   const self = me?.id === m.user_id;
+                  const targetIsSuperadmin = !!u?.is_superuser;
                   return (
                     <DkTableRow key={m.id}>
                       <DkTableCell>
@@ -386,7 +387,9 @@ export default function MembersPage() {
                         )}
                       </DkTableCell>
                       <DkTableCell>
-                        {me?.is_superuser ? (
+                        {targetIsSuperadmin ? (
+                          <DkBadge tone="brand">superadmin</DkBadge>
+                        ) : me?.is_superuser ? (
                           <DkSelect
                             value={m.role}
                             onChange={(e) =>
@@ -406,7 +409,7 @@ export default function MembersPage() {
                       </DkTableCell>
                       <DkTableCell className="text-right">
                         <div className="inline-flex items-center gap-2">
-                          {canAdminThisOrg && !self && (
+                          {canAdminThisOrg && !self && !targetIsSuperadmin && (
                             <DkButton
                               size="sm"
                               variant="secondary"
@@ -416,7 +419,7 @@ export default function MembersPage() {
                               Reset password
                             </DkButton>
                           )}
-                          {me?.is_superuser && !self && (
+                          {me?.is_superuser && !self && !targetIsSuperadmin && (
                             <DkButton
                               size="sm"
                               variant="danger"
