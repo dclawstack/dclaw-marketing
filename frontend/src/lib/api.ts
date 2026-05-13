@@ -221,11 +221,11 @@ export async function listOrgs(): Promise<Organization[]> {
 }
 
 export async function createOrg(data: {
-  slug: string;
   name: string;
   description?: string;
   is_external?: boolean;
 }): Promise<Organization> {
+  // Slug is auto-generated server-side (o-{first4(name)}-{random6hex}).
   return fetchJson<Organization>("/api/v1/orgs", {
     method: "POST",
     body: JSON.stringify(data),
