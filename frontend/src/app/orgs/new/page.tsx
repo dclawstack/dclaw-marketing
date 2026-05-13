@@ -18,31 +18,16 @@ import {
 import { createOrg } from "@/lib/api";
 import { useOrg } from "@/contexts/org-context";
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
-}
 
 export default function NewOrgPage() {
   const router = useRouter();
   const { refresh, setCurrentOrg } = useOrg();
 
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugDirty, setSlugDirty] = useState(false);
   const [description, setDescription] = useState("");
   const [isExternal, setIsExternal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  function onNameChange(v: string) {
-    setName(v);
-    if (!slugDirty) setSlug(slugify(v));
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -50,7 +35,6 @@ export default function NewOrgPage() {
     setSubmitting(true);
     try {
       const org = await createOrg({
-        slug,
         name,
         description: description || undefined,
         is_external: isExternal,
@@ -76,7 +60,7 @@ export default function NewOrgPage() {
       <DkPageHeader
         eyebrow="Workspace"
         title="New Organization"
-        description="Set up a new workspace. You can change the name and description later; the slug is permanent."
+        description="Set up a new workspace. Slug is auto-generated server-side as o-{first4(name)}-{random6hex} and is permanent."
       />
 
       <DkCard>
@@ -90,29 +74,7 @@ export default function NewOrgPage() {
                 id="name"
                 placeholder="Acme Inc"
                 value={name}
-                onChange={(e) => onNameChange(e.target.value)}
-                disabled={submitting}
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <DkLabel
-                htmlFor="slug"
-                required
-                description="URL-safe identifier. Used in API paths. Cannot be changed after creation."
-              >
-                Slug
-              </DkLabel>
-              <DkInput
-                id="slug"
-                placeholder="acme"
-                value={slug}
-                onChange={(e) => {
-                  setSlug(slugify(e.target.value));
-                  setSlugDirty(true);
-                }}
-                pattern="[a-z0-9-]+"
+                onChange={(e) => setName(e.target.value)}
                 disabled={submitting}
                 required
               />
@@ -163,7 +125,7 @@ export default function NewOrgPage() {
               <DkButton
                 type="submit"
                 loading={submitting}
-                disabled={submitting || !name || !slug}
+                disabled={submitting || !name}
                 withArrow={!submitting}
               >
                 Create Organization

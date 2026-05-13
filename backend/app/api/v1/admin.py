@@ -200,7 +200,7 @@ async def admin_create_user_with_orgs(
             organization_id=assn.org_id,
             actor_user_id=actor.id,
             target_type="user",
-            target_id=user.id,
+            target_id=str(user.id),
             payload={"role": assn.role},
         )
 
