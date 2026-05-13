@@ -71,7 +71,9 @@ async def test_admin_can_create_user_with_temp_password(client):
 
 
 @pytest.mark.asyncio
-async def test_admin_can_create_another_admin(client):
+async def test_admin_cannot_create_another_superadmin(client):
+    """Sprint 4: only the bootstrap account can be a superadmin. The endpoint
+    must reject is_superuser=True with 409."""
     await _seed_user("admin@example.com", "AdminPwd123!", is_superuser=True)
     token = await _login(client, "admin@example.com", "AdminPwd123!")
 
@@ -80,8 +82,7 @@ async def test_admin_can_create_another_admin(client):
         json={"email": "co_admin@example.com", "is_superuser": True},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert res.status_code == 201
-    assert res.json()["user"]["is_superuser"] is True
+    assert res.status_code == 409
 
 
 @pytest.mark.asyncio
