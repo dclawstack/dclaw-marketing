@@ -68,6 +68,7 @@ async def init_db() -> None:
                 is_verified=True,
                 full_name="Bootstrap Admin",
                 password_reset_required=False,
+                display_code="000000",
             )
             session.add(admin)
         else:
@@ -79,4 +80,7 @@ async def init_db() -> None:
             admin.is_superuser = True
             admin.is_verified = True
             admin.password_reset_required = False
+            # Re-assert the bootstrap admin's display_code in case the column
+            # was just added or somehow drifted.
+            admin.display_code = "000000"
         await session.commit()

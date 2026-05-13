@@ -40,6 +40,14 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         Boolean, nullable=False, default=False, server_default="false"
     )
 
+    # Sprint 4 — 6-character lowercase hex display code, unique per user.
+    # Bootstrap admin is `000000`; other users get the next sequential value
+    # at insert time. Used as the suffix for auto-generated org slugs and
+    # surfaceable in UI as a short, memorable handle.
+    display_code: Mapped[str | None] = mapped_column(
+        String(6), nullable=True, unique=True, index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
