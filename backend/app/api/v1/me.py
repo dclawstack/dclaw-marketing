@@ -23,6 +23,27 @@ async def get_me(user: User = Depends(current_active_user)) -> User:
     return user
 
 
+class MyAdminOrgsOut(BaseModel):
+    is_superuser: bool
+    admin_org_ids: list[str]
+
+
+@router.get("/me/admin-orgs", response_model=MyAdminOrgsOut)
+async def get_my_admin_orgs(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> MyAdminOrgsOut:
+    """Returns the orgs the caller can admin. Used by the frontend to decide
+    whether to show the Admin sidebar group."""
+    from app.auth.guards import admin_org_ids_for
+
+    org_ids = await admin_org_ids_for(session, user)
+    return MyAdminOrgsOut(
+        is_superuser=user.is_superuser,
+        admin_org_ids=[str(i) for i in org_ids],
+    )
+
+
 class PasswordChangeIn(BaseModel):
     current_password: str = Field(min_length=1)
     new_password: str = Field(min_length=10)

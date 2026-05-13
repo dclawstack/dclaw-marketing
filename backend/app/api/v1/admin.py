@@ -143,6 +143,42 @@ async def admin_force_reset_password(
     return AdminUserResetPasswordResponse(user_id=user.id, temp_password=temp_password)
 
 
+class UserMembershipRead(BaseModel):
+    org_id: UUID
+    org_slug: str
+    org_name: str
+    role: str
+
+
+@router.get("/users/{user_id}/memberships", response_model=list[UserMembershipRead])
+async def admin_list_user_memberships(
+    user_id: UUID,
+    session: AsyncSession = Depends(get_db),
+) -> list[UserMembershipRead]:
+    """Returns every org the user is a member of, with role + org metadata.
+
+    Used by the admin users page to show which orgs each user belongs to.
+    """
+    from app.models.organization import Organization, OrganizationMembership
+
+    rows = (
+        await session.execute(
+            select(OrganizationMembership, Organization)
+            .join(Organization, Organization.id == OrganizationMembership.organization_id)
+            .where(OrganizationMembership.user_id == user_id)
+        )
+    ).all()
+    return [
+        UserMembershipRead(
+            org_id=org.id,
+            org_slug=org.slug,
+            org_name=org.name,
+            role=m.role.value,
+        )
+        for (m, org) in rows
+    ]
+
+
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def admin_delete_user(
     user_id: UUID,
