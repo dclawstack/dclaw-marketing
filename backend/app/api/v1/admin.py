@@ -65,6 +65,8 @@ async def admin_create_user(
             detail=f"User with email {body.email} already exists.",
         )
 
+    from app.services.user_codes import next_display_code
+
     temp_password = generate_temp_password()
     user = User(
         email=body.email,
@@ -74,6 +76,7 @@ async def admin_create_user(
         is_verified=True,  # admin-created = trusted; no email-verify roundtrip
         full_name=body.full_name,
         password_reset_required=True,
+        display_code=await next_display_code(session),
     )
     session.add(user)
     await session.flush()

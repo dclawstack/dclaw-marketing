@@ -443,6 +443,7 @@ async def invite_member_by_email(
     if target is None:
         import secrets
         from fastapi_users.password import PasswordHelper
+        from app.services.user_codes import next_display_code
 
         temp_password = secrets.token_urlsafe(12)
         helper = PasswordHelper()
@@ -453,6 +454,7 @@ async def invite_member_by_email(
             is_active=True,
             is_verified=False,
             is_superuser=False,
+            display_code=await next_display_code(session),
         )
         session.add(target)
         await session.flush()

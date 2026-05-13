@@ -9,6 +9,7 @@ from pydantic import EmailStr
 class UserRead(schemas.BaseUser[UUID]):
     full_name: str | None = None
     password_reset_required: bool = False
+    display_code: str | None = None
 
 
 class UserCreate(schemas.BaseUserCreate):
