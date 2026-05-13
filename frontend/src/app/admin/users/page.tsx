@@ -703,7 +703,13 @@ export default function AdminUsersPage() {
           onClose={() => setManagingUser(null)}
         />
         <DkDialogContent>
-          {managingUser && (
+          {managingUser?.is_superuser && (
+            <div className="mb-3 rounded-md border border-[var(--dk-border)] bg-[var(--dk-purple-50)] px-3 py-2 text-sm text-ink">
+              <strong>Superadmin</strong> — implicit admin of every org. Membership
+              controls are locked; their role is fixed to <em>superadmin</em>.
+            </div>
+          )}
+          {managingUser && !managingUser.is_superuser && (
             <div className="flex flex-col gap-2">
               {allOrgs.map((org) => {
                 const userMs = memberships[managingUser.id] ?? [];
