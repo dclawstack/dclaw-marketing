@@ -14,6 +14,7 @@ class AnalyticsEventRepository(BaseRepository[AnalyticsEvent]):
     async def list_by_campaign(
         self,
         campaign_id: UUID,
+        organization_id: Optional[UUID] = None,
         event_type: Optional[EventType] = None,
         limit: int = 20,
         offset: int = 0,
@@ -21,6 +22,9 @@ class AnalyticsEventRepository(BaseRepository[AnalyticsEvent]):
         query = select(AnalyticsEvent).where(AnalyticsEvent.campaign_id == campaign_id)
         count_query = select(func.count()).select_from(AnalyticsEvent).where(AnalyticsEvent.campaign_id == campaign_id)
 
+        if organization_id is not None:
+            query = query.where(AnalyticsEvent.organization_id == organization_id)
+            count_query = count_query.where(AnalyticsEvent.organization_id == organization_id)
         if event_type:
             query = query.where(AnalyticsEvent.event_type == event_type)
             count_query = count_query.where(AnalyticsEvent.event_type == event_type)
@@ -31,12 +35,21 @@ class AnalyticsEventRepository(BaseRepository[AnalyticsEvent]):
         total = count_result.scalar() or 0
         return items, total
 
-    async def get_summary_by_campaign(self, campaign_id: UUID) -> dict:
-        result = await self.db.execute(
-            select(AnalyticsEvent.event_type, func.count().label("count"), func.sum(AnalyticsEvent.value).label("total_value"))
+    async def get_summary_by_campaign(
+        self, campaign_id: UUID, organization_id: Optional[UUID] = None
+    ) -> dict:
+        stmt = (
+            select(
+                AnalyticsEvent.event_type,
+                func.count().label("count"),
+                func.sum(AnalyticsEvent.value).label("total_value"),
+            )
             .where(AnalyticsEvent.campaign_id == campaign_id)
             .group_by(AnalyticsEvent.event_type)
         )
+        if organization_id is not None:
+            stmt = stmt.where(AnalyticsEvent.organization_id == organization_id)
+        result = await self.db.execute(stmt)
         summary = {}
         for row in result.all():
             summary[row.event_type.value] = {
