@@ -10,6 +10,64 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ---
 
+## [1.1.1] — 2026-05-14 — *Sprint 3 closeout*
+
+Sprint 3 focused on **operator UX, the admin model, and platform polish** on top of the feature-complete v1.1.0 stack. Forty-plus PRs across two days. No new product surfaces — every change makes an existing one safer, clearer, or more honest.
+
+### Added
+- **Two-tier admin model** — single bootstrap superadmin (`s-admn-000000`) + per-org admins, backed by centralized guards + audit + notifications + last-admin protection (`#243`/`#246`). `is_superuser=True` creation is refused for anyone but the bootstrap account.
+- **Combined create-user-with-org flow** — superadmin can spin up a user, optionally assign them to multiple existing orgs OR create a new org inline, all from one dialog (`#254`/`#257`, `#263`/`#266`).
+- **Slug scheme** — every User and Org now has a `slug` field: users `u-{first4}-{6hex}`, orgs `o-{first4}-{6hex}`, bootstrap hardcoded `s-admn-000000`. Migration re-slugs all existing rows (`#262`/`#265`).
+- **Admin sidebar group** — Integrations / Orgs / Users / Costs / Quotas / Audit / Health collapse into one Admin section in the left rail (`#244`/`#247`).
+- **Org-admin password reset** — org admins can reset passwords for members of orgs they administer; superadmin can still reset anyone (`#255`/`#258`).
+- **All-Orgs switcher + per-org stats** — superadmin can flip into an "All Orgs" view; each card on `/orgs` shows project / user / asset counts (`#245`/`#248`).
+- **Superadmin role display** — member tables render `superadmin` as its own pill and lock role edits (`#264`/`#267`).
+- **Left-sidebar navigation** — the top nav becomes a collapsible left rail; items group by domain (`#238`/`#239`).
+- **TOTP 2FA columns** — `totp_secret`, `totp_enabled`, `totp_last_used_at` on users with a backfill-safe migration (`#251`/`#252`).
+- **User `display_code` → slug** — `display_code` (6-hex unique handle) shipped first (`#253`/`#256`) and was subsequently subsumed by the full slug refactor.
+
+### Fixed
+- **Auto-close pipeline** — squash merge now passes the PR body to the merge commit AND the auto-merge workflow has `issues: write` so `Closes #N` actually fires (`#240`/`#241`, `#249`/`#250`).
+- **Next.js rewrite proxy** — frontend container couldn't reach the backend (`ECONNREFUSED 127.0.0.1:8102`). Build-time `BACKEND_INTERNAL_URL=http://backend:8102` fixes the container-DNS path (`#270`/`#271`).
+- **DB migrations** — `landing_pages_json` + `kanban_json` columns on `organizations` (`#259`/`#260`); TOTP columns on `users` (`#251`/`#252`).
+- **Reset-password dialog** — surfaces the newly generated temp password (had a dialog-gating bug) (`#274`/`#275`).
+- **Audit-event UUID coercion** — every `target_id` is now `str(...)`-wrapped, fixing several 500s during admin actions.
+
+### Changed
+- **Release naming** — `v0.1.0-mvp` renamed to `v1.0.0`, `v0.2.0` renamed to `v1.1.0` so the version line aligns with the `PLAN-v1.2.md` roadmap doc the stakeholder reads (`#276`/`#278`). Tags re-pointed at the same commit SHAs; releases re-published with the new names.
+- **Documentation set** — 31 docs consolidated to 17; redundant files removed, overlapping content merged (`#269`).
+- **Marketing collaterals** — `marketing/` directory removed from repo per user request; collateral now owned out-of-band (`#237`).
+
+### Sprint 3 lane breakdown (SP3-* PRs landed on top of v1.1.0)
+- **SP3-1** Org-scope the v1 legacy routers + dashboard (`#213`)
+- **SP3-2** Tabbed `/orgs/[id]` detail layout (`#214`)
+- **SP3-3** Invite-by-email — find-or-create user + membership (`#229`)
+- **SP3-5** Q6 Project Setup Wizard at `/orgs/[id]/wizard` (`#215`)
+- **SP3-6** Fernet-encrypt SocialAccount tokens at rest (`#230`)
+- **SP3-7** Per-source chunk drill-down at `/knowledge/sources/[id]` (`#221`)
+- **SP3-8** Git-repo ingestion worker + endpoint (`#232`)
+- **SP3-9** B6 Hook & Headline Lab — service + API + `/hooks` UI (`#216`)
+- **SP3-10** B5 Variant A/B Studio — models + migration + CRUD API (`#217`)
+- **SP3-11** B4 Repurposing Engine — service + API + `/repurpose` UI (`#218`)
+- **SP3-12** E2 Lead enrichment fan-out service + endpoint (`#224`)
+- **SP3-13** F2 Content Performance Heatmap (`#219`)
+- **SP3-14** Global Conductor chat dock on every page (`#223`)
+- **SP3-15** D3 BYO MCP marketplace page (`#225`)
+- **SP3-16** Minimal HTML-body landing-page builder (`#234`)
+- **SP3-17** H2 SEO blog pipeline — keyword/outline/draft (`#235`)
+- **SP3-18** Theme N — Playbook search + CRUD API (`#226`)
+- **SP3-19** Embeddable client dashboard URLs via signed JWT (`#220`)
+- **SP3-20** Per-project task board via `Project.kanban_json` (`#233`)
+- **SP3-21** Start/stop timer widget on `/time` (`#222`)
+- **SP3-22** Per-org retainer + monthly budget burn-down (`#227`)
+- **SP3-23** Invoices list + mark-paid/void/uncollectible (`#228`)
+- **SP3-24** Pydantic sweep: `class Config` → `ConfigDict` across v1 routers (`#231`)
+
+### Process
+- Workflow rule established and enforced: every task → issue → board Todo → In Progress on start → PR with `Closes #N` → Done on merge. Auto-merge bot + auto-close pipeline now drains the queue end-to-end with no manual board ops.
+
+---
+
 ## [1.1.0] — 2026-05-13 — *Sprint 2 closeout*
 
 > **Naming note.** The roadmap doc is titled `PLAN-v1.2.md` (carried over from the original spec); this release is `v1.1.0` per the post-MVP versioning. Future plan-doc revisions will be retitled to remove the confusion.
