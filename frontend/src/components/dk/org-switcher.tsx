@@ -5,7 +5,8 @@ import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
-import { useOrg } from "@/contexts/org-context";
+import { useAuth } from "@/contexts/auth-context";
+import { ALL_ORGS_ID, useOrg } from "@/contexts/org-context";
 
 /**
  * Org switcher dropdown — appears in the top nav between the logo and
@@ -13,9 +14,12 @@ import { useOrg } from "@/contexts/org-context";
  * organizations + a "Create organization" link.
  */
 export function DkOrgSwitcher() {
-  const { orgs, currentOrg, setCurrentOrg, loading } = useOrg();
+  const { orgs, currentOrg, setCurrentOrg, selectAllOrgs, isAllOrgs, loading } =
+    useOrg();
+  const { user } = useAuth();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const showAllOrgsOption = !!user?.is_superuser && orgs.length > 1;
 
   React.useEffect(() => {
     if (!open) return;
@@ -72,7 +76,9 @@ export function DkOrgSwitcher() {
       >
         <Building2 className="h-4 w-4 text-brand shrink-0" />
         <span className="flex-1 text-left text-ink truncate">
-          {currentOrg?.name ?? "Select organization"}
+          {isAllOrgs
+            ? "All Orgs"
+            : currentOrg?.name ?? "Select organization"}
         </span>
         <ChevronsUpDown className="h-3.5 w-3.5 text-[var(--dk-fg-2)] shrink-0" />
       </button>
@@ -88,8 +94,34 @@ export function DkOrgSwitcher() {
             </p>
           </div>
           <div className="max-h-64 overflow-auto py-1">
+            {showAllOrgsOption && (
+              <button
+                type="button"
+                role="option"
+                aria-selected={isAllOrgs}
+                onClick={() => {
+                  selectAllOrgs();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-2 text-sm text-left transition-colors duration-fast border-b border-[var(--dk-border)]",
+                  isAllOrgs
+                    ? "bg-[var(--dk-purple-50)] text-brand"
+                    : "text-ink hover:bg-[var(--dk-gray-50)]",
+                )}
+              >
+                <Building2 className="h-4 w-4 shrink-0" />
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="truncate font-medium">All Orgs</span>
+                  <span className="text-xs text-[var(--dk-fg-2)]">
+                    Combined view (superadmin)
+                  </span>
+                </div>
+                {isAllOrgs && <Check className="h-4 w-4 shrink-0" />}
+              </button>
+            )}
             {orgs.map((o) => {
-              const active = o.id === currentOrg?.id;
+              const active = !isAllOrgs && o.id === currentOrg?.id;
               return (
                 <button
                   key={o.id}

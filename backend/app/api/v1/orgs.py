@@ -175,6 +175,94 @@ async def list_my_orgs(
     return list(result.scalars().all())
 
 
+class OrganizationStatsRead(BaseModel):
+    id: UUID
+    slug: str
+    name: str
+    description: str | None
+    is_external: bool
+    member_count: int
+    last_active_at: str | None  # ISO 8601 — last audit event timestamp
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+@router.get("/with-stats", response_model=list[OrganizationStatsRead])
+async def list_orgs_with_stats(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> list[OrganizationStatsRead]:
+    """Same scoping as GET /orgs but enriched with member_count + last_active.
+
+    Used by the /orgs list page so superadmins can spot dormant/orphaned orgs.
+    """
+    from sqlalchemy import func as _func
+    from app.models.audit_event import AuditEvent
+
+    # Pick the visible org-set first (mirrors GET /orgs).
+    if user.is_superuser:
+        orgs = (
+            await session.execute(
+                select(Organization).order_by(Organization.created_at.desc())
+            )
+        ).scalars().all()
+    else:
+        orgs = (
+            await session.execute(
+                select(Organization)
+                .join(OrganizationMembership)
+                .where(OrganizationMembership.user_id == user.id)
+                .order_by(Organization.created_at.desc())
+            )
+        ).scalars().all()
+
+    if not orgs:
+        return []
+
+    org_ids = [o.id for o in orgs]
+
+    # Batch: member count per org.
+    member_rows = (
+        await session.execute(
+            select(
+                OrganizationMembership.organization_id,
+                _func.count(OrganizationMembership.id),
+            )
+            .where(OrganizationMembership.organization_id.in_(org_ids))
+            .group_by(OrganizationMembership.organization_id)
+        )
+    ).all()
+    member_count_by_org = {oid: int(cnt) for (oid, cnt) in member_rows}
+
+    # Batch: last audit-event timestamp per org.
+    last_rows = (
+        await session.execute(
+            select(
+                AuditEvent.organization_id,
+                _func.max(AuditEvent.created_at),
+            )
+            .where(AuditEvent.organization_id.in_(org_ids))
+            .group_by(AuditEvent.organization_id)
+        )
+    ).all()
+    last_by_org = {oid: ts for (oid, ts) in last_rows if oid is not None}
+
+    return [
+        OrganizationStatsRead(
+            id=o.id,
+            slug=o.slug,
+            name=o.name,
+            description=o.description,
+            is_external=o.is_external,
+            member_count=member_count_by_org.get(o.id, 0),
+            last_active_at=(
+                last_by_org[o.id].isoformat() if o.id in last_by_org else None
+            ),
+        )
+        for o in orgs
+    ]
+
+
 @router.get("/{org_id}", response_model=OrganizationRead)
 async def get_org(
     org_id: UUID,

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { getToken } from "@/lib/auth";
 import Link from "next/link";
 import { Building2, Plus, Trash2 } from "lucide-react";
 
@@ -22,6 +24,11 @@ import { useAuth } from "@/contexts/auth-context";
 import { useOrg } from "@/contexts/org-context";
 import { Organization, deleteOrg } from "@/lib/api";
 
+interface OrgStats {
+  member_count: number;
+  last_active_at: string | null;
+}
+
 export default function OrgsListPage() {
   const { orgs, loading, error, refresh } = useOrg();
   const { user } = useAuth();
@@ -30,6 +37,35 @@ export default function OrgsListPage() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [stats, setStats] = useState<Record<string, OrgStats>>({});
+
+  useEffect(() => {
+    fetch("/api/v1/orgs/with-stats", {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: Array<{ id: string } & OrgStats>) => {
+        const idx: Record<string, OrgStats> = {};
+        for (const r of rows)
+          idx[r.id] = {
+            member_count: r.member_count,
+            last_active_at: r.last_active_at,
+          };
+        setStats(idx);
+      })
+      .catch(() => setStats({}));
+  }, [orgs]);
+
+  function formatLastActive(iso: string | null): string {
+    if (!iso) return "no activity";
+    const then = new Date(iso).getTime();
+    const days = Math.floor((Date.now() - then) / (1000 * 60 * 60 * 24));
+    if (days < 1) return "today";
+    if (days === 1) return "1 day ago";
+    if (days < 30) return `${days} days ago`;
+    if (days < 365) return `${Math.floor(days / 30)} mo ago`;
+    return `${Math.floor(days / 365)} yr ago`;
+  }
 
   const closeDialog = () => {
     if (deleting) return;
@@ -135,6 +171,18 @@ export default function OrgsListPage() {
                         {o.description}
                       </p>
                     )}
+                    <div className="flex items-center gap-3 pt-1 text-xs text-[var(--dk-fg-2)]">
+                      <span>
+                        <strong className="font-semibold text-ink">
+                          {stats[o.id]?.member_count ?? "—"}
+                        </strong>{" "}
+                        member{stats[o.id]?.member_count === 1 ? "" : "s"}
+                      </span>
+                      <span className="text-[var(--dk-border-strong)]">•</span>
+                      <span>
+                        {formatLastActive(stats[o.id]?.last_active_at ?? null)}
+                      </span>
+                    </div>
                   </DkCardContent>
                 </DkCard>
               </Link>
