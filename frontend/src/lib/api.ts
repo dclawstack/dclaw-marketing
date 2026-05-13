@@ -713,6 +713,7 @@ export interface AdminUser {
   is_superuser: boolean;
   is_verified: boolean;
   password_reset_required: boolean;
+  slug: string | null;
 }
 
 export interface AdminUserCreateResponse {

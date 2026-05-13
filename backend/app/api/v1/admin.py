@@ -65,18 +65,27 @@ async def admin_create_user(
             detail=f"User with email {body.email} already exists.",
         )
 
-    from app.services.user_codes import next_display_code
+    from app.services.slugs import make_slug
+
+    if body.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Only the bootstrap account can be a superadmin. Make this "
+                "user an org admin via OrganizationMembership instead."
+            ),
+        )
 
     temp_password = generate_temp_password()
     user = User(
         email=body.email,
         hashed_password=_password_helper.hash(temp_password),
         is_active=True,
-        is_superuser=body.is_superuser,
-        is_verified=True,  # admin-created = trusted; no email-verify roundtrip
+        is_superuser=False,
+        is_verified=True,
         full_name=body.full_name,
         password_reset_required=True,
-        display_code=await next_display_code(session),
+        slug=make_slug("u", body.full_name or body.email.split("@")[0]),
     )
     session.add(user)
     await session.flush()
@@ -123,14 +132,6 @@ class AdminUserWithOrgResponse(BaseModel):
     membership: CreatedMembershipRead | None = None
 
 
-def _slugify(name: str) -> str:
-    """Lowercase, replace non-alnum with hyphens, collapse, trim, cap 48."""
-    s = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
-    while "--" in s:
-        s = s.replace("--", "-")
-    return s[:48] or "org"
-
-
 @router.post(
     "/users/with-org",
     response_model=AdminUserWithOrgResponse,
@@ -143,7 +144,7 @@ async def admin_create_user_with_org(
 ) -> AdminUserWithOrgResponse:
     """Transactional combined create:
     - mode=existing: user + membership in given org
-    - mode=new: org (slug = slugify(name)-{display_code}) + actor-admin + user + membership
+    - mode=new: org (slug = make_slug('o', name)) + actor-admin + user + membership
     - None: just user
     Any failure rolls back the whole thing.
     """
@@ -153,7 +154,16 @@ async def admin_create_user_with_org(
         OrganizationRole,
     )
     from app.services.audit import write_audit_event
-    from app.services.user_codes import next_display_code
+    from app.services.slugs import make_slug
+
+    if body.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Only the bootstrap account can be a superadmin. Make this "
+                "user an org admin via OrganizationMembership instead."
+            ),
+        )
 
     if (
         await session.execute(select(User).where(User.email == body.email))
@@ -184,11 +194,11 @@ async def admin_create_user_with_org(
         email=body.email,
         hashed_password=_password_helper.hash(temp_password),
         is_active=True,
-        is_superuser=body.is_superuser,
+        is_superuser=False,
         is_verified=True,
         full_name=body.full_name,
         password_reset_required=True,
-        display_code=await next_display_code(session),
+        slug=make_slug("u", body.full_name or body.email.split("@")[0]),
     )
     session.add(user)
     await session.flush()
@@ -216,7 +226,7 @@ async def admin_create_user_with_org(
 
         else:  # mode == "new"
             new_org = Organization(
-                slug=f"{_slugify(body.org.name)}-{user.display_code}",
+                slug=make_slug("o", body.org.name),
                 name=body.org.name,
                 description=body.org.description,
                 is_external=body.org.is_external,
