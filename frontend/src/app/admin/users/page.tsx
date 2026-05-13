@@ -105,6 +105,9 @@ export default function AdminUsersPage() {
   const [managingBusy, setManagingBusy] = useState(false);
   const [creating, setCreating] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  // Separate state for the Reset-Password flow so the result has its own
+  // dialog (the createOpen dialog is gated on createOpen=true).
+  const [resetPwTemp, setResetPwTemp] = useState<string | null>(null);
 
   const [pendingDelete, setPendingDelete] = useState<AdminUser | null>(null);
   const [confirmEmail, setConfirmEmail] = useState("");
@@ -273,7 +276,7 @@ export default function AdminUsersPage() {
     if (!confirm("Issue a new temporary password for this user?")) return;
     try {
       const res = await adminResetUserPassword(userId);
-      setTempPassword(res.temp_password);
+      setResetPwTemp(res.temp_password);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Reset failed.");
     }
@@ -850,6 +853,41 @@ export default function AdminUsersPage() {
           >
             Create
           </DkButton>
+        </DkDialogFooter>
+      </DkDialog>
+
+      {/* Reset-password result dialog — surfaces the one-shot temp password
+          after a successful /admin/users/{id}/reset-password call. */}
+      <DkDialog
+        open={resetPwTemp !== null}
+        onClose={() => setResetPwTemp(null)}
+        size="sm"
+      >
+        <DkDialogHeader
+          title="Temp Password Issued"
+          description="Copy this now — it's shown once. The user must reset it on first login."
+          onClose={() => setResetPwTemp(null)}
+        />
+        <DkDialogContent>
+          {resetPwTemp && (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-md border border-[var(--dk-border-strong)] bg-[var(--dk-bg-muted)] px-3 py-3 font-mono text-md text-ink break-all">
+                {resetPwTemp}
+              </div>
+              <DkButton
+                variant="secondary"
+                onClick={() =>
+                  navigator.clipboard.writeText(resetPwTemp ?? "")
+                }
+              >
+                <Copy className="h-4 w-4" />
+                Copy to Clipboard
+              </DkButton>
+            </div>
+          )}
+        </DkDialogContent>
+        <DkDialogFooter>
+          <DkButton onClick={() => setResetPwTemp(null)}>Done</DkButton>
         </DkDialogFooter>
       </DkDialog>
     </div>
