@@ -6,8 +6,8 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_analytics_event(client, test_org_id):
-    campaign_resp = await client.post(
+async def test_create_analytics_event(auth_client, test_org_id):
+    campaign_resp = await auth_client.post(
         f"/api/v1/campaigns/?organization_id={test_org_id}",
         json={"name": "Analytics Campaign", "type": "email", "status": "active"},
     )
@@ -19,7 +19,7 @@ async def test_create_analytics_event(client, test_org_id):
         "value": 1.5,
         "recorded_at": datetime.now(timezone.utc).isoformat(),
     }
-    response = await client.post(
+    response = await auth_client.post(
         f"/api/v1/analytics/?organization_id={test_org_id}", json=payload
     )
     assert response.status_code == 201
@@ -29,14 +29,14 @@ async def test_create_analytics_event(client, test_org_id):
 
 
 @pytest.mark.asyncio
-async def test_list_analytics_by_campaign(client, test_org_id):
-    campaign_resp = await client.post(
+async def test_list_analytics_by_campaign(auth_client, test_org_id):
+    campaign_resp = await auth_client.post(
         f"/api/v1/campaigns/?organization_id={test_org_id}",
         json={"name": "Analytics Campaign 2", "type": "social", "status": "active"},
     )
     campaign_id = campaign_resp.json()["id"]
 
-    await client.post(
+    await auth_client.post(
         f"/api/v1/analytics/?organization_id={test_org_id}",
         json={
             "campaign_id": str(campaign_id),
@@ -46,7 +46,7 @@ async def test_list_analytics_by_campaign(client, test_org_id):
         },
     )
 
-    response = await client.get(
+    response = await auth_client.get(
         f"/api/v1/analytics/campaign/{campaign_id}?organization_id={test_org_id}"
     )
     assert response.status_code == 200
@@ -56,14 +56,14 @@ async def test_list_analytics_by_campaign(client, test_org_id):
 
 
 @pytest.mark.asyncio
-async def test_analytics_summary(client, test_org_id):
-    campaign_resp = await client.post(
+async def test_analytics_summary(auth_client, test_org_id):
+    campaign_resp = await auth_client.post(
         f"/api/v1/campaigns/?organization_id={test_org_id}",
         json={"name": "Summary Campaign", "type": "ppc", "status": "active"},
     )
     campaign_id = campaign_resp.json()["id"]
 
-    await client.post(
+    await auth_client.post(
         f"/api/v1/analytics/?organization_id={test_org_id}",
         json={
             "campaign_id": str(campaign_id),
@@ -73,7 +73,7 @@ async def test_analytics_summary(client, test_org_id):
         },
     )
 
-    response = await client.get(
+    response = await auth_client.get(
         f"/api/v1/analytics/campaign/{campaign_id}/summary"
         f"?organization_id={test_org_id}"
     )
