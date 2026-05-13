@@ -134,6 +134,11 @@ services:
         # and Chromium-based fetch() on macOS may resolve `localhost` to ::1
         # first and fail with "Failed to fetch" without falling back to v4.
         NEXT_PUBLIC_API_URL: http://127.0.0.1:8102
+        # Server-side proxy target (Next.js rewrites). Baked at build
+        # time because rewrites() is evaluated when the bundle is
+        # produced, not at server boot. Inside the docker network, the
+        # backend resolves via the service name.
+        BACKEND_INTERNAL_URL: http://backend:8102
     environment:
       PORT: 3015
     ports:

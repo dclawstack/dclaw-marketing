@@ -40,6 +40,7 @@ import {
   adminListUsers,
   adminResetUserPassword,
   addOrgMember,
+  createOrg,
   listOrgs,
   listOrgMembers,
   removeOrgMember,
@@ -243,23 +244,11 @@ export default function AdminUsersPage() {
     if (!newOrgName.trim() || !newOrgRowId) return;
     setNewOrgBusy(true);
     try {
-      const res = await fetch("/api/v1/orgs", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newOrgName.trim(),
-          description: newOrgDesc.trim() || undefined,
-          is_external: newOrgExternal,
-        }),
+      const created = await createOrg({
+        name: newOrgName.trim(),
+        description: newOrgDesc.trim() || undefined,
+        is_external: newOrgExternal,
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail ?? `Org create failed (${res.status})`);
-      }
-      const created: Organization = await res.json();
       // Refresh org list and auto-select the new one in the row.
       const orgs = await listOrgs();
       setAllOrgs(orgs);
