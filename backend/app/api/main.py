@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.1.0",
+    version="1.1.1",
     lifespan=lifespan,
     description="DClaw Marketing — agent-driven marketing operating system",
 )
