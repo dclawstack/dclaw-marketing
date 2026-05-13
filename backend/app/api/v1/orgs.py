@@ -16,7 +16,13 @@ from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import current_active_user, current_superuser
+from app.auth import (
+    current_active_user,
+    current_superuser,
+    ensure_not_last_admin_demotion,
+)
+from app.services.audit import write_audit_event as _audit
+from app.services.email_send import send_user_added_to_org_email
 from app.core.database import get_db
 from app.models.organization import (
     Organization,
@@ -383,8 +389,32 @@ async def invite_member_by_email(
     )
     session.add(membership)
     await session.flush()
+
+    # Audit + notify (Sprint 4 — two-tier admin model).
+    await _audit(
+        session,
+        action_type="org.member.invite",
+        organization_id=org_id,
+        actor_user_id=user.id,
+        target_type="user",
+        target_id=target.id,
+        payload={"role": body.role.value, "user_created": user_created},
+    )
     await session.commit()
     await session.refresh(membership)
+
+    # Best-effort email notification — never block the API on it.
+    try:
+        await send_user_added_to_org_email(
+            session,
+            recipient=target,
+            org_id=org_id,
+            role=body.role.value,
+            invited_by=user,
+            temp_password=temp_password,
+        )
+    except Exception:
+        pass
 
     return MembershipInviteResponse(
         membership=MembershipRead.model_validate(membership),
@@ -426,8 +456,27 @@ async def update_member_role(
     membership = await session.get(OrganizationMembership, membership_id)
     if membership is None or membership.organization_id != org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found.")
+
+    # Last-admin guard — only enforced when demoting an admin.
+    if (
+        membership.role == OrganizationRole.admin
+        and body.role != OrganizationRole.admin
+    ):
+        await ensure_not_last_admin_demotion(
+            session, org_id, demoting_user_id=membership.user_id
+        )
+
     membership.role = body.role
     await session.flush()
+    await _audit(
+        session,
+        action_type="org.member.role_update",
+        organization_id=org_id,
+        actor_user_id=user.id,
+        target_type="user",
+        target_id=membership.user_id,
+        payload={"new_role": body.role.value},
+    )
     await session.commit()
     await session.refresh(membership)
     return membership
@@ -449,8 +498,24 @@ async def remove_member(
     membership = await session.get(OrganizationMembership, membership_id)
     if membership is None or membership.organization_id != org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found.")
+
+    # Last-admin guard — only when removing an admin.
+    if membership.role == OrganizationRole.admin:
+        await ensure_not_last_admin_demotion(
+            session, org_id, removing_user_id=membership.user_id
+        )
+
+    removed_user_id = membership.user_id
     await session.delete(membership)
     await session.flush()
+    await _audit(
+        session,
+        action_type="org.member.remove",
+        organization_id=org_id,
+        actor_user_id=user.id,
+        target_type="user",
+        target_id=removed_user_id,
+    )
     await session.commit()
 
 
