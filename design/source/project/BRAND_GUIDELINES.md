@@ -4,6 +4,46 @@ A working brand book for DKube — a wholly-owned subsidiary and DBA brand of **
 
 ---
 
+## Design System Overview
+
+DKube (a product of **One Convergence**) designs and delivers **secure Private AI solutions** for enterprises across on-prem, private cloud, and hybrid environments. The brand emphasises three pillars: **Private AI · Enterprise Trust · Scalable Delivery**, and a **12-week** "experimentation to production" delivery commitment.
+
+### Products & surfaces
+
+- **Marketing site** (`dkube.io`) — Webflow-built, the single visual source for this design system.
+- **Platforms** referenced: `DKubeX` (GenAI ModelOps) and `DKube` (MLOps).
+- **AI Blueprints:** `QueriLynx` (multi-agent data exploration), `Virtual Teaching Assistant`, `DocMind` (document intelligence).
+- **Audience:** enterprise CIOs / heads of AI / platform engineering. Logos shown include VMware, Cisco, Fungible, Altos Labs, Apollo, TIAA, StackPath.
+
+> No codebase, Figma file, or slide template was attached for this build. All tokens were derived from the public marketing site and brand-mark SVG. Anywhere a value is implied rather than confirmed it is flagged in the relevant section below.
+
+### File index
+
+| File | What's in it |
+|---|---|
+| `BRAND_GUIDELINES.md` | This document — full brand book (voice, logo, color, type, imagery, motion, legal) |
+| `SKILL.md` | Claude Code skill front-matter |
+| `colors_and_type.css` | Color, type, spacing, radius, shadow, motion tokens + semantic classes |
+| `assets/` | Brand mark, customer logos, marketing imagery, navigational icons |
+| `preview/` | Small HTML cards rendered into the project's Design System tab |
+| `ui_kits/marketing-site/` | React recreation of dkube.io's marketing surfaces |
+| `slides/` | Fifteen master slide layouts + `SLIDE_GUIDE.md` + `arch-diagrams.css` |
+
+### Iconography
+
+- **No built-in icon font.** Icons on dkube.io are individually authored SVGs; weights are inconsistent (some 1.5px stroke, some filled).
+- **Real assets copied into `assets/`:** `arrow-top-right.png`, `arrow-icon.svg`, `round-arrow-right.svg`, `menu-icon.svg`, `icon-magic.svg`, `icon-trust.svg`, `icon-scalable.svg`, `icon-call.svg`, `icon-sms.svg`, `icon-marker.webp`, social icons (`si-linkedin.svg`, `si-twitter.svg`, `si-insta.svg`).
+- **For new product UI surfaces:** use **Lucide** — its 1.5px stroke matches the brand's directional arrows. `<script src="https://unpkg.com/lucide@latest"></script>`.
+- **Never:** emoji, unicode glyphs as icons, or hand-rolled SVGs except for simple primitives.
+
+### Caveats
+
+1. **Product UI is out of scope** by user direction — this system covers the marketing site and slide masters only.
+2. **Slide masters** were derived from three source decks (DKubeX 2.0 Introduction, DKube Executive Overview, DKubeX 2.0 Architecture Diagrams) — see `slides/SLIDE_GUIDE.md` for full reference.
+3. **Chart styling** for data viz is not yet covered by a dedicated master.
+
+---
+
 ## 1 · Company
 
 DKube is an enterprise AI platform company that helps organizations design, deploy, and operate **Private AI** systems across on-premises, private cloud, and hybrid environments. The brand is built around enabling enterprises to take AI **from experimentation to production** — securely, compliantly, and at scale.
