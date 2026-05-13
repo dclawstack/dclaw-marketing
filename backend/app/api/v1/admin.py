@@ -95,27 +95,16 @@ async def admin_create_user(
     return AdminUserCreateResponse(user=UserRead.model_validate(user), temp_password=temp_password)
 
 
-class CreateOrgInline(BaseModel):
-    """Org-create payload inside the combined endpoint."""
-    mode: str = Field(pattern=r"^(existing|new)$")
-    org_id: UUID | None = None
-    name: str | None = Field(default=None, max_length=255)
-    description: str | None = Field(default=None, max_length=1024)
-    is_external: bool = False
+class OrgAssignment(BaseModel):
+    """One (org, role) assignment in the combined create call."""
+    org_id: UUID
     role: str
 
 
-class AdminUserWithOrgCreate(BaseModel):
+class AdminUserWithOrgsCreate(BaseModel):
     email: EmailStr
     full_name: str | None = None
-    is_superuser: bool = False
-    org: CreateOrgInline | None = None
-
-
-class CreatedOrgRead(BaseModel):
-    id: UUID
-    slug: str
-    name: str
+    orgs: list[OrgAssignment] = Field(default_factory=list)
 
 
 class CreatedMembershipRead(BaseModel):
@@ -125,28 +114,28 @@ class CreatedMembershipRead(BaseModel):
     role: str
 
 
-class AdminUserWithOrgResponse(BaseModel):
+class AdminUserWithOrgsResponse(BaseModel):
     user: UserRead
     temp_password: str
-    org: CreatedOrgRead | None = None
-    membership: CreatedMembershipRead | None = None
+    memberships: list[CreatedMembershipRead] = Field(default_factory=list)
 
 
 @router.post(
     "/users/with-org",
-    response_model=AdminUserWithOrgResponse,
+    response_model=AdminUserWithOrgsResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def admin_create_user_with_org(
-    body: AdminUserWithOrgCreate,
+async def admin_create_user_with_orgs(
+    body: AdminUserWithOrgsCreate,
     actor: User = Depends(current_superuser),
     session: AsyncSession = Depends(get_db),
-) -> AdminUserWithOrgResponse:
-    """Transactional combined create:
-    - mode=existing: user + membership in given org
-    - mode=new: org (slug = make_slug('o', name)) + actor-admin + user + membership
-    - None: just user
-    Any failure rolls back the whole thing.
+) -> AdminUserWithOrgsResponse:
+    """Create a user and attach them to zero or more orgs in one transaction.
+
+    The new-org flow is intentionally NOT in this endpoint — clients should
+    call POST /orgs first (which is also transactional and auto-derives the
+    slug), receive the new org_id, and pass it here as one of the
+    `orgs[]` entries.
     """
     from app.models.organization import (
         Organization,
@@ -156,15 +145,7 @@ async def admin_create_user_with_org(
     from app.services.audit import write_audit_event
     from app.services.slugs import make_slug
 
-    if body.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                "Only the bootstrap account can be a superadmin. Make this "
-                "user an org admin via OrganizationMembership instead."
-            ),
-        )
-
+    # Uniqueness check.
     if (
         await session.execute(select(User).where(User.email == body.email))
     ).scalar_one_or_none() is not None:
@@ -173,22 +154,22 @@ async def admin_create_user_with_org(
             detail=f"User with email {body.email} already exists.",
         )
 
-    if body.org is not None:
+    # Validate every (org_id, role) pair before any writes.
+    for assn in body.orgs:
         try:
-            OrganizationRole(body.org.role)
+            OrganizationRole(assn.role)
         except ValueError:
             raise HTTPException(
-                status_code=400, detail=f"Invalid role: {body.org.role}"
+                status_code=400, detail=f"Invalid role: {assn.role}"
             )
-        if body.org.mode == "existing" and body.org.org_id is None:
+        target_org = await session.get(Organization, assn.org_id)
+        if target_org is None:
             raise HTTPException(
-                status_code=400, detail="mode=existing requires org_id."
-            )
-        if body.org.mode == "new" and not body.org.name:
-            raise HTTPException(
-                status_code=400, detail="mode=new requires name."
+                status_code=404,
+                detail=f"Organization {assn.org_id} not found.",
             )
 
+    # Create user.
     temp_password = generate_temp_password()
     user = User(
         email=body.email,
@@ -203,93 +184,44 @@ async def admin_create_user_with_org(
     session.add(user)
     await session.flush()
 
-    created_org: Organization | None = None
-    membership: OrganizationMembership | None = None
-
-    if body.org is not None:
-        role_enum = OrganizationRole(body.org.role)
-
-        if body.org.mode == "existing":
-            target_org = await session.get(Organization, body.org.org_id)
-            if target_org is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Organization {body.org.org_id} not found.",
-                )
-            membership = OrganizationMembership(
-                user_id=user.id,
-                organization_id=target_org.id,
-                role=role_enum,
-            )
-            session.add(membership)
-            created_org = target_org
-
-        else:  # mode == "new"
-            new_org = Organization(
-                slug=make_slug("o", body.org.name),
-                name=body.org.name,
-                description=body.org.description,
-                is_external=body.org.is_external,
-            )
-            session.add(new_org)
-            await session.flush()
-            session.add(
-                OrganizationMembership(
-                    user_id=actor.id,
-                    organization_id=new_org.id,
-                    role=OrganizationRole.admin,
-                )
-            )
-            membership = OrganizationMembership(
-                user_id=user.id,
-                organization_id=new_org.id,
-                role=role_enum,
-            )
-            session.add(membership)
-            created_org = new_org
-
-        await session.flush()
+    memberships: list[OrganizationMembership] = []
+    for assn in body.orgs:
+        role_enum = OrganizationRole(assn.role)
+        m = OrganizationMembership(
+            user_id=user.id,
+            organization_id=assn.org_id,
+            role=role_enum,
+        )
+        session.add(m)
+        memberships.append(m)
         await write_audit_event(
             session,
-            action_type=(
-                "admin.user.create_with_existing_org"
-                if body.org.mode == "existing"
-                else "admin.user.create_with_new_org"
-            ),
-            organization_id=created_org.id,
+            action_type="admin.user.create_with_org",
+            organization_id=assn.org_id,
             actor_user_id=actor.id,
             target_type="user",
             target_id=user.id,
-            payload={"role": body.org.role},
+            payload={"role": assn.role},
         )
 
+    await session.flush()
     await session.commit()
     await session.refresh(user)
-    if created_org is not None:
-        await session.refresh(created_org)
-    if membership is not None:
-        await session.refresh(membership)
+    for m in memberships:
+        await session.refresh(m)
 
-    return AdminUserWithOrgResponse(
+    return AdminUserWithOrgsResponse(
         user=UserRead.model_validate(user),
         temp_password=temp_password,
-        org=(
-            CreatedOrgRead(
-                id=created_org.id, slug=created_org.slug, name=created_org.name
-            )
-            if created_org is not None
-            else None
-        ),
-        membership=(
+        memberships=[
             CreatedMembershipRead(
-                id=membership.id,
-                organization_id=membership.organization_id,
-                user_id=membership.user_id,
-                role=membership.role.value,
+                id=m.id,
+                organization_id=m.organization_id,
+                user_id=m.user_id,
+                role=m.role.value,
             )
-            if membership is not None
-            else None
-        ),
+            for m in memberships
+        ],
     )
 
 
