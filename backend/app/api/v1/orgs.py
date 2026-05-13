@@ -484,7 +484,7 @@ async def invite_member_by_email(
         organization_id=org_id,
         actor_user_id=user.id,
         target_type="user",
-        target_id=target.id,
+        target_id=str(target.id),
         payload={"role": body.role.value, "user_created": user_created},
     )
     await session.commit()
@@ -582,7 +582,7 @@ async def org_admin_reset_member_password(
         organization_id=org_id,
         actor_user_id=actor.id,
         target_type="user",
-        target_id=target.id,
+        target_id=str(target.id),
     )
     await session.commit()
 
@@ -642,7 +642,7 @@ async def update_member_role(
         organization_id=org_id,
         actor_user_id=user.id,
         target_type="user",
-        target_id=membership.user_id,
+        target_id=str(membership.user_id),
         payload={"new_role": body.role.value},
     )
     await session.commit()
@@ -682,7 +682,7 @@ async def remove_member(
         organization_id=org_id,
         actor_user_id=user.id,
         target_type="user",
-        target_id=removed_user_id,
+        target_id=str(removed_user_id),
     )
     await session.commit()
 
