@@ -32,6 +32,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # issues: write is required so GitHub can auto-close linked issues
+  # when the squash commit body contains `Closes #N`. Without this,
+  # the merge succeeds but the issue stays OPEN.
+  issues: write
   actions: read
 
 concurrency:
