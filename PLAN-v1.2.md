@@ -552,6 +552,8 @@ Every agent on the platform needs models: text LLMs for reasoning, embedding mod
 
 **Why this comes before S4-A:** The agent runtime needs to know what models are available for each org before it can route tasks. The Model Registry is the config layer that makes all of S4-A, S4-B, and S4-C possible.
 
+**Multiple providers of the same type are fully supported.** An org can have 3 Anthropic keys (e.g. dev / staging / prod), 2 OpenAI keys (personal + org-billing), an Ollama instance alongside a Groq OpenAI-compatible endpoint, etc. There is no limit. Each provider is an independent row; models from all providers of the same type coexist in the registry and appear in the same assignment dropdowns. This also means provider-level failover is possible (if provider A's Anthropic key is rate-limited, the resolver can fall back to provider B's key).
+
 **Supported provider types**
 
 | Provider type | What it covers |
@@ -622,15 +624,99 @@ Every agent on the platform needs models: text LLMs for reasoning, embedding mod
   - Bar chart: calls by platform component.
   - Latency percentile bars: p50 / p95 / p99.
 
-- **S4-M11** Model resolver service (`app/services/model_resolver.py`): replaces direct `settings.anthropic_api_key` references throughout the agent codebase. `resolve(org_id, capability) → ModelEntry` — picks the highest-priority healthy model with the required capability for that org (org-scoped first, then global fallback, then env-var fallback, then stub). All of S4-A + S4-B use the resolver.
+- **S4-M11** Model resolver service (`app/services/model_resolver.py`): resolves which specific `ModelEntry` to use for a given `(org_id, user_id, capability)` tuple. Resolution priority chain (top wins):
+  1. `UserModelPreference` for `(user_id, org_id, capability)` → user's explicit selection
+  2. `OrgModelAssignment` for `(org_id, capability)` → org-level default
+  3. First healthy `ModelEntry` with the capability in the org-scoped pool, then global pool (lexicographic — deterministic)
+  4. Env-var fallback (existing `settings.anthropic_api_key`, etc.)
+  5. Deterministic stub (dev / CI / no key configured)
+  All of S4-A + S4-B use the resolver. No direct `settings.*_api_key` references remain in agent code outside the fallback path.
+
+- **S4-M12** `OrgModelAssignment` + `UserModelPreference` DB models + migration.
+  - `OrgModelAssignment(id, org_id FK, capability str, model_entry_id FK, set_by_user_id FK, created_at, updated_at)` — UNIQUE(org_id, capability). Org-level default for each capability slot. Set by org-admin or superadmin.
+  - `UserModelPreference(id, user_id FK, org_id FK, capability str, model_entry_id FK, updated_at)` — UNIQUE(user_id, org_id, capability). Per-user override; beats the org default. Set by any authenticated user for themselves.
+
+- **S4-M13** Assignment / preference CRUD API.
+  - `PUT /api/v1/models/org-assignments` — body: `{capability, model_entry_id}` — org-admin+ only; upserts `OrgModelAssignment` for the caller's active org.
+  - `PUT /api/v1/models/user-preferences` — body: `{capability, model_entry_id}` — any authenticated user; upserts `UserModelPreference` for `(current_user, active_org)`.
+  - `GET /api/v1/models/resolved-assignments` — returns the fully resolved assignment map for `(current_user, active_org)`: for each capability, which model entry was resolved and at which level (user / org / auto / fallback). Used by the Conductor settings panel and the gate hook.
+
+- **S4-M14** Conductor model selector panel. The full-screen `/conductor` page and the docked chat panel both get a **Model Settings** collapsible section (gear icon in the dock; sidebar panel in full-screen). Layout per capability row:
+  ```
+  Text / Chat         [claude-sonnet-4-6  (Anthropic) ▼]  ● healthy
+  Embeddings          [nomic-embed-text   (Ollama)    ▼]  ● healthy
+  Image Generation    [— not selected —               ▼]  ✗ no model
+  Voice (TTS)         [— not selected —               ▼]  ✗ no model
+  Video Generation    [— not selected —               ▼]  ✗ no model
+  Music Generation    [— not selected —               ▼]  ✗ no model
+  Audio Transcription [— not selected —               ▼]  ✗ no model
+  ```
+  Each dropdown is populated with all `ModelEntry` rows that: (a) are healthy, (b) belong to the org's pool (org-scoped + global), (c) have the required capability. Each option shows `{display_name} ({provider_name})`. Options from multiple providers of the same type all appear — e.g., if there are two Anthropic providers, all their models show up labelled. Selecting a model calls `PUT /api/v1/models/user-preferences` immediately (no save button needed). A status dot next to each row reflects the resolved model's current health in real-time (polling the feature-availability endpoint). "Manage Providers" link → `/admin/models`.
+
+- **S4-M15** Model gate hook + onboarding flow. Frontend React hook `useModelGate(capability: string)` available globally.
+
+  **First-visit onboarding modal** (shown when user has zero preferences set AND visits any page that triggers a model-dependent action, OR when the user opens `/conductor` for the first time):
+  ```
+  ┌──────────────────────────────────────────────────────────┐
+  │  Set up your AI models                                    │
+  │  Choose which model handles each task for your workspace. │
+  │  You can change these anytime from Conductor settings.    │
+  │                                                           │
+  │  Text & Chat  *required*  [— choose model ▼]             │
+  │  Embeddings               [— choose model ▼]             │
+  │  Image Generation         [— optional ▼]                 │
+  │  Voice (TTS)              [— optional ▼]                 │
+  │  Video Generation         [— optional ▼]                 │
+  │  Music Generation         [— optional ▼]                 │
+  │  Audio Transcription      [— optional ▼]                 │
+  │                                                           │
+  │  ⚠ No models available for Image Generation.             │
+  │    Ask your admin to add a provider → /admin/models       │
+  │                                                           │
+  │  [Skip for now]           [Save & Start]                  │
+  └──────────────────────────────────────────────────────────┘
+  ```
+  "Save & Start" is disabled until at least `text` is assigned. Dropdowns only show healthy available models; capabilities with no models show a greyed-out "No provider configured" message + link. "Skip for now" closes the modal and stores a `dismissed_at` timestamp in localStorage; if the user skips and later tries to use Conductor or any model-dependent feature, the inline gate fires.
+
+  **Inline capability gate** (shown when any action requiring a specific capability is triggered with no model assigned for that capability, and the first-visit modal has already been dismissed):
+  ```
+  ┌──────────────────────────────────────────────────────┐
+  │  Image Generation model required                      │
+  │                                                       │
+  │  This action needs an image generation model.        │
+  │  Select one to continue:                              │
+  │                                                       │
+  │  [— choose model ▼]  (only image_generation models)  │
+  │                                                       │
+  │  No models available?                                 │
+  │  → Ask your admin to add a Replicate or OpenAI key   │
+  │    in /admin/models                                   │
+  │                                                       │
+  │  [Cancel]            [Select & Continue]              │
+  └──────────────────────────────────────────────────────┘
+  ```
+  "Select & Continue" saves the preference and re-triggers the original action. The hook is called at every model-dispatch site in the frontend (generation forms, repurpose triggers, brand studio, etc.).
+
+  **Conductor partial unlock:** once `text` is assigned, the Conductor chat input unlocks and the user can type. If the Conductor's tool-call plan includes an action that requires an unassigned capability (e.g. image generation), the Conductor's tool-call response card shows an inline "Select model for this action" prompt before proceeding.
+
+- **S4-M16** Inline model selectors on action pages. Every page/form that triggers a model-dependent action gets a small "Model" selector chip showing the currently resolved model, clickable to change:
+  - `/agents/creatives` — "Text model" chip in the generation form header.
+  - `/campaigns/[id]/generate` — per-kind model chip: "Text: claude-sonnet-4-6 ▾ | Image: — ▾".
+  - `/repurpose` — "Transcription model" chip (shown only when source is audio/video).
+  - `/brand` (Brand Setup Studio) — "Vision model" chip for PDF/logo analysis step.
+  - `/agents/seo` — "Text model" chip for AEO scorer and blog draft.
+  Clicking a chip opens a compact dropdown (same options as Conductor panel). Selection calls `PUT /api/v1/models/user-preferences` and the action re-resolves immediately.
 
 **Definition of done**
-- Superadmin can add an Anthropic provider + OpenAI provider + Ollama instance; all models are auto-discovered and capability-tagged.
-- Adding an org-scoped Replicate API key makes Image Generation go from ✗ to ✅ for that org.
-- Feature Availability section accurately reflects what the current model set can and cannot do.
+- Superadmin can add 3 separate Anthropic providers simultaneously; all their models appear in the same assignment dropdowns labelled by provider name.
+- Adding an org-scoped Replicate API key makes Image Generation go from ✗ to ✅ for that org, and the Conductor panel's Image Generation row shows the new models immediately.
+- Feature Availability matrix on `/admin/models` accurately reflects both what is registered and what is assigned.
+- First-visit modal appears the first time a user opens `/conductor` with no preferences set; "Save & Start" unlocks after selecting a text model.
+- Inline gate fires correctly when a user attempts image generation with no image model assigned.
+- Inline model selector chips appear and are functional on: `/agents/creatives`, `/campaigns/[id]/generate`, `/repurpose`, `/brand`, `/agents/seo`.
+- Resolver correctly honours user preference → org default → auto-pick → stub priority chain.
 - Live model logs stream within 2s of a model call anywhere on the platform.
 - Metrics show 7-day call volume, cost, and latency percentiles per model.
-- All agents use the resolver — no direct `settings.anthropic_api_key` references remain outside the fallback path.
 
 ---
 
