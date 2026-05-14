@@ -18,6 +18,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SQLEnum,
     ForeignKey,
+    Integer,
     JSON,
     String,
     Text,
@@ -97,4 +98,15 @@ class ApprovalRequest(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # S4-A5 — 4-eye / N-of-M approval. `approvers_required` is the
+    # threshold of distinct users who must sign off; for legacy single-
+    # approver rows it stays at 1. `approvers_user_ids_json` tracks who
+    # has signed off so far (list of UUID strings).
+    approvers_required: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1
+    )
+    approvers_user_ids_json: Mapped[list[str] | None] = mapped_column(
+        JSON, nullable=True
     )
