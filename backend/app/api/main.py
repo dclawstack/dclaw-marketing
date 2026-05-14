@@ -114,6 +114,10 @@ app.include_router(model_assignments.router, prefix="/api/v1")
 from app.api.v1 import conductor as conductor_api  # noqa: E402
 app.include_router(conductor_api.router, prefix="/api/v1")
 
+# Sprint 4 S4-A3/A5/A6 — generic role-agent runner + 4-eye + trace replay
+from app.api.v1 import agent_runtime as agent_runtime_api  # noqa: E402
+app.include_router(agent_runtime_api.router, prefix="/api/v1")
+
 # Phase 9 — agent threads + messages (Conductor + role-agents)
 app.include_router(agent_threads.router, prefix="/api/v1")
 
