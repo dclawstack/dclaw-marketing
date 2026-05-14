@@ -237,3 +237,20 @@ The whole flow ships in v0.1 with no LLM API keys required (stubs make it determ
 **KG search returns no results.** Either no chunks have embeddings (set `OPENAI_API_KEY` then re-ingest) or no chunks exist at all (run the file ingestion flow).
 
 **Bootstrap admin password rejected.** You're typing the wrong default — copy/paste `ChangeMeOnFirstLogin!` exactly (including the exclamation mark). Or override via `BOOTSTRAP_ADMIN_TEMP_PASSWORD` in `.env`.
+
+---
+
+## End-to-end walkthrough (Sprint 4)
+
+The Sprint 4 demo run is one continuous flow:
+
+1. **Sign in** as the bootstrap admin → first-login password reset.
+2. **Add a model provider** at `/admin/models` → pick **Anthropic**, paste your API key, **Test Connection**, save. Auto-discovery populates the Models table within a few seconds.
+3. **Set a default model**: under any role agent (Conductor or Creatives) hit the Model Settings panel and pick the entry you just discovered for the `text` capability.
+4. **Open `/conductor`** → drop a brief like _"Launch announcement for v1.1.2 on LinkedIn + X next Tuesday"_ → **Dispatch**. Decomposition plan appears, then each role-agent's output card.
+5. **Approve hard-gated steps** in `/inbox` if the workflow templates' `approval` nodes paused. Hit Sign-off twice if `approvers_required=2`.
+6. **Watch the trace** at `/api/v1/agents/runs/{request_id}/trace` for the chronological model-call trail (Logs / Metrics buttons on `/admin/models` use the same data).
+7. **Run a Workflow template** at `/workflows/templates` → clone _Launch Announcement_ → edit → smoke-test → schedule.
+8. **Check costs** at `/admin/costs` — every model call rolled up into per-agent / per-model totals.
+
+This sequence exercises every Sprint-4 surface end-to-end.

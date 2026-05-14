@@ -1,0 +1,54 @@
+{
+  "title": "DClaw — Platform Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["dclaw", "v1.1.2"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Backend up",
+      "gridPos": {"x": 0, "y": 0, "w": 4, "h": 4},
+      "targets": [{"expr": "up{job=\"dclaw-backend\"}"}]
+    },
+    {
+      "type": "stat",
+      "title": "Celery worker up",
+      "gridPos": {"x": 4, "y": 0, "w": 4, "h": 4},
+      "targets": [{"expr": "up{job=\"dclaw-celery-worker\"}"}]
+    },
+    {
+      "type": "stat",
+      "title": "Requests / s",
+      "gridPos": {"x": 8, "y": 0, "w": 4, "h": 4},
+      "targets": [
+        {"expr": "sum(rate(http_requests_total{service=\"dclaw-backend\"}[5m]))"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Backend p95 latency",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 6},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"dclaw-backend\"}[5m])) by (le))"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Model call rate (per provider)",
+      "gridPos": {"x": 0, "y": 10, "w": 12, "h": 6},
+      "targets": [
+        {"expr": "sum by (provider_type) (rate(dclaw_model_calls_total[5m]))"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Error rate (5xx)",
+      "gridPos": {"x": 0, "y": 16, "w": 12, "h": 6},
+      "targets": [
+        {"expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))"}
+      ]
+    }
+  ]
+}

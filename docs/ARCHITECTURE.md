@@ -311,3 +311,28 @@ Plus **poll-and-merge bot** (`.github/workflows/auto-merge.yml`) which merges PR
 **Prod (target — v0.2)**: Helm chart at `helm/dclaw-marketing`. Customer brings a pre-existing Kubernetes cluster (k8s 1.28+); `helm install dclaw-marketing dclaw/dclaw-marketing` deploys everything. Bundled defaults for Postgres / Redis / MinIO via subcharts; production customers override with managed services (RDS, ElastiCache, S3).
 
 See PLAN-v1.2.md §Appendix A.2 for the full chart shape.
+
+---
+
+## Sprint 4 additions (v1.1.2)
+
+- **Model Registry** (`ModelProvider`, `ModelEntry`, `ModelCallLog`,
+  `OrgModelAssignment`, `UserModelPreference`) under
+  `app.models.model_registry` + `model_call_log` + `model_assignment`.
+- **Model Resolver** (`app/services/model_resolver.py`) — single
+  resolution point with priority chain `user → org → pool → env → stub`.
+- **Agent Runtime** (`app/agents/runtime.py`) — resolver-aware
+  completion + Conductor decomposition; called by `agents/roles.py`
+  with seven curated role-agent system prompts.
+- **Approval 4-eye + trace replay** — `approvers_required` /
+  `approvers_user_ids_json` on `ApprovalRequest`; trace stitched from
+  `ModelCallLog.request_id`.
+- **Generation adapters** (`app/services/generation_adapters.py`) —
+  Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram.
+- **Workflow Runner** — sandbox harness + 5 production templates +
+  failure playbook.
+- **Observability** — `app/core/otel.py` OTLP tracing initializer;
+  Grafana dashboard JSON under `monitoring/grafana/`.
+- **Frontend surfaces** — `/admin/models`, `/conductor`,
+  `/workflows/templates`, `/settings/2fa` and the in-Conductor
+  `ModelSettingsPanel` + `InlineModelSelector` + `ModelGateBanner`.
