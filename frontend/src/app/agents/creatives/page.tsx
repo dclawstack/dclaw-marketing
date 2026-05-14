@@ -24,6 +24,8 @@ import {
   DkTabsTrigger,
   DkTextarea,
 } from "@/components/dk";
+import { InlineModelSelector } from "@/components/inline-model-selector";
+import { ModelGateBanner } from "@/components/model-gate-banner";
 import {
   AspectRatio,
   GenerateImagesResultItem,
@@ -141,6 +143,24 @@ export default function CreativesStationPage() {
               ))}
             </DkSelect>
           </div>
+
+          {orgId && (
+            <>
+              <ModelGateBanner component="creatives_agent" label="Creatives Agent" />
+              <div className="flex flex-wrap gap-4">
+                <InlineModelSelector
+                  orgId={orgId}
+                  capability="text"
+                  label="Text model:"
+                />
+                <InlineModelSelector
+                  orgId={orgId}
+                  capability="image_generation"
+                  label="Image model:"
+                />
+              </div>
+            </>
+          )}
 
           {error && (
             <div
