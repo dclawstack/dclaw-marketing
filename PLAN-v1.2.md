@@ -685,20 +685,85 @@ Providers are grouped into four tiers by their integration method.
   - Sub-section A1: **Platform Components** — grid of component cards (Conductor, Creatives Agent, SMM Agent, SEO Agent, KG / Embeddings, Image Generation, Voice Generation, Video Generation, Music Generation, Audio Transcription, Brand Kit Studio, AEO Scorer). Each card shows a colour-coded status chip: ✅ Full | ⚠ Partial | ✗ Missing. Clicking opens a popover listing required / missing capabilities with "Add a provider" CTA.
   - Sub-section A2: **Capability Summary** — a single row of capability pills with counts: e.g. "text ✅ 3 models · embedding ✅ 1 · image_generation ✗ 0 needed · text_to_speech ✗ ...".
 
-  **Section B — Providers** — cards for each configured ModelProvider with "Add Provider" button. Provider card shows: name, type badge, model count, overall health dot, and (for OpenRouter) remaining credit balance. "Add Provider" opens a slide-over form with smart field display per provider type:
-  - **Step 1** — pick provider type from a categorised list (Tier 1 / Tier 2 / Tier 3 / Self-hosted). Selecting a named type pre-fills `base_url` and shows only the fields that type needs.
-  - **Step 2** — fill required fields:
-    - `anthropic`, `openai`, `groq`, `together_ai`, `fireworks_ai`, `deepseek`, `perplexity`, `mistral`, `cohere`, `voyage_ai`, `openrouter`, `elevenlabs`, `cartesia`, `deepgram`, `fal_ai`, `suno`, `huggingface` → API key only (base URL pre-filled and locked).
-    - `azure_openai` → API key + deployment base URL + API version.
-    - `google_gemini` → API key (AI Studio).
-    - `google_vertex_ai` → service account JSON (paste) + GCP project ID + region.
-    - `aws_bedrock` → access key + secret key + region (or "Use instance profile" toggle).
-    - `runway` → API key (pre-filled base URL).
-    - `replicate` → API token + optional custom model ID list.
-    - `ollama` → base URL (default `http://localhost:11434`) — no key.
-    - `openai_compatible` → base URL + optional API key + optional API version.
-  - **Step 3** — "Test Connection" button: live-calls the provider's health endpoint before saving. Shows ✅ success or ❌ error inline.
-  - **Step 4** — save. Auto-discovery Celery task queued immediately; model entries appear within seconds. A banner shows "Discovering models…" until the task completes.
+  **Section B — Providers** — cards for each configured ModelProvider with "Add Provider" button. Provider card shows: name, type badge, model count, overall health dot, and (for OpenRouter) remaining credit balance. "Add Provider" opens a slide-over form.
+
+  **Provider type selection — two-level picker:**
+
+  The form opens with five radio buttons displayed upfront (no dropdowns, no extra click):
+  ```
+  ◉ Anthropic
+  ○ OpenAI
+  ○ OpenAI-compatible
+  ○ Ollama
+  ○ Others ▾
+  ```
+  These four are shown as radios because they cover the vast majority of use cases and are the ones users will reach for first. Selecting any of the first four immediately renders that provider's input form below the radios.
+
+  Selecting **Others** renders a searchable dropdown listing every remaining provider, grouped by tier:
+  ```
+  Others ▾
+  ┌─────────────────────────────────┐
+  │ Cloud / Enterprise              │
+  │   Google Gemini                 │
+  │   Google Vertex AI              │
+  │   Azure OpenAI                  │
+  │   AWS Bedrock                   │
+  │ Aggregators / Routers           │
+  │   OpenRouter                    │
+  │   Groq                          │
+  │   Together AI                   │
+  │   Fireworks AI                  │
+  │   DeepSeek                      │
+  │   Perplexity                    │
+  │   SambaNova                     │
+  │ Specialist APIs                 │
+  │   Mistral                       │
+  │   Cohere                        │
+  │   Voyage AI                     │
+  │   HuggingFace                   │
+  │   Replicate                     │
+  │   ElevenLabs                    │
+  │   Cartesia                      │
+  │   Runway                        │
+  │   Suno                          │
+  │   Deepgram                      │
+  │   fal.ai                        │
+  └─────────────────────────────────┘
+  ```
+  Selecting any option from the dropdown immediately renders that provider's input form below, replacing the dropdown (the radio for "Others" stays selected so the user knows where they are).
+
+  **Input forms per provider type** (appear below the radio/dropdown selection; only the fields that provider actually needs):
+  - **Anthropic** → Name (pre-filled "Anthropic"), API Key.
+  - **OpenAI** → Name (pre-filled "OpenAI"), API Key, optional Org ID.
+  - **OpenAI-compatible** → Name, Base URL, optional API Key, optional API Version header.
+  - **Ollama** → Name (pre-filled "Ollama"), Base URL (default `http://localhost:11434`, editable). No key field.
+  - **Google Gemini** → Name, API Key (AI Studio).
+  - **Google Vertex AI** → Name, GCP Project ID, Region, Service Account JSON (paste box).
+  - **Azure OpenAI** → Name, Deployment Base URL, API Key, API Version.
+  - **AWS Bedrock** → Name, Region, Access Key ID, Secret Access Key; toggle "Use instance profile / IAM role" hides the key fields.
+  - **OpenRouter** → Name (pre-filled "OpenRouter"), API Key. Base URL locked to `https://openrouter.ai/api/v1`.
+  - **Groq** → Name (pre-filled "Groq"), API Key. Base URL locked.
+  - **Together AI** → Name (pre-filled "Together AI"), API Key. Base URL locked.
+  - **Fireworks AI** → Name (pre-filled "Fireworks AI"), API Key. Base URL locked.
+  - **DeepSeek** → Name (pre-filled "DeepSeek"), API Key. Base URL locked.
+  - **Perplexity** → Name (pre-filled "Perplexity"), API Key. Base URL locked.
+  - **SambaNova** → Name, Base URL (from SambaNova dashboard), API Key.
+  - **Mistral** → Name (pre-filled "Mistral"), API Key. Base URL locked.
+  - **Cohere** → Name (pre-filled "Cohere"), API Key.
+  - **Voyage AI** → Name (pre-filled "Voyage AI"), API Key.
+  - **HuggingFace** → Name (pre-filled "HuggingFace"), API Token. Base URL locked to `https://router.huggingface.co/v1`.
+  - **Replicate** → Name (pre-filled "Replicate"), API Token, optional additional model IDs (multi-line text area, one `owner/name:version` per line).
+  - **ElevenLabs** → Name (pre-filled "ElevenLabs"), API Key.
+  - **Cartesia** → Name (pre-filled "Cartesia"), API Key.
+  - **Runway** → Name (pre-filled "Runway"), API Key. Base URL locked.
+  - **Suno** → Name (pre-filled "Suno"), API Key.
+  - **Deepgram** → Name (pre-filled "Deepgram"), API Key.
+  - **fal.ai** → Name (pre-filled "fal.ai"), API Key.
+
+  All forms end with:
+  - **"Test Connection"** button — live-calls the provider's health endpoint before saving; shows ✅ / ❌ inline with the raw error message on failure.
+  - **"Save"** button (disabled until test passes, or skip-test toggle for power users).
+  - On save: auto-discovery Celery task queues immediately; a "Discovering models…" progress banner replaces the form; model entries appear in Section C within seconds.
 
   **Section C — Models Table** — columns: Model ID | Provider | Capabilities (pills) | Status (healthy/unhealthy/unknown badge) | Last Checked | [Logs] | [Metrics]. Sortable by status and capability. Search/filter by capability tag.
 
