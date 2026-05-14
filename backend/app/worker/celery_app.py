@@ -158,6 +158,11 @@ celery_app.conf.update(
             "task": "app.worker.tasks.seo.daily_ranking_snapshot",
             "schedule": crontab(hour=7, minute=15),
         },
+        # Sprint 4 S4-J2 — Audit-event retention pruner (daily, 02:15 UTC).
+        "prune-audit-events": {
+            "task": "app.worker.tasks.audit_retention.prune_audit_events",
+            "schedule": crontab(hour=2, minute=15),
+        },
         # Sprint 4 S4-M5 — Model Registry provider health probe every 5 min.
         # Each provider's lightweight credential check (no token spend).
         # On transitions, emits an AuditEvent for /admin/audit visibility.

@@ -25,6 +25,7 @@ from app.worker.tasks.model_registry import (  # noqa: F401
     discover_provider_models,
     health_check_all_providers,
 )
+from app.worker.tasks.audit_retention import prune_audit_events  # noqa: F401
 from app.worker.tasks.publishing import (  # noqa: F401
     publish_scheduled_post,
     scan_due_scheduled_posts,
