@@ -22,6 +22,7 @@ import {
   DkTabsTrigger,
   DkTextarea,
 } from "@/components/dk";
+import { AeoWidget } from "@/components/aeo-widget";
 import {
   getRankingDelta,
   listOrgs,
@@ -124,6 +125,8 @@ export default function SeoStationPage() {
         description="Run a site audit, watch your SERP positions, and let the agent suggest internal links pulled straight from your Knowledge Graph."
         actions={<DkBadge tone="brand">Theme H</DkBadge>}
       />
+
+      <AeoWidget orgId={orgId} />
 
       {orgs.length === 0 ? (
         <DkEmptyState

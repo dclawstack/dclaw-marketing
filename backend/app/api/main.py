@@ -126,6 +126,10 @@ app.include_router(workflow_templates_api.router, prefix="/api/v1")
 from app.api.v1 import brand_studio as brand_studio_api  # noqa: E402
 app.include_router(brand_studio_api.router, prefix="/api/v1")
 
+# Sprint 4 S4-K — AEO scorer + batch + fix suggestions
+from app.api.v1 import aeo as aeo_api  # noqa: E402
+app.include_router(aeo_api.router, prefix="/api/v1")
+
 # Phase 9 — agent threads + messages (Conductor + role-agents)
 app.include_router(agent_threads.router, prefix="/api/v1")
 
