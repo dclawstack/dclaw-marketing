@@ -110,6 +110,10 @@ app.include_router(model_observability.router, prefix="/api/v1")
 from app.api.v1 import model_assignments  # noqa: E402
 app.include_router(model_assignments.router, prefix="/api/v1")
 
+# Sprint 4 S4-A1/A2 — Conductor decomposition + dispatch
+from app.api.v1 import conductor as conductor_api  # noqa: E402
+app.include_router(conductor_api.router, prefix="/api/v1")
+
 # Phase 9 — agent threads + messages (Conductor + role-agents)
 app.include_router(agent_threads.router, prefix="/api/v1")
 
