@@ -554,23 +554,63 @@ Every agent on the platform needs models: text LLMs for reasoning, embedding mod
 
 **Multiple providers of the same type are fully supported.** An org can have 3 Anthropic keys (e.g. dev / staging / prod), 2 OpenAI keys (personal + org-billing), an Ollama instance alongside a Groq OpenAI-compatible endpoint, etc. There is no limit. Each provider is an independent row; models from all providers of the same type coexist in the registry and appear in the same assignment dropdowns. This also means provider-level failover is possible (if provider A's Anthropic key is rate-limited, the resolver can fall back to provider B's key).
 
-**Supported provider types**
+**Supported provider types — full taxonomy**
+
+Providers are grouped into four tiers by their integration method.
+
+**Tier 1 — Native APIs** (each has its own auth format or SDK; DClaw implements a dedicated adapter per provider)
+
+| Provider type | What it covers | Auth |
+|---|---|---|
+| `anthropic` | Claude Opus / Sonnet / Haiku — text, function calling, extended reasoning | API key |
+| `openai` | GPT-5/4o series (text, vision), `text-embedding-3-*` (embedding), `gpt-image-1` (image gen), `tts-1` / `gpt-4o-audio` (TTS), `whisper-1` (transcription) | API key |
+| `google_gemini` | Gemini 2.x / Flash / Pro — text, vision/image_understanding, image gen (`Imagen`), embedding (`text-embedding-005`) | API key (AI Studio) |
+| `google_vertex_ai` | Same Gemini + Imagen models served from Google Cloud; access via Vertex AI OpenAI-compatible endpoint or native API | Service account JSON or ADC |
+| `azure_openai` | OpenAI models served from Azure — same capability set as `openai`, adds compliance / SLA / VNet | Base URL + API key + API version + deployment name |
+| `aws_bedrock` | Claude, Llama, Mistral, Titan served from AWS — same models, adds IAM / VPC / CloudTrail | AWS access key + secret + region (or IAM role via instance profile) |
+| `mistral` | Mistral Large / Medium / Small (text, function calling), Pixtral (vision), Voxtral / Le Chat TTS (voice), Mistral Embed | API key |
+| `cohere` | Command R / Command A (text, function calling), `embed-v4` multimodal embedding, `rerank-4` reranker | API key |
+| `voyage_ai` | Embedding specialists: `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-4-nano`; multimodal embeddings (text + image in shared space); `rerank-2` reranker | API key |
+| `huggingface` | Serverless Inference via HF router (`https://router.huggingface.co/v1`) — OpenAI-compatible; routes to partner providers (Together, fal, SambaNova, Replicate). Covers text LLMs, embeddings (BERT, BGE, sentence-transformers), image models, STT | HF API token |
+
+**Tier 2 — Named OpenAI-compatible aggregators** (all speak OpenAI Chat Completions; DClaw pre-fills base URL + required headers; treated as `openai_compatible` under the hood but have named types for UX clarity and auto-discovery)
+
+| Provider type | What it covers | Special notes |
+|---|---|---|
+| `openrouter` | 500+ models from 60+ upstream providers (Anthropic, OpenAI, Google, Meta, Mistral, DeepSeek, Qwen, …) via a single key + base URL `https://openrouter.ai/api/v1` | Requires `HTTP-Referer` + `X-Title` headers; exposes per-model pricing in `/models` response; supports provider routing / fallback preferences |
+| `groq` | Llama 3.x, Qwen, Mistral, Gemma on Groq LPU hardware — text + function calling; 800+ tok/s | Base URL `https://api.groq.com/openai/v1`; text-only, no image gen |
+| `together_ai` | 200+ open-source models: Llama, Qwen, DBRX, StableDiffusion, etc. — text, embedding, image gen | Base URL `https://api.together.xyz/v1`; image gen via `image_generation` endpoint |
+| `fireworks_ai` | Fast open-source inference (FireAttention engine) — Llama, Mixtral, Qwen, function calling | Base URL `https://api.fireworks.ai/inference/v1` |
+| `deepseek` | DeepSeek V3 / R1 — text, function calling, reasoning; very cheap per-token | Base URL `https://api.deepseek.com/v1`; R1 has `reasoning` capability |
+| `perplexity` | Sonar models (web-augmented text) — adds live web context to every completion | Base URL `https://api.perplexity.ai`; adds `web_search` capability tag |
+| `sambanova` | Fast enterprise inference on RDU chips — Llama, Meta models | Base URL from SambaNova dashboard |
+
+**Tier 3 — Multimedia specialists** (non-text generation; native APIs)
 
 | Provider type | What it covers |
 |---|---|
-| `anthropic` | Any Claude model via Anthropic API (text, function calling, extended thinking) |
-| `openai` | OpenAI API (text, embedding, image-gen `gpt-image-1`, TTS, Whisper transcription) |
-| `openai_compatible` | Any OpenAI-compatible endpoint: vLLM, LM Studio, Groq, Together.ai, Mistral, DeepSeek, Fireworks, Azure OpenAI, Bedrock with proxy, custom self-hosted |
-| `ollama` | Local Ollama instance — auto-discovers all pulled models, capability-tagged from model metadata |
-| `replicate` | Replicate API — image (Flux/SDXL), video (Wan, Kling, CogVideoX), music (MusicGen), transcription |
-| `elevenlabs` | ElevenLabs TTS + voice cloning |
-| `runway` | Runway ML video generation |
-| `suno` | Suno music generation |
-| `deepgram` | Deepgram STT / transcription |
+| `replicate` | Image: Flux, SDXL, Stable Diffusion; Video: Wan, Kling, CogVideoX, Mochi; Music: MusicGen; Transcription: Whisper; any public Replicate model by ID |
+| `elevenlabs` | TTS + voice cloning (`eleven_multilingual_v2`, Flash v2.5); STT via Scribe; Sound effects |
+| `runway` | Video generation (Gen-3 Alpha / Gen-4); image-to-video; video editing |
+| `suno` | Music generation (Suno v4); lyrics + audio |
+| `deepgram` | STT / transcription (Nova-3); speaker diarisation; live streaming STT |
+| `cartesia` | Low-latency TTS (Sonic); voice cloning; real-time streaming |
+| `fal_ai` | Image: Flux fast variants, SDXL; Video: Kling, HunyuanVideo; LoRA training | 
 
-**Model capability tags** (what a model can do — affects feature-availability matrix)
+**Tier 4 — Self-hosted / generic**
 
-`text` · `embedding` · `image_generation` · `image_understanding` · `audio_transcription` · `text_to_speech` · `text_to_video` · `text_to_music` · `function_calling` · `reasoning` (extended thinking / o1-class)
+| Provider type | What it covers |
+|---|---|
+| `ollama` | Local Ollama instance; auto-discovers all pulled models via `GET /api/tags`; capability-tagged via `POST /api/show` metadata |
+| `openai_compatible` | Generic catch-all: vLLM, LM Studio, text-generation-webui, llama.cpp server, Kobold, any custom server; admin supplies base URL + optional key |
+
+**Model capability tags** (what a model can do — drives feature-availability matrix and assignment dropdowns)
+
+`text` · `embedding` · `multimodal_embedding` · `image_generation` · `image_understanding` · `audio_transcription` · `text_to_speech` · `text_to_video` · `text_to_music` · `function_calling` · `reasoning` · `reranking` · `web_search`
+
+- **`multimodal_embedding`** — embeds text and images into a shared vector space (Cohere Embed 4, Voyage AI multimodal, Together CLIP); enables image-based KG search.
+- **`reranking`** — reorders a list of retrieved chunks by relevance to a query (Cohere Rerank 4, Voyage Rerank 2); improves RAG quality. The resolver exposes this as a separate capability slot so the KG can use a reranker if configured.
+- **`web_search`** — model has live internet access built in (Perplexity Sonar, some OpenRouter routes); used by Analyst agent + Trend Radar.
 
 **Stories**
 
@@ -578,22 +618,55 @@ Every agent on the platform needs models: text LLMs for reasoning, embedding mod
 
 - **S4-M2** Provider CRUD API (`/api/v1/models/providers`) + model-entry CRUD (`/api/v1/models/entries`). Superadmin-only for global providers; org-admin for org-scoped. API key encrypted via the same Fernet-per-org pattern as `Connection`.
 
-- **S4-M3** Auto-discovery on provider save:
-  - **OpenAI / OpenAI-compatible:** `GET base_url/v1/models` → import all, capability-tag by model-ID heuristic (see below).
-  - **Ollama:** `GET base_url/api/tags` → import all pulled models; call `POST base_url/api/show {name}` for metadata to infer vision/embedding capability.
-  - **Anthropic:** hardcoded known-model list with pinned capabilities (Claude 4 Opus/Sonnet/Haiku + Claude 3.x families).
-  - **Replicate / ElevenLabs / Runway / Suno / Deepgram:** curated known-model lists, admin can add custom Replicate model IDs.
+- **S4-M3** Auto-discovery on provider save (runs as a Celery task immediately after provider creation; also triggered manually via "Sync" button):
+  - **OpenAI / Azure OpenAI / Groq / Together / Fireworks / DeepSeek / Perplexity / SambaNova / generic openai_compatible:** `GET base_url/v1/models` → import all returned model objects, capability-tag by heuristic (S4-M4).
+  - **OpenRouter:** `GET https://openrouter.ai/api/v1/models` → rich model objects include `architecture.modality` (`text→text`, `text→image`, etc.) and `pricing`; use modality field for accurate capability tagging, no heuristic needed.
+  - **Google Gemini:** hardcoded known-model list (Gemini 2.0 Flash, 2.0 Pro, Gemini 1.5 families, Imagen 3, text-embedding-005) with pinned capabilities.
+  - **Google Vertex AI:** same list as Gemini; base URL differs per region / project.
+  - **AWS Bedrock:** curated list of available foundation models (Claude, Llama, Mistral, Titan Embed); capabilities pinned per model ID.
+  - **Azure OpenAI:** `GET base_url/openai/models?api-version={v}` → import deployed models; capabilities via heuristic.
+  - **Mistral:** `GET https://api.mistral.ai/v1/models` → import; tag Pixtral → `image_understanding`, Voxtral → `text_to_speech`, embed → `embedding`.
+  - **Cohere:** hardcoded list: Command A/R+ → `text`, `function_calling`; Embed 4 → `embedding`, `multimodal_embedding`; Rerank 4 → `reranking`.
+  - **Voyage AI:** hardcoded list: voyage-4-* → `embedding`; voyage-multimodal → `embedding`, `multimodal_embedding`; rerank-2 → `reranking`.
+  - **HuggingFace:** `GET https://router.huggingface.co/v1/models` → import supported models; capability via heuristic.
+  - **Ollama:** `GET base_url/api/tags` → import all pulled models; `POST base_url/api/show {name}` for `details.families` to detect vision (`clip`) and embedding models.
+  - **Anthropic:** hardcoded list: claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5 → `text`, `function_calling`, `image_understanding`; Opus + claude-3-7-sonnet → add `reasoning`.
+  - **Replicate:** curated lists per modality category + admin can add arbitrary model IDs (owner/name:version format).
+  - **ElevenLabs / Cartesia / Runway / Suno / Deepgram / fal.ai:** curated known-model lists with pinned capabilities.
 
-- **S4-M4** Capability heuristic for OpenAI-compatible model IDs: `*embed*` or `*e5*` or `*bge*` → `embedding`; `*dall-e*` or `*image*` or `*flux*` or `*sdxl*` → `image_generation`; `*whisper*` or `*stt*` → `audio_transcription`; `*tts*` or `*voice*` → `text_to_speech`; `*vision*` or `*4o*` or `*gemini*` or `*llava*` → `image_understanding` ∪ `text`; else → `text`. Operator can manually override any capability on any entry.
+- **S4-M4** Capability heuristic for OpenAI-compatible model IDs (applied when no richer metadata is available). Pattern → capabilities assigned:
+  - `*embed*`, `*e5*`, `*bge*`, `*nomic*`, `*minilm*`, `*sentence*` → `embedding`
+  - `*rerank*` → `reranking`
+  - `*dall-e*`, `*image*`, `*flux*`, `*sdxl*`, `*stable-diffusion*`, `*playground*` → `image_generation`
+  - `*whisper*`, `*stt*`, `*transcrib*`, `*asr*` → `audio_transcription`
+  - `*tts*`, `*voice*`, `*eleven*`, `*cartesia*`, `*voxtral*` → `text_to_speech`
+  - `*video*`, `*runway*`, `*wan*`, `*kling*`, `*mochi*`, `*cogvideo*` → `text_to_video`
+  - `*music*`, `*suno*`, `*musicgen*`, `*udio*` → `text_to_music`
+  - `*vision*`, `*4o*`, `*llava*`, `*minicpm*`, `*pixtral*`, `*gemini*`, `*qwen-vl*`, `*internvl*` → `image_understanding` + `text`
+  - `*sonar*`, `*perplexity*` → `text` + `web_search`
+  - `*o1*`, `*o3*`, `*o4*`, `*deepseek-r1*`, `*qwq*` → `text` + `function_calling` + `reasoning`
+  - else → `text` + `function_calling`
+  - Operator can manually toggle any capability on any entry via the UI; manual overrides survive re-sync.
 
 - **S4-M5** Health-check Celery beat task (every 5 min). Per-provider strategy:
-  - **Anthropic:** small `messages.create` (`max_tokens=1`, model ping).
-  - **OpenAI / compatible:** `GET /v1/models/{id}` — 200 = healthy.
-  - **Ollama:** `GET /` (root returns `"Ollama is running"`) → healthy; then check model is in `/api/tags` list.
-  - **Replicate:** `GET https://api.replicate.com/v1/models/{owner}/{name}` with auth.
-  - **ElevenLabs:** `GET https://api.elevenlabs.io/v1/models` with auth.
-  - **Runway / Suno / Deepgram:** provider-specific lightweight ping.
-  - On failure: set `status=unhealthy`, write `health_error`, emit `AuditEvent`. On recovery: set `status=healthy`, clear error.
+  - **Anthropic:** `POST /v1/messages` with `max_tokens=1` + model param — success = healthy.
+  - **OpenAI / Azure OpenAI / Groq / Together / Fireworks / DeepSeek / Perplexity / SambaNova / HuggingFace / generic openai_compatible:** `GET base_url/v1/models` — 200 = healthy (no credits spent).
+  - **OpenRouter:** `GET https://openrouter.ai/api/v1/models` — 200 = healthy; additionally check `GET https://openrouter.ai/api/v1/auth/key` to verify key is valid and show remaining credit balance in the provider card.
+  - **Google Gemini:** `GET https://generativelanguage.googleapis.com/v1beta/models?key={k}` — 200 = healthy.
+  - **Google Vertex AI:** `GET {base_url}/v1/models` with OAuth2 Bearer — 200 = healthy.
+  - **AWS Bedrock:** `ListFoundationModels` SDK call — success = healthy (uses boto3).
+  - **Mistral:** `GET https://api.mistral.ai/v1/models` with Bearer — 200 = healthy.
+  - **Cohere:** `GET https://api.cohere.com/v2/models` with Bearer — 200 = healthy.
+  - **Voyage AI:** `GET https://api.voyageai.com/v1/models` — 200 = healthy.
+  - **Ollama:** `GET base_url/` — body `"Ollama is running"` = healthy; additionally check model is still in `/api/tags`.
+  - **Replicate:** `GET https://api.replicate.com/v1/models/{owner}/{name}` with auth — 200 = healthy.
+  - **ElevenLabs:** `GET https://api.elevenlabs.io/v1/models` with `xi-api-key` header — 200 = healthy.
+  - **Cartesia:** `GET https://api.cartesia.ai/voices` with `X-API-Key` header — 200 = healthy.
+  - **Runway:** `GET https://api.runwayml.com/v1/models` with Bearer — 200 = healthy.
+  - **Deepgram:** `GET https://api.deepgram.com/v1/projects` with `Token` auth — 200 = healthy.
+  - **fal.ai:** `GET https://fal.run/health` — 200 = healthy.
+  - **Suno:** lightweight ping to Suno API status endpoint.
+  - On any failure: `status=unhealthy`, write `health_error` (first 500 chars of error message), emit `AuditEvent`. On recovery: `status=healthy`, clear error, emit recovery `AuditEvent`.
 
 - **S4-M6** `ModelCallLog` table: every model invocation anywhere in the platform logs `(model_entry_id, org_id, caller_component, started_at, duration_ms, input_tokens, output_tokens, cost_usd, status, error_message, request_id)`. `caller_component` is a string constant defined per call site (e.g. `"conductor"`, `"creatives_agent"`, `"embeddings"`, `"image_gen"`). Written async via the Celery worker or a lightweight fire-and-forget (non-blocking).
 
@@ -612,7 +685,20 @@ Every agent on the platform needs models: text LLMs for reasoning, embedding mod
   - Sub-section A1: **Platform Components** — grid of component cards (Conductor, Creatives Agent, SMM Agent, SEO Agent, KG / Embeddings, Image Generation, Voice Generation, Video Generation, Music Generation, Audio Transcription, Brand Kit Studio, AEO Scorer). Each card shows a colour-coded status chip: ✅ Full | ⚠ Partial | ✗ Missing. Clicking opens a popover listing required / missing capabilities with "Add a provider" CTA.
   - Sub-section A2: **Capability Summary** — a single row of capability pills with counts: e.g. "text ✅ 3 models · embedding ✅ 1 · image_generation ✗ 0 needed · text_to_speech ✗ ...".
 
-  **Section B — Providers** — cards for each configured ModelProvider with "Add Provider" button. Provider card shows: name, type badge, model count, overall health dot. "Add Provider" opens a slide-over form: pick type → enter name + base_url + API key → "Test Connection" button (calls a `POST /api/v1/models/providers/{id}/test` endpoint live) → save. On save, auto-discovery runs and model entries appear.
+  **Section B — Providers** — cards for each configured ModelProvider with "Add Provider" button. Provider card shows: name, type badge, model count, overall health dot, and (for OpenRouter) remaining credit balance. "Add Provider" opens a slide-over form with smart field display per provider type:
+  - **Step 1** — pick provider type from a categorised list (Tier 1 / Tier 2 / Tier 3 / Self-hosted). Selecting a named type pre-fills `base_url` and shows only the fields that type needs.
+  - **Step 2** — fill required fields:
+    - `anthropic`, `openai`, `groq`, `together_ai`, `fireworks_ai`, `deepseek`, `perplexity`, `mistral`, `cohere`, `voyage_ai`, `openrouter`, `elevenlabs`, `cartesia`, `deepgram`, `fal_ai`, `suno`, `huggingface` → API key only (base URL pre-filled and locked).
+    - `azure_openai` → API key + deployment base URL + API version.
+    - `google_gemini` → API key (AI Studio).
+    - `google_vertex_ai` → service account JSON (paste) + GCP project ID + region.
+    - `aws_bedrock` → access key + secret key + region (or "Use instance profile" toggle).
+    - `runway` → API key (pre-filled base URL).
+    - `replicate` → API token + optional custom model ID list.
+    - `ollama` → base URL (default `http://localhost:11434`) — no key.
+    - `openai_compatible` → base URL + optional API key + optional API version.
+  - **Step 3** — "Test Connection" button: live-calls the provider's health endpoint before saving. Shows ✅ success or ❌ error inline.
+  - **Step 4** — save. Auto-discovery Celery task queued immediately; model entries appear within seconds. A banner shows "Discovering models…" until the task completes.
 
   **Section C — Models Table** — columns: Model ID | Provider | Capabilities (pills) | Status (healthy/unhealthy/unknown badge) | Last Checked | [Logs] | [Metrics]. Sortable by status and capability. Search/filter by capability tag.
 
