@@ -37,6 +37,7 @@ from app.models.model_registry import (
     ProviderType,
 )
 from app.models.model_call_log import ModelCallLog, ModelCallStatus
+from app.models.model_assignment import OrgModelAssignment, UserModelPreference
 from app.models.email_event import EmailEvent, EmailEventKind, EmailEventProvider
 from app.models.sequence_membership import (
     SequenceMembership,
