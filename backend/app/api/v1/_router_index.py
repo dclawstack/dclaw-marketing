@@ -1,0 +1,130 @@
+"""Router consolidation (S4-J1).
+
+Single import surface for the v1 routers. New endpoints register here
+instead of being pinned individually in `app/api/main.py`. The main
+entry point can switch to `for r in V1_ROUTERS: app.include_router(...)`
+without changing per-route prefixes.
+
+For Sprint 4 we ship this side-by-side with the explicit includes in
+`main.py` — the next sprint cleanup deletes the explicit list once we
+verify nothing slipped through.
+"""
+
+from __future__ import annotations
+
+from fastapi import APIRouter
+
+from app.api.v1 import (
+    admin,
+    agent_runtime,
+    agent_threads,
+    agents,
+    approvals,
+    assets,
+    audit_events,
+    auth,
+    brand_insights,
+    brand_kits,
+    brand_studio,
+    branding,
+    campaign_analytics,
+    conductor as conductor_api,
+    costs,
+    email_send,
+    gdpr,
+    goals,
+    heatmap,
+    hooks,
+    ingest,
+    integrations,
+    invoices,
+    jobs,
+    kanban,
+    kg,
+    magic_link,
+    me,
+    model_assignments,
+    model_observability,
+    model_providers,
+    oauth,
+    orgs,
+    pages,
+    playbooks,
+    projects,
+    quotas,
+    repurpose,
+    retainer,
+    scheduled_posts,
+    seo,
+    seo_pipeline,
+    share_tokens,
+    social_accounts,
+    time_entries,
+    totp,
+    variants,
+    webhooks_email,
+    webhooks_generic,
+    workflow_templates,
+    workflows,
+)
+from app.api.v1.analytics import router as analytics_router
+from app.api.v1.campaigns import router as campaigns_router
+from app.api.v1.leads import router as leads_router
+
+
+V1_ROUTERS: list[APIRouter] = [
+    admin.router,
+    agent_runtime.router,
+    agent_threads.router,
+    agents.router,
+    analytics_router,
+    approvals.router,
+    assets.router,
+    audit_events.router,
+    auth.router,
+    brand_insights.router,
+    brand_kits.router,
+    brand_studio.router,
+    branding.router,
+    campaign_analytics.router,
+    campaigns_router,
+    conductor_api.router,
+    costs.router,
+    email_send.router,
+    gdpr.router,
+    goals.router,
+    heatmap.router,
+    hooks.router,
+    ingest.router,
+    integrations.router,
+    invoices.router,
+    jobs.router,
+    kanban.router,
+    kg.router,
+    leads_router,
+    magic_link.router,
+    me.router,
+    model_assignments.router,
+    model_observability.router,
+    model_providers.router,
+    oauth.router,
+    orgs.router,
+    pages.router,
+    playbooks.router,
+    projects.router,
+    quotas.router,
+    repurpose.router,
+    retainer.router,
+    scheduled_posts.router,
+    seo.router,
+    seo_pipeline.router,
+    share_tokens.router,
+    social_accounts.router,
+    time_entries.router,
+    totp.router,
+    variants.router,
+    webhooks_email.router,
+    webhooks_generic.router,
+    workflow_templates.router,
+    workflows.router,
+]
