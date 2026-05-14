@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageSquare, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Maximize2, MessageSquare, X } from "lucide-react";
 
 import { DkAgentChat, DkButton } from "@/components/dk";
 import { ModelSettingsPanel } from "@/components/model-settings-panel";
@@ -19,9 +21,27 @@ const STORAGE_KEY = "dclaw.agent-dock.open.v1";
  * those routes don't render the AppShell, so this component never
  * reaches them.
  */
+// S4-C1/C2 — page-to-context map: which slice of the platform the
+// docked Conductor should focus on while the user is on that route.
+const PAGE_CONTEXT: { match: RegExp; label: string }[] = [
+  { match: /^\/calendar/, label: "calendar" },
+  { match: /^\/leads/, label: "leads" },
+  { match: /^\/agents\/creatives/, label: "creatives" },
+  { match: /^\/agents\/seo/, label: "seo" },
+  { match: /^\/agents\/smm/, label: "smm" },
+  { match: /^\/agents\/paid-media/, label: "paid_media" },
+  { match: /^\/agents\/analyst/, label: "analyst" },
+  { match: /^\/inbox/, label: "inbox" },
+  { match: /^\/campaigns/, label: "campaigns" },
+  { match: /^\/admin\/models/, label: "model_registry" },
+];
+
 export function AgentDock() {
   const { currentOrg } = useOrg();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const pageContext =
+    PAGE_CONTEXT.find((p) => p.match.test(pathname || ""))?.label ?? "general";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -76,18 +96,25 @@ export function AgentDock() {
           <header className="flex items-center justify-between border-b border-[var(--dk-border)] px-4 py-3">
             <div>
               <div className="text-xs uppercase tracking-wider text-[var(--dk-fg-3)]">
-                Conductor
+                Conductor · {pageContext}
               </div>
               <div className="font-medium">{currentOrg.name}</div>
             </div>
-            <DkButton
-              variant="ghost"
-              size="sm"
-              onClick={toggle}
-              aria-label="Close dock"
-            >
-              <X className="h-4 w-4" />
-            </DkButton>
+            <div className="flex items-center gap-1">
+              <Link href="/conductor" title="Open full-screen">
+                <DkButton variant="ghost" size="sm" aria-label="Full-screen">
+                  <Maximize2 className="h-4 w-4" />
+                </DkButton>
+              </Link>
+              <DkButton
+                variant="ghost"
+                size="sm"
+                onClick={toggle}
+                aria-label="Close dock"
+              >
+                <X className="h-4 w-4" />
+              </DkButton>
+            </div>
           </header>
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="px-3 pt-3">
