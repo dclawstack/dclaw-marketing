@@ -118,6 +118,10 @@ app.include_router(conductor_api.router, prefix="/api/v1")
 from app.api.v1 import agent_runtime as agent_runtime_api  # noqa: E402
 app.include_router(agent_runtime_api.router, prefix="/api/v1")
 
+# Sprint 4 S4-D2/D6 — workflow templates catalog + clone-to-org
+from app.api.v1 import workflow_templates as workflow_templates_api  # noqa: E402
+app.include_router(workflow_templates_api.router, prefix="/api/v1")
+
 # Phase 9 — agent threads + messages (Conductor + role-agents)
 app.include_router(agent_threads.router, prefix="/api/v1")
 
