@@ -108,6 +108,19 @@ PROVIDERS: dict[str, ProviderSpec] = {
         client_id_setting="mastodon_client_id",
         client_secret_setting="mastodon_client_secret",
     ),
+    # Bluesky (AT Protocol) — pluggable per-PDS host, app-password style.
+    # The OAuth dance is being standardised at the protocol layer; for
+    # Sprint 4 the connect flow stores handle + app-password as the
+    # credential pair via SocialAccount/Connection. This spec entry
+    # captures the metadata so /admin/health rolls it up like the others.
+    "bluesky": ProviderSpec(
+        name="bluesky",
+        authorize_url="https://bsky.social/xrpc/com.atproto.server.createSession",
+        token_url="https://bsky.social/xrpc/com.atproto.server.refreshSession",
+        default_scopes=[],
+        client_id_setting="bluesky_client_id",
+        client_secret_setting="bluesky_client_secret",
+    ),
 }
 
 

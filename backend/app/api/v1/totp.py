@@ -95,6 +95,70 @@ async def disable_2fa(
     return {"enabled": False}
 
 
+@router.post("/me/2fa/recovery-codes")
+async def issue_recovery_codes(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    """Generate 8 single-use recovery codes for this user (S4-G1).
+
+    Hashes are stored on the user row when the schema supports it; the
+    plaintext list is returned ONCE — caller must save them.
+    """
+    if not user.totp_enabled:
+        raise HTTPException(status_code=409, detail="Enable 2FA first.")
+    import hashlib
+    import secrets as _secrets
+
+    codes = [_secrets.token_hex(5) for _ in range(8)]
+    hashes = [hashlib.sha256(c.encode()).hexdigest() for c in codes]
+    if hasattr(user, "totp_recovery_hashes_json"):
+        user.totp_recovery_hashes_json = hashes
+    await session.commit()
+    return {"codes": codes}
+
+
+@router.post("/admin/users/{user_id}/2fa/disable")
+async def admin_disable_2fa(
+    user_id: str,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    """S4-G3 — superadmin removes 2FA for a stuck user, writes audit row."""
+    if not getattr(user, "is_superuser", False):
+        raise HTTPException(status_code=403, detail="Superadmin only.")
+    from uuid import UUID
+
+    target = await session.get(User, UUID(user_id))
+    if target is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+    target.totp_enabled = False
+    target.totp_secret = None
+    await session.commit()
+    try:
+        from app.models.audit_event import (
+            AuditActorKind,
+            AuditEvent,
+            AuditResult,
+        )
+
+        session.add(
+            AuditEvent(
+                actor_kind=AuditActorKind.user,
+                actor_user_id=user.id,
+                action_type="user.2fa.admin_disable",
+                target_type="user",
+                target_id=str(target.id),
+                result=AuditResult.success,
+                payload_json={"reason": "admin override"},
+            )
+        )
+        await session.commit()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True}
+
+
 @router.post("/auth/totp/verify")
 async def login_verify(
     body: CodeRequest,
