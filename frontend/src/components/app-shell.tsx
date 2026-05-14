@@ -80,6 +80,12 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "Conductor",
+    items: [
+      { label: "Conductor", href: "/conductor", icon: Bot },
+    ],
+  },
+  {
     label: "Insights",
     items: [
       { label: "SEO", href: "/agents/seo", icon: Search },
