@@ -106,6 +106,10 @@ app.include_router(model_providers.router, prefix="/api/v1")
 from app.api.v1 import model_observability  # noqa: E402
 app.include_router(model_observability.router, prefix="/api/v1")
 
+# Sprint 4 S4-M11/M12/M13 — model resolver + org assignments + user prefs
+from app.api.v1 import model_assignments  # noqa: E402
+app.include_router(model_assignments.router, prefix="/api/v1")
+
 # Phase 9 — agent threads + messages (Conductor + role-agents)
 app.include_router(agent_threads.router, prefix="/api/v1")
 
