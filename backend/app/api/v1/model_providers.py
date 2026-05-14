@@ -289,7 +289,15 @@ async def create_provider(
     db.add(provider)
     await db.commit()
     await db.refresh(provider)
-    # Auto-discovery task is queued in services/model_discovery on M3 PR.
+    # M3 — kick off auto-discovery in Celery. Best-effort: if Celery is
+    # down or the broker is unreachable, the provider still saves; the
+    # operator can hit POST /providers/{id}/sync to retry.
+    try:
+        from app.worker.tasks.model_registry import discover_provider_models
+
+        discover_provider_models.delay(str(provider.id))
+    except Exception:  # noqa: BLE001
+        pass
     return ProviderOut.from_model(provider)
 
 
@@ -349,6 +357,57 @@ async def update_provider(
     await db.commit()
     await db.refresh(p)
     return ProviderOut.from_model(p)
+
+
+@router.post("/providers/{provider_id}/sync", status_code=status.HTTP_202_ACCEPTED)
+async def sync_provider(
+    provider_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(current_active_user),
+) -> dict:
+    """S4-M3 — manually trigger discovery for this provider."""
+    p = await db.get(ModelProvider, provider_id)
+    if p is None:
+        raise HTTPException(status_code=404, detail="Provider not found.")
+    if p.organization_id is None and not _can_create_global(user):
+        raise HTTPException(status_code=403, detail="Superadmin only.")
+    if p.organization_id is not None and not await _is_org_writer(
+        db, user, p.organization_id
+    ):
+        raise HTTPException(status_code=403, detail="Not an admin/manager.")
+    try:
+        from app.worker.tasks.model_registry import discover_provider_models
+
+        discover_provider_models.delay(str(provider_id))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=f"queue failed: {e}")
+    return {"queued": True}
+
+
+@router.post("/providers/{provider_id}/health-check", status_code=status.HTTP_200_OK)
+async def health_check_provider(
+    provider_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(current_active_user),
+) -> dict:
+    """S4-M5 — synchronous health-probe for one provider (UI 'Test Connection')."""
+    from app.services.model_discovery import probe_provider_health
+
+    p = await db.get(ModelProvider, provider_id)
+    if p is None:
+        raise HTTPException(status_code=404, detail="Provider not found.")
+    if p.organization_id is None and not _can_create_global(user):
+        raise HTTPException(status_code=403, detail="Superadmin only.")
+    if p.organization_id is not None and not await _is_org_writer(
+        db, user, p.organization_id
+    ):
+        raise HTTPException(status_code=403, detail="Not an admin/manager.")
+    status_, err = probe_provider_health(p)
+    p.health_status = status_
+    p.health_error = err
+    p.last_health_check_at = datetime.utcnow()
+    await db.commit()
+    return {"status": status_.value, "error": err}
 
 
 @router.delete("/providers/{provider_id}", status_code=status.HTTP_204_NO_CONTENT)

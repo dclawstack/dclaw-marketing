@@ -21,6 +21,10 @@ from app.worker.tasks.example import sleep_and_progress  # noqa: F401
 from app.worker.tasks.gdpr import export_organization_data  # noqa: F401
 from app.worker.tasks.identity import resolve_visitor_identities  # noqa: F401
 from app.worker.tasks.ingestion import ingest_asset  # noqa: F401
+from app.worker.tasks.model_registry import (  # noqa: F401
+    discover_provider_models,
+    health_check_all_providers,
+)
 from app.worker.tasks.publishing import (  # noqa: F401
     publish_scheduled_post,
     scan_due_scheduled_posts,
@@ -34,6 +38,8 @@ __all__ = [
     "resolve_visitor_identities",
     "sleep_and_progress",
     "ingest_asset",
+    "discover_provider_models",
+    "health_check_all_providers",
     "publish_scheduled_post",
     "scan_due_scheduled_posts",
 ]

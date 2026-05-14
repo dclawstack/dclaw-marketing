@@ -158,5 +158,12 @@ celery_app.conf.update(
             "task": "app.worker.tasks.seo.daily_ranking_snapshot",
             "schedule": crontab(hour=7, minute=15),
         },
+        # Sprint 4 S4-M5 — Model Registry provider health probe every 5 min.
+        # Each provider's lightweight credential check (no token spend).
+        # On transitions, emits an AuditEvent for /admin/audit visibility.
+        "model-registry-health-check": {
+            "task": "app.worker.tasks.model_registry.health_check_all_providers",
+            "schedule": 300.0,
+        },
     },
 )
