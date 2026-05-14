@@ -29,6 +29,13 @@ from app.models.ingestion import (
     IngestionStatus,
 )
 from app.models.connection import Connection, ConnectionStatus
+from app.models.model_registry import (
+    Capability,
+    HealthStatus,
+    ModelEntry,
+    ModelProvider,
+    ProviderType,
+)
 from app.models.email_event import EmailEvent, EmailEventKind, EmailEventProvider
 from app.models.sequence_membership import (
     SequenceMembership,
