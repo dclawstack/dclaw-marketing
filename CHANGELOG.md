@@ -10,6 +10,76 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ---
 
+## [1.1.2] — 2026-05-15 — *Sprint 4 closeout — agents go live*
+
+Sprint 4 turns the scaffolded agent platform into a running system. 38 dev issues (#284-#321 excluding the off-limits marketing 49-53) closed across **16 PRs** (#322-#338) in one continuous session. Headline themes: **Model Registry & AI Gateway**, **Conductor + role-agents over the resolver chain**, **Workflow Runner hardening + templates**, **AEO**, and a full pass of tech-debt + observability + docs.
+
+### Added — Model Registry (S4-M, 11 issues)
+- `ModelProvider` + `ModelEntry` + `ModelCallLog` + `OrgModelAssignment` + `UserModelPreference` tables (migrations `20260525_0001-0003`). 26 provider types across 4 tiers (Anthropic / OpenAI / Gemini / Vertex / Azure / Bedrock / Mistral / Cohere / Voyage / HF + OpenRouter / Groq / Together / Fireworks / DeepSeek / Perplexity / SambaNova + Replicate / ElevenLabs / Runway / Suno / Deepgram / Cartesia / fal.ai + Ollama / openai_compatible).
+- `/api/v1/models/*` — provider-types, providers, entries, sync, health-check, org-assignments, user-preferences, resolved-assignments, feature-availability, logs/stream (SSE), metrics.
+- Auto-discovery + capability heuristic (Celery task on provider create + manual Sync). Health-check beat every 5 min with AuditEvent on transitions.
+- `services/model_resolver.py` resolution chain `user → org → pool → env → stub`. Every agent + service can hit it.
+- Frontend `/admin/models` page with Feature Availability section (component coverage + capability summary), Providers section with the 5 radio + Others ▾ dropdown UI per the spec, and Models table.
+- `ModelSettingsPanel` (Conductor dock + full-screen), `useModelGate` hook + `ModelGateBanner` (onboarding gate), `InlineModelSelector` (per-action picker on Creatives Agent).
+
+### Added — Agent Runtime (S4-A, 5 issues)
+- `agents/runtime.py` resolver-aware `run_completion()` calling Anthropic or any OpenAI-compatible endpoint; logs every call to ModelCallLog via `fire_and_forget`.
+- `agents/roles.py` curated system prompts for **7 role-agents** (creatives / smm / seo / paid_media / analyst / inbox / reviewer); generic runner at `POST /agents/role/{name}/run`.
+- `services/trust_mode.py` autonomy posture lookup (`hard_gate` / `soft_gate` / `auto`) with platform defaults overlay-able per org.
+- 4-eye approval: `approvers_required` + `approvers_user_ids_json` on ApprovalRequest (migration `20260525_0004`). New `POST /approvals/{id}/sign-off`.
+- Reasoning-trace replay: `GET /agents/runs/{request_id}/trace` returns chronological ModelCallLog rows.
+
+### Added — Generation + Cost + Lint (S4-B, 3 issues)
+- `services/generation_adapters.py` httpx shells for Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram.
+- `services/agent_cost.py` per-run CostLedger writer with token→USD rate table for headline models.
+- `services/dont_say.py` brand-banned phrase lint + refine-prompt builder.
+
+### Added — Conductor UI (S4-C, 3 issues)
+- `/conductor` full-screen page: AgentThread sidebar (persisted), brief textarea, Plan card, per-agent result cards, embedded ModelSettingsPanel.
+- Agent dock derives `pageContext` from the active route (creatives/seo/smm/...). "Maximize" button opens the full-screen page.
+- `POST /conductor/decompose` + `POST /conductor/dispatch`.
+
+### Added — Workflow Runner (S4-D, 4 issues)
+- `services/workflow_templates.py` with 5 production templates: `launch_announcement`, `weekly_digest`, `lead_magnet`, `ad_campaign`, `aeo_audit`.
+- `services/workflow_sandbox.smoke_workflow()` dry-run harness.
+- `docs/WORKFLOW-FAILURE-PLAYBOOK.md` operator runbook.
+- `/workflows/templates` page with one-click clone-into-org.
+- Approval-node pause/resume already in `workflow_runner` (verified + documented).
+
+### Added — Brand Setup Studio (S4-E, 3 issues)
+- `services/brand_pdf_extract.py` palette / fonts / voice extractor from raw brand-guidelines text.
+- `services/brand_bandit.py` ε-greedy ranker over BrandKitInsight rows.
+- `POST /brand-studio/extract` + `GET /brand-studio/bandit/{org_id}`.
+
+### Added — Auth (S4-F/G, 2 issues)
+- Bluesky ProviderSpec added to `services/oauth.py`.
+- `/settings/2fa` frontend page (setup → verify → enable + recovery codes panel).
+- `POST /me/2fa/recovery-codes` issues 8 single-use codes with SHA-256 hashes stored.
+- `POST /admin/users/{id}/2fa/disable` superadmin override with AuditEvent row.
+
+### Added — Observability + Docs (S4-H/I, 2 issues)
+- `core/otel.py` opt-in OTLP tracer + `sentry_tag` helper.
+- `monitoring/grafana/dclaw-overview.json` starter dashboard.
+- Sprint-4 end-to-end walkthrough in `docs/USER-GUIDE.md`.
+- Sprint-4 additions summary in `docs/ARCHITECTURE.md`.
+- `scripts/docs_to_pdf.sh` bundles all docs into a single PDF.
+
+### Added — Tech Debt (S4-J, 3 issues)
+- `app/api/v1/_router_index.py` central `V1_ROUTERS` list (54 entries).
+- `worker/tasks/audit_retention.py` daily AuditEvent pruner with per-org retention.
+- `services/webhook_keys.py` N-keys-in-rotation HMAC signer with key-id versioning.
+- `frontend/tests/smoke.spec.ts` + `playwright.config.ts` 16-route smoke harness.
+
+### Added — AEO (S4-K, 2 issues)
+- `services/aeo_scorer.py` 8-check rubric (direct_answer / question_h1 / faq_present / structured_data / tldr_block / concise_paragraphs / citations / uniqueness) weighted to 0-100.
+- `POST /aeo/score`, `POST /aeo/batch`, `POST /aeo/suggest-rewrite` (LLM rewrite via resolver).
+- `AeoWidget` embedded under `/agents/seo`.
+
+### PRs (16)
+#322 M1/M2 · #323 M3/M4/M5 · #324 M6-M9 · #325 M11-M13 · #326 M10 · #327 M14-M16 · #328 A1/A2 · #329 A3-A6 · #330 B1-B6 · #331 C1-C6 · #332 D1-D6 · #333 E1-E5 · #334 F/G · #335 H/I · #336 J1-J4 · #337 K1-K5 · #338 Playwright build hotfix.
+
+---
+
 ## [1.1.1] — 2026-05-14 — *Sprint 3 closeout*
 
 Sprint 3 focused on **operator UX, the admin model, and platform polish** on top of the feature-complete v1.1.0 stack. Forty-plus PRs across two days. No new product surfaces — every change makes an existing one safer, clearer, or more honest.
@@ -209,5 +279,7 @@ The first release. End-to-end demo flow works: log in → set brand → ingest c
 - Conductor agent (multi-agent orchestration) is v0.2 / Phase 3.
 - Legacy v1.0 `/api/v1/campaigns`, `/leads`, `/analytics` routes don't yet require Org/Project context.
 
+[1.1.2]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v1.1.2
+[1.1.1]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v1.1.1
 [1.1.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v1.1.0
 [1.0.0]: https://github.com/dclawstack/dclaw-marketing/releases/tag/v1.0.0
