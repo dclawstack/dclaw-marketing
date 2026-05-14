@@ -689,15 +689,16 @@ Providers are grouped into four tiers by their integration method.
 
   **Provider type selection — two-level picker:**
 
-  The form opens with five radio buttons displayed upfront (no dropdowns, no extra click):
+  The form opens with six radio buttons displayed upfront (no dropdowns, no extra click):
   ```
   ◉ Anthropic
   ○ OpenAI
   ○ OpenAI-compatible
   ○ Ollama
+  ○ OpenRouter
   ○ Others ▾
   ```
-  These four are shown as radios because they cover the vast majority of use cases and are the ones users will reach for first. Selecting any of the first four immediately renders that provider's input form below the radios.
+  These five are shown as radios because they cover the vast majority of use cases and are the ones users will reach for first. Selecting any of the first five immediately renders that provider's input form below the radios.
 
   Selecting **Others** renders a searchable dropdown listing every remaining provider, grouped by tier:
   ```
@@ -709,7 +710,6 @@ Providers are grouped into four tiers by their integration method.
   │   Azure OpenAI                  │
   │   AWS Bedrock                   │
   │ Aggregators / Routers           │
-  │   OpenRouter                    │
   │   Groq                          │
   │   Together AI                   │
   │   Fireworks AI                  │
