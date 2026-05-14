@@ -8,6 +8,7 @@ import { getToken } from "@/lib/auth";
 import {
   BarChart3,
   Bot,
+  Box,
   Calendar,
   Inbox as InboxIcon,
   Layers,
@@ -96,7 +97,13 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Users",
         href: "/admin/users",
         icon: Shield,
-        matchPrefix: "/admin",
+        matchPrefix: "/admin/users",
+      },
+      {
+        label: "Models",
+        href: "/admin/models",
+        icon: Box,
+        matchPrefix: "/admin/models",
       },
     ],
   },
