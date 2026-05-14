@@ -102,6 +102,10 @@ app.include_router(integrations.router, prefix="/api/v1")
 # Sprint 4 S4-M — Model Registry CRUD (providers + model entries)
 app.include_router(model_providers.router, prefix="/api/v1")
 
+# Sprint 4 S4-M7/M8/M9 — feature availability + SSE log stream + metrics
+from app.api.v1 import model_observability  # noqa: E402
+app.include_router(model_observability.router, prefix="/api/v1")
+
 # Phase 9 — agent threads + messages (Conductor + role-agents)
 app.include_router(agent_threads.router, prefix="/api/v1")
 
