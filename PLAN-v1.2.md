@@ -111,9 +111,9 @@ These were the green-light items before v1.2 implementation could start. All loc
 - [x] **Auto-merge + auto-close pipeline** ✅ Shipped (v1.1.1): squash carries PR body; workflow has `issues: write`; queue drains itself.
 
 ### Pending blocks summary (what's left for v1.2.0)
-- ⬜ **Sprint 4 P0** — Brand Setup Studio polish (Q1) · real OAuth client credentials wired (C2, all platforms) · TOTP enrollment UI (A.11.6) · observability dashboards (Grafana + Sentry tags + `/admin/health` queue depth) · user-guide refresh.
-- ⬜ **Sprint 4 P0 — Agent runtime headline** — Claude Agent SDK integration · real model connections · Conductor as all-in-one chat controller · end-to-end live workflow execution. See "Sprint 4 Plan" below.
-- ⬜ **Sprint 4 P1** — Audit retention pruner · v1 legacy router consolidation · per-tenant LLM provider override · BrandKitInsight bandit ranking.
+- ⬜ **Sprint 4 P0** — Model Registry & AI Gateway (S4-M, new — multi-provider model config, health checks, feature-availability matrix, live logs + metrics) · Brand Setup Studio polish (Q1/S4-E) · real OAuth client credentials wired (C2/S4-F, all platforms) · TOTP enrollment UI (S4-G) · observability dashboards (Grafana + Sentry tags + `/admin/health` queue depth, S4-H) · user-guide refresh.
+- ⬜ **Sprint 4 P0 — Agent runtime headline** — Claude Agent SDK integration (S4-A) · real model connections via Model Registry (S4-B) · Conductor as all-in-one chat controller (S4-C) · end-to-end live workflow execution (S4-D). See "Sprint 4 Plan" below.
+- ⬜ **Sprint 4 P1** — Audit retention pruner · v1 legacy router consolidation · BrandKitInsight bandit ranking · AEO scorer (S4-K, new — Answer Engine Optimization for AI search).
 - ⬜ **Sprint 5+ P2** — Brand-Safe Image Editor (B7) · SMS / WhatsApp (C5) · Push / In-App (C6) · Competitor Tracker (F3) · Customer-Voice Mining (F4) · Topic Cluster Map (H3) · Client Portal (O) · Visual Workflow Builder (P) · Trend Radar / Comment Triage / Auto-Optimizer (G3-G5) · Sandbox dry-run UI polish.
 - ⬜ **Marketing collateral** — Issues #49–#53 (one-pager / slides / demo script / demo video / launch posts). **Operator-owned, out-of-band, off-limits to engineering** unless explicitly asked.
 
@@ -426,6 +426,22 @@ Every new table gets `workspace_id` (except `User`/`Workspace`/`MCPServer` regis
 > **Target release:** `v1.2.0` — the demo build the stakeholder is expecting (the plan doc is `PLAN-v1.2.md`, so this aligns the version line).
 > **Headline.** Stop scaffolding agents. Start running them. By the end of Sprint 4, the Conductor agent can read a brief, pick the right role-Agent, call the right MCP tools against the right real model, draft a multi-channel campaign, queue it through the Approval Inbox, and report back — all from a single chat surface that controls every aspect of the platform.
 > **Posture.** Sprint 4 is **build + integrate + test**, not new scaffolding. Almost every backend exists; the work is wiring real models / real credentials / real flows into the runtime.
+> **No hard deadline** — ship when done right. Demo audience is both internal stakeholders and external/investor-grade. External credentials (Anthropic, Replicate, ElevenLabs, OAuth apps) will be wired in as they become available; all adapters fall back to the existing deterministic stub path until then.
+
+### Competitive context (researched May 2026)
+
+The market has validated this sprint's direction:
+
+- **CharacterQuilt (YC P2026)** — "AI infra for marketing: a brain that learns your brand, and agents that operate your existing tools." Direct overlap with DClaw's Conductor + MCP hub vision. They ship in hours what used to take 3 agencies.
+- **Sitefire (YC W2026)** — Answer Engine Optimization (AEO) for AI search (ChatGPT/Perplexity/Claude). Hot new frontier; HubSpot Spring 2026 Spotlight also launched AEO. DClaw adds this as S4-K.
+- **Absurd (YC F2025)** — Production-quality brand videos in 72 hrs via multi-agent orchestration. DClaw's S4-B (Replicate + Runway) is the head-on answer.
+- **HubSpot Breeze AI** — Content Agent + Social Agent + Prospecting Agent. Enterprise players are now shipping role-specific agents. DClaw's fleet (Conductor + 6 role-agents) is architecturally ahead.
+- **Salesforce Agentforce** — Autonomous agents within Salesforce; 40–60% CAC reduction reported. Validates the agent-as-operator thesis.
+- **Jasper / Writer.com / Copy.ai** — Brand voice is now "infrastructure" (video + audio knowledge), not just templates. DClaw's BrandKit + KG + Brand Setup Studio (S4-E) is the answer.
+
+**White-space DClaw can own:** MCP integration hub breadth (14+ adapters as the unified tool layer), per-tenant trust-mode resolver with explainability, multi-tenant agency architecture, and — with S4-M — the most capable AI model management layer in any marketing platform.
+
+**Anthropic Agent SDK (May 2026):** Anthropic renamed the Claude Code SDK → Claude Agent SDK, adding: programmatic tool calling (Claude writes code that orchestrates tools, not just individual round-trips), Agent Skills (reusable domain-specific expertise, maps to our role-agent pattern), and managed multi-agent orchestration (lead + specialist sub-agents on a shared file system). S4-A should be designed around these primitives.
 
 ### Sprint 4 themes (P0 → P2)
 
@@ -530,6 +546,331 @@ Backend columns shipped (v1.1.1, PR #252). Sprint 4 surfaces them.
 
 ---
 
+#### S4-M. Model Registry & AI Gateway **(P0 — prerequisite for agent runtime)**
+
+Every agent on the platform needs models: text LLMs for reasoning, embedding models for the Knowledge Graph, image/video/voice/music generators for creative production, transcription models for repurposing. Right now the only way to configure models is via env-vars that apply globally. Sprint 4 ships a full **per-org, per-superadmin model management system** so that admins can configure exactly which models are available, see their health and capabilities live, and the platform's feature-availability changes accordingly.
+
+**Why this comes before S4-A:** The agent runtime needs to know what models are available for each org before it can route tasks. The Model Registry is the config layer that makes all of S4-A, S4-B, and S4-C possible.
+
+**Multiple providers of the same type are fully supported.** An org can have 3 Anthropic keys (e.g. dev / staging / prod), 2 OpenAI keys (personal + org-billing), an Ollama instance alongside a Groq OpenAI-compatible endpoint, etc. There is no limit. Each provider is an independent row; models from all providers of the same type coexist in the registry and appear in the same assignment dropdowns. This also means provider-level failover is possible (if provider A's Anthropic key is rate-limited, the resolver can fall back to provider B's key).
+
+**Supported provider types — full taxonomy**
+
+Providers are grouped into four tiers by their integration method.
+
+**Tier 1 — Native APIs** (each has its own auth format or SDK; DClaw implements a dedicated adapter per provider)
+
+| Provider type | What it covers | Auth |
+|---|---|---|
+| `anthropic` | Claude Opus / Sonnet / Haiku — text, function calling, extended reasoning | API key |
+| `openai` | GPT-5/4o series (text, vision), `text-embedding-3-*` (embedding), `gpt-image-1` (image gen), `tts-1` / `gpt-4o-audio` (TTS), `whisper-1` (transcription) | API key |
+| `google_gemini` | Gemini 2.x / Flash / Pro — text, vision/image_understanding, image gen (`Imagen`), embedding (`text-embedding-005`) | API key (AI Studio) |
+| `google_vertex_ai` | Same Gemini + Imagen models served from Google Cloud; access via Vertex AI OpenAI-compatible endpoint or native API | Service account JSON or ADC |
+| `azure_openai` | OpenAI models served from Azure — same capability set as `openai`, adds compliance / SLA / VNet | Base URL + API key + API version + deployment name |
+| `aws_bedrock` | Claude, Llama, Mistral, Titan served from AWS — same models, adds IAM / VPC / CloudTrail | AWS access key + secret + region (or IAM role via instance profile) |
+| `mistral` | Mistral Large / Medium / Small (text, function calling), Pixtral (vision), Voxtral / Le Chat TTS (voice), Mistral Embed | API key |
+| `cohere` | Command R / Command A (text, function calling), `embed-v4` multimodal embedding, `rerank-4` reranker | API key |
+| `voyage_ai` | Embedding specialists: `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-4-nano`; multimodal embeddings (text + image in shared space); `rerank-2` reranker | API key |
+| `huggingface` | Serverless Inference via HF router (`https://router.huggingface.co/v1`) — OpenAI-compatible; routes to partner providers (Together, fal, SambaNova, Replicate). Covers text LLMs, embeddings (BERT, BGE, sentence-transformers), image models, STT | HF API token |
+
+**Tier 2 — Named OpenAI-compatible aggregators** (all speak OpenAI Chat Completions; DClaw pre-fills base URL + required headers; treated as `openai_compatible` under the hood but have named types for UX clarity and auto-discovery)
+
+| Provider type | What it covers | Special notes |
+|---|---|---|
+| `openrouter` | 500+ models from 60+ upstream providers (Anthropic, OpenAI, Google, Meta, Mistral, DeepSeek, Qwen, …) via a single key + base URL `https://openrouter.ai/api/v1` | Requires `HTTP-Referer` + `X-Title` headers; exposes per-model pricing in `/models` response; supports provider routing / fallback preferences |
+| `groq` | Llama 3.x, Qwen, Mistral, Gemma on Groq LPU hardware — text + function calling; 800+ tok/s | Base URL `https://api.groq.com/openai/v1`; text-only, no image gen |
+| `together_ai` | 200+ open-source models: Llama, Qwen, DBRX, StableDiffusion, etc. — text, embedding, image gen | Base URL `https://api.together.xyz/v1`; image gen via `image_generation` endpoint |
+| `fireworks_ai` | Fast open-source inference (FireAttention engine) — Llama, Mixtral, Qwen, function calling | Base URL `https://api.fireworks.ai/inference/v1` |
+| `deepseek` | DeepSeek V3 / R1 — text, function calling, reasoning; very cheap per-token | Base URL `https://api.deepseek.com/v1`; R1 has `reasoning` capability |
+| `perplexity` | Sonar models (web-augmented text) — adds live web context to every completion | Base URL `https://api.perplexity.ai`; adds `web_search` capability tag |
+| `sambanova` | Fast enterprise inference on RDU chips — Llama, Meta models | Base URL from SambaNova dashboard |
+
+**Tier 3 — Multimedia specialists** (non-text generation; native APIs)
+
+| Provider type | What it covers |
+|---|---|
+| `replicate` | Image: Flux, SDXL, Stable Diffusion; Video: Wan, Kling, CogVideoX, Mochi; Music: MusicGen; Transcription: Whisper; any public Replicate model by ID |
+| `elevenlabs` | TTS + voice cloning (`eleven_multilingual_v2`, Flash v2.5); STT via Scribe; Sound effects |
+| `runway` | Video generation (Gen-3 Alpha / Gen-4); image-to-video; video editing |
+| `suno` | Music generation (Suno v4); lyrics + audio |
+| `deepgram` | STT / transcription (Nova-3); speaker diarisation; live streaming STT |
+| `cartesia` | Low-latency TTS (Sonic); voice cloning; real-time streaming |
+| `fal_ai` | Image: Flux fast variants, SDXL; Video: Kling, HunyuanVideo; LoRA training | 
+
+**Tier 4 — Self-hosted / generic**
+
+| Provider type | What it covers |
+|---|---|
+| `ollama` | Local Ollama instance; auto-discovers all pulled models via `GET /api/tags`; capability-tagged via `POST /api/show` metadata |
+| `openai_compatible` | Generic catch-all: vLLM, LM Studio, text-generation-webui, llama.cpp server, Kobold, any custom server; admin supplies base URL + optional key |
+
+**Model capability tags** (what a model can do — drives feature-availability matrix and assignment dropdowns)
+
+`text` · `embedding` · `multimodal_embedding` · `image_generation` · `image_understanding` · `audio_transcription` · `text_to_speech` · `text_to_video` · `text_to_music` · `function_calling` · `reasoning` · `reranking` · `web_search`
+
+- **`multimodal_embedding`** — embeds text and images into a shared vector space (Cohere Embed 4, Voyage AI multimodal, Together CLIP); enables image-based KG search.
+- **`reranking`** — reorders a list of retrieved chunks by relevance to a query (Cohere Rerank 4, Voyage Rerank 2); improves RAG quality. The resolver exposes this as a separate capability slot so the KG can use a reranker if configured.
+- **`web_search`** — model has live internet access built in (Perplexity Sonar, some OpenRouter routes); used by Analyst agent + Trend Radar.
+
+**Stories**
+
+- **S4-M1** `ModelProvider` + `ModelEntry` DB models + Alembic migration. `ModelProvider(org_id nullable, provider_type, name, base_url, encrypted_api_key, extra_config_json, is_active)`. `ModelEntry(provider_id, model_id, display_name, capabilities[], context_window, max_output_tokens, status, last_health_check_at, health_error)`. Superadmin-level providers have `org_id=NULL` and are available globally; org-admin providers are scoped to the org.
+
+- **S4-M2** Provider CRUD API (`/api/v1/models/providers`) + model-entry CRUD (`/api/v1/models/entries`). Superadmin-only for global providers; org-admin for org-scoped. API key encrypted via the same Fernet-per-org pattern as `Connection`.
+
+- **S4-M3** Auto-discovery on provider save (runs as a Celery task immediately after provider creation; also triggered manually via "Sync" button):
+  - **OpenAI / Azure OpenAI / Groq / Together / Fireworks / DeepSeek / Perplexity / SambaNova / generic openai_compatible:** `GET base_url/v1/models` → import all returned model objects, capability-tag by heuristic (S4-M4).
+  - **OpenRouter:** `GET https://openrouter.ai/api/v1/models` → rich model objects include `architecture.modality` (`text→text`, `text→image`, etc.) and `pricing`; use modality field for accurate capability tagging, no heuristic needed.
+  - **Google Gemini:** hardcoded known-model list (Gemini 2.0 Flash, 2.0 Pro, Gemini 1.5 families, Imagen 3, text-embedding-005) with pinned capabilities.
+  - **Google Vertex AI:** same list as Gemini; base URL differs per region / project.
+  - **AWS Bedrock:** curated list of available foundation models (Claude, Llama, Mistral, Titan Embed); capabilities pinned per model ID.
+  - **Azure OpenAI:** `GET base_url/openai/models?api-version={v}` → import deployed models; capabilities via heuristic.
+  - **Mistral:** `GET https://api.mistral.ai/v1/models` → import; tag Pixtral → `image_understanding`, Voxtral → `text_to_speech`, embed → `embedding`.
+  - **Cohere:** hardcoded list: Command A/R+ → `text`, `function_calling`; Embed 4 → `embedding`, `multimodal_embedding`; Rerank 4 → `reranking`.
+  - **Voyage AI:** hardcoded list: voyage-4-* → `embedding`; voyage-multimodal → `embedding`, `multimodal_embedding`; rerank-2 → `reranking`.
+  - **HuggingFace:** `GET https://router.huggingface.co/v1/models` → import supported models; capability via heuristic.
+  - **Ollama:** `GET base_url/api/tags` → import all pulled models; `POST base_url/api/show {name}` for `details.families` to detect vision (`clip`) and embedding models.
+  - **Anthropic:** hardcoded list: claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5 → `text`, `function_calling`, `image_understanding`; Opus + claude-3-7-sonnet → add `reasoning`.
+  - **Replicate:** curated lists per modality category + admin can add arbitrary model IDs (owner/name:version format).
+  - **ElevenLabs / Cartesia / Runway / Suno / Deepgram / fal.ai:** curated known-model lists with pinned capabilities.
+
+- **S4-M4** Capability heuristic for OpenAI-compatible model IDs (applied when no richer metadata is available). Pattern → capabilities assigned:
+  - `*embed*`, `*e5*`, `*bge*`, `*nomic*`, `*minilm*`, `*sentence*` → `embedding`
+  - `*rerank*` → `reranking`
+  - `*dall-e*`, `*image*`, `*flux*`, `*sdxl*`, `*stable-diffusion*`, `*playground*` → `image_generation`
+  - `*whisper*`, `*stt*`, `*transcrib*`, `*asr*` → `audio_transcription`
+  - `*tts*`, `*voice*`, `*eleven*`, `*cartesia*`, `*voxtral*` → `text_to_speech`
+  - `*video*`, `*runway*`, `*wan*`, `*kling*`, `*mochi*`, `*cogvideo*` → `text_to_video`
+  - `*music*`, `*suno*`, `*musicgen*`, `*udio*` → `text_to_music`
+  - `*vision*`, `*4o*`, `*llava*`, `*minicpm*`, `*pixtral*`, `*gemini*`, `*qwen-vl*`, `*internvl*` → `image_understanding` + `text`
+  - `*sonar*`, `*perplexity*` → `text` + `web_search`
+  - `*o1*`, `*o3*`, `*o4*`, `*deepseek-r1*`, `*qwq*` → `text` + `function_calling` + `reasoning`
+  - else → `text` + `function_calling`
+  - Operator can manually toggle any capability on any entry via the UI; manual overrides survive re-sync.
+
+- **S4-M5** Health-check Celery beat task (every 5 min). Per-provider strategy:
+  - **Anthropic:** `POST /v1/messages` with `max_tokens=1` + model param — success = healthy.
+  - **OpenAI / Azure OpenAI / Groq / Together / Fireworks / DeepSeek / Perplexity / SambaNova / HuggingFace / generic openai_compatible:** `GET base_url/v1/models` — 200 = healthy (no credits spent).
+  - **OpenRouter:** `GET https://openrouter.ai/api/v1/models` — 200 = healthy; additionally check `GET https://openrouter.ai/api/v1/auth/key` to verify key is valid and show remaining credit balance in the provider card.
+  - **Google Gemini:** `GET https://generativelanguage.googleapis.com/v1beta/models?key={k}` — 200 = healthy.
+  - **Google Vertex AI:** `GET {base_url}/v1/models` with OAuth2 Bearer — 200 = healthy.
+  - **AWS Bedrock:** `ListFoundationModels` SDK call — success = healthy (uses boto3).
+  - **Mistral:** `GET https://api.mistral.ai/v1/models` with Bearer — 200 = healthy.
+  - **Cohere:** `GET https://api.cohere.com/v2/models` with Bearer — 200 = healthy.
+  - **Voyage AI:** `GET https://api.voyageai.com/v1/models` — 200 = healthy.
+  - **Ollama:** `GET base_url/` — body `"Ollama is running"` = healthy; additionally check model is still in `/api/tags`.
+  - **Replicate:** `GET https://api.replicate.com/v1/models/{owner}/{name}` with auth — 200 = healthy.
+  - **ElevenLabs:** `GET https://api.elevenlabs.io/v1/models` with `xi-api-key` header — 200 = healthy.
+  - **Cartesia:** `GET https://api.cartesia.ai/voices` with `X-API-Key` header — 200 = healthy.
+  - **Runway:** `GET https://api.runwayml.com/v1/models` with Bearer — 200 = healthy.
+  - **Deepgram:** `GET https://api.deepgram.com/v1/projects` with `Token` auth — 200 = healthy.
+  - **fal.ai:** `GET https://fal.run/health` — 200 = healthy.
+  - **Suno:** lightweight ping to Suno API status endpoint.
+  - On any failure: `status=unhealthy`, write `health_error` (first 500 chars of error message), emit `AuditEvent`. On recovery: `status=healthy`, clear error, emit recovery `AuditEvent`.
+
+- **S4-M6** `ModelCallLog` table: every model invocation anywhere in the platform logs `(model_entry_id, org_id, caller_component, started_at, duration_ms, input_tokens, output_tokens, cost_usd, status, error_message, request_id)`. `caller_component` is a string constant defined per call site (e.g. `"conductor"`, `"creatives_agent"`, `"embeddings"`, `"image_gen"`). Written async via the Celery worker or a lightweight fire-and-forget (non-blocking).
+
+- **S4-M7** Feature-availability API (`GET /api/v1/models/feature-availability`). Returns two objects:
+  1. **Component coverage** — for each platform component (`conductor`, `creatives_agent`, `smm_agent`, `seo_agent`, `paid_media_agent`, `analyst_agent`, `knowledge_graph`, `image_generation`, `voice_generation`, `video_generation`, `music_generation`, `audio_transcription`, `brand_kit_studio`, `aeo_scorer`) → `{required: [cap,...], covered: [cap,...], missing: [cap,...], status: "full"|"partial"|"none"}`.
+  2. **Capability coverage** — for each capability tag → `{available: bool, model_count: int, healthy_count: int}`.
+  - Component → required capability map is hardcoded in the backend.
+
+- **S4-M8** Live log streaming: SSE endpoint `GET /api/v1/models/{id}/logs/stream`. Publishes to Redis channel `model_logs:{model_entry_id}` on every call; SSE handler subscribes and streams JSON lines to the client. Log line shape: `{ts, component, status, latency_ms, input_tokens, output_tokens, cost_usd, error}`.
+
+- **S4-M9** Metrics endpoint: `GET /api/v1/models/{id}/metrics?window=7d`. Aggregates from `ModelCallLog`: total calls, success rate, avg/p50/p95/p99 latency, total tokens, total cost, calls-by-component breakdown, daily time series. Cached in Redis with 60s TTL.
+
+- **S4-M10** Frontend: `/admin/models` page (superadmin + org-admin).
+
+  **Section A — Feature Availability** (top of page, always visible)
+  - Sub-section A1: **Platform Components** — grid of component cards (Conductor, Creatives Agent, SMM Agent, SEO Agent, KG / Embeddings, Image Generation, Voice Generation, Video Generation, Music Generation, Audio Transcription, Brand Kit Studio, AEO Scorer). Each card shows a colour-coded status chip: ✅ Full | ⚠ Partial | ✗ Missing. Clicking opens a popover listing required / missing capabilities with "Add a provider" CTA.
+  - Sub-section A2: **Capability Summary** — a single row of capability pills with counts: e.g. "text ✅ 3 models · embedding ✅ 1 · image_generation ✗ 0 needed · text_to_speech ✗ ...".
+
+  **Section B — Providers** — cards for each configured ModelProvider with "Add Provider" button. Provider card shows: name, type badge, model count, overall health dot, and (for OpenRouter) remaining credit balance. "Add Provider" opens a slide-over form.
+
+  **Provider type selection — two-level picker:**
+
+  The form opens with six radio buttons displayed upfront (no dropdowns, no extra click):
+  ```
+  ◉ Anthropic
+  ○ OpenAI
+  ○ OpenAI-compatible
+  ○ Ollama
+  ○ OpenRouter
+  ○ Others ▾
+  ```
+  These five are shown as radios because they cover the vast majority of use cases and are the ones users will reach for first. Selecting any of the first five immediately renders that provider's input form below the radios.
+
+  Selecting **Others** renders a searchable dropdown listing every remaining provider, grouped by tier:
+  ```
+  Others ▾
+  ┌─────────────────────────────────┐
+  │ Cloud / Enterprise              │
+  │   Google Gemini                 │
+  │   Google Vertex AI              │
+  │   Azure OpenAI                  │
+  │   AWS Bedrock                   │
+  │ Aggregators / Routers           │
+  │   Groq                          │
+  │   Together AI                   │
+  │   Fireworks AI                  │
+  │   DeepSeek                      │
+  │   Perplexity                    │
+  │   SambaNova                     │
+  │ Specialist APIs                 │
+  │   Mistral                       │
+  │   Cohere                        │
+  │   Voyage AI                     │
+  │   HuggingFace                   │
+  │   Replicate                     │
+  │   ElevenLabs                    │
+  │   Cartesia                      │
+  │   Runway                        │
+  │   Suno                          │
+  │   Deepgram                      │
+  │   fal.ai                        │
+  └─────────────────────────────────┘
+  ```
+  Selecting any option from the dropdown immediately renders that provider's input form below, replacing the dropdown (the radio for "Others" stays selected so the user knows where they are).
+
+  **Input forms per provider type** (appear below the radio/dropdown selection; only the fields that provider actually needs):
+  - **Anthropic** → Name (pre-filled "Anthropic"), API Key.
+  - **OpenAI** → Name (pre-filled "OpenAI"), API Key, optional Org ID.
+  - **OpenAI-compatible** → Name, Base URL, optional API Key, optional API Version header.
+  - **Ollama** → Name (pre-filled "Ollama"), Base URL (default `http://localhost:11434`, editable). No key field.
+  - **Google Gemini** → Name, API Key (AI Studio).
+  - **Google Vertex AI** → Name, GCP Project ID, Region, Service Account JSON (paste box).
+  - **Azure OpenAI** → Name, Deployment Base URL, API Key, API Version.
+  - **AWS Bedrock** → Name, Region, Access Key ID, Secret Access Key; toggle "Use instance profile / IAM role" hides the key fields.
+  - **OpenRouter** → Name (pre-filled "OpenRouter"), API Key. Base URL locked to `https://openrouter.ai/api/v1`.
+  - **Groq** → Name (pre-filled "Groq"), API Key. Base URL locked.
+  - **Together AI** → Name (pre-filled "Together AI"), API Key. Base URL locked.
+  - **Fireworks AI** → Name (pre-filled "Fireworks AI"), API Key. Base URL locked.
+  - **DeepSeek** → Name (pre-filled "DeepSeek"), API Key. Base URL locked.
+  - **Perplexity** → Name (pre-filled "Perplexity"), API Key. Base URL locked.
+  - **SambaNova** → Name, Base URL (from SambaNova dashboard), API Key.
+  - **Mistral** → Name (pre-filled "Mistral"), API Key. Base URL locked.
+  - **Cohere** → Name (pre-filled "Cohere"), API Key.
+  - **Voyage AI** → Name (pre-filled "Voyage AI"), API Key.
+  - **HuggingFace** → Name (pre-filled "HuggingFace"), API Token. Base URL locked to `https://router.huggingface.co/v1`.
+  - **Replicate** → Name (pre-filled "Replicate"), API Token, optional additional model IDs (multi-line text area, one `owner/name:version` per line).
+  - **ElevenLabs** → Name (pre-filled "ElevenLabs"), API Key.
+  - **Cartesia** → Name (pre-filled "Cartesia"), API Key.
+  - **Runway** → Name (pre-filled "Runway"), API Key. Base URL locked.
+  - **Suno** → Name (pre-filled "Suno"), API Key.
+  - **Deepgram** → Name (pre-filled "Deepgram"), API Key.
+  - **fal.ai** → Name (pre-filled "fal.ai"), API Key.
+
+  All forms end with:
+  - **"Test Connection"** button — live-calls the provider's health endpoint before saving; shows ✅ / ❌ inline with the raw error message on failure.
+  - **"Save"** button (disabled until test passes, or skip-test toggle for power users).
+  - On save: auto-discovery Celery task queues immediately; a "Discovering models…" progress banner replaces the form; model entries appear in Section C within seconds.
+
+  **Section C — Models Table** — columns: Model ID | Provider | Capabilities (pills) | Status (healthy/unhealthy/unknown badge) | Last Checked | [Logs] | [Metrics]. Sortable by status and capability. Search/filter by capability tag.
+
+  **[Logs] button** → slide-over panel with live SSE stream. Each line: timestamp + component badge + status dot + latency + token counts + cost. Auto-scrolls. Pause/resume button. "Clear" clears the visual buffer (not DB).
+
+  **[Metrics] button** → slide-over panel with:
+  - 4 summary cards: Total Calls (7d) · Success Rate · Avg Latency · Total Cost (USD).
+  - Line chart: daily call volume over last 7 days (success vs error stacked).
+  - Bar chart: calls by platform component.
+  - Latency percentile bars: p50 / p95 / p99.
+
+- **S4-M11** Model resolver service (`app/services/model_resolver.py`): resolves which specific `ModelEntry` to use for a given `(org_id, user_id, capability)` tuple. Resolution priority chain (top wins):
+  1. `UserModelPreference` for `(user_id, org_id, capability)` → user's explicit selection
+  2. `OrgModelAssignment` for `(org_id, capability)` → org-level default
+  3. First healthy `ModelEntry` with the capability in the org-scoped pool, then global pool (lexicographic — deterministic)
+  4. Env-var fallback (existing `settings.anthropic_api_key`, etc.)
+  5. Deterministic stub (dev / CI / no key configured)
+  All of S4-A + S4-B use the resolver. No direct `settings.*_api_key` references remain in agent code outside the fallback path.
+
+- **S4-M12** `OrgModelAssignment` + `UserModelPreference` DB models + migration.
+  - `OrgModelAssignment(id, org_id FK, capability str, model_entry_id FK, set_by_user_id FK, created_at, updated_at)` — UNIQUE(org_id, capability). Org-level default for each capability slot. Set by org-admin or superadmin.
+  - `UserModelPreference(id, user_id FK, org_id FK, capability str, model_entry_id FK, updated_at)` — UNIQUE(user_id, org_id, capability). Per-user override; beats the org default. Set by any authenticated user for themselves.
+
+- **S4-M13** Assignment / preference CRUD API.
+  - `PUT /api/v1/models/org-assignments` — body: `{capability, model_entry_id}` — org-admin+ only; upserts `OrgModelAssignment` for the caller's active org.
+  - `PUT /api/v1/models/user-preferences` — body: `{capability, model_entry_id}` — any authenticated user; upserts `UserModelPreference` for `(current_user, active_org)`.
+  - `GET /api/v1/models/resolved-assignments` — returns the fully resolved assignment map for `(current_user, active_org)`: for each capability, which model entry was resolved and at which level (user / org / auto / fallback). Used by the Conductor settings panel and the gate hook.
+
+- **S4-M14** Conductor model selector panel. The full-screen `/conductor` page and the docked chat panel both get a **Model Settings** collapsible section (gear icon in the dock; sidebar panel in full-screen). Layout per capability row:
+  ```
+  Text / Chat         [claude-sonnet-4-6  (Anthropic) ▼]  ● healthy
+  Embeddings          [nomic-embed-text   (Ollama)    ▼]  ● healthy
+  Image Generation    [— not selected —               ▼]  ✗ no model
+  Voice (TTS)         [— not selected —               ▼]  ✗ no model
+  Video Generation    [— not selected —               ▼]  ✗ no model
+  Music Generation    [— not selected —               ▼]  ✗ no model
+  Audio Transcription [— not selected —               ▼]  ✗ no model
+  ```
+  Each dropdown is populated with all `ModelEntry` rows that: (a) are healthy, (b) belong to the org's pool (org-scoped + global), (c) have the required capability. Each option shows `{display_name} ({provider_name})`. Options from multiple providers of the same type all appear — e.g., if there are two Anthropic providers, all their models show up labelled. Selecting a model calls `PUT /api/v1/models/user-preferences` immediately (no save button needed). A status dot next to each row reflects the resolved model's current health in real-time (polling the feature-availability endpoint). "Manage Providers" link → `/admin/models`.
+
+- **S4-M15** Model gate hook + onboarding flow. Frontend React hook `useModelGate(capability: string)` available globally.
+
+  **First-visit onboarding modal** (shown when user has zero preferences set AND visits any page that triggers a model-dependent action, OR when the user opens `/conductor` for the first time):
+  ```
+  ┌──────────────────────────────────────────────────────────┐
+  │  Set up your AI models                                    │
+  │  Choose which model handles each task for your workspace. │
+  │  You can change these anytime from Conductor settings.    │
+  │                                                           │
+  │  Text & Chat  *required*  [— choose model ▼]             │
+  │  Embeddings               [— choose model ▼]             │
+  │  Image Generation         [— optional ▼]                 │
+  │  Voice (TTS)              [— optional ▼]                 │
+  │  Video Generation         [— optional ▼]                 │
+  │  Music Generation         [— optional ▼]                 │
+  │  Audio Transcription      [— optional ▼]                 │
+  │                                                           │
+  │  ⚠ No models available for Image Generation.             │
+  │    Ask your admin to add a provider → /admin/models       │
+  │                                                           │
+  │  [Skip for now]           [Save & Start]                  │
+  └──────────────────────────────────────────────────────────┘
+  ```
+  "Save & Start" is disabled until at least `text` is assigned. Dropdowns only show healthy available models; capabilities with no models show a greyed-out "No provider configured" message + link. "Skip for now" closes the modal and stores a `dismissed_at` timestamp in localStorage; if the user skips and later tries to use Conductor or any model-dependent feature, the inline gate fires.
+
+  **Inline capability gate** (shown when any action requiring a specific capability is triggered with no model assigned for that capability, and the first-visit modal has already been dismissed):
+  ```
+  ┌──────────────────────────────────────────────────────┐
+  │  Image Generation model required                      │
+  │                                                       │
+  │  This action needs an image generation model.        │
+  │  Select one to continue:                              │
+  │                                                       │
+  │  [— choose model ▼]  (only image_generation models)  │
+  │                                                       │
+  │  No models available?                                 │
+  │  → Ask your admin to add a Replicate or OpenAI key   │
+  │    in /admin/models                                   │
+  │                                                       │
+  │  [Cancel]            [Select & Continue]              │
+  └──────────────────────────────────────────────────────┘
+  ```
+  "Select & Continue" saves the preference and re-triggers the original action. The hook is called at every model-dispatch site in the frontend (generation forms, repurpose triggers, brand studio, etc.).
+
+  **Conductor partial unlock:** once `text` is assigned, the Conductor chat input unlocks and the user can type. If the Conductor's tool-call plan includes an action that requires an unassigned capability (e.g. image generation), the Conductor's tool-call response card shows an inline "Select model for this action" prompt before proceeding.
+
+- **S4-M16** Inline model selectors on action pages. Every page/form that triggers a model-dependent action gets a small "Model" selector chip showing the currently resolved model, clickable to change:
+  - `/agents/creatives` — "Text model" chip in the generation form header.
+  - `/campaigns/[id]/generate` — per-kind model chip: "Text: claude-sonnet-4-6 ▾ | Image: — ▾".
+  - `/repurpose` — "Transcription model" chip (shown only when source is audio/video).
+  - `/brand` (Brand Setup Studio) — "Vision model" chip for PDF/logo analysis step.
+  - `/agents/seo` — "Text model" chip for AEO scorer and blog draft.
+  Clicking a chip opens a compact dropdown (same options as Conductor panel). Selection calls `PUT /api/v1/models/user-preferences` and the action re-resolves immediately.
+
+**Definition of done**
+- Superadmin can add 3 separate Anthropic providers simultaneously; all their models appear in the same assignment dropdowns labelled by provider name.
+- Adding an org-scoped Replicate API key makes Image Generation go from ✗ to ✅ for that org, and the Conductor panel's Image Generation row shows the new models immediately.
+- Feature Availability matrix on `/admin/models` accurately reflects both what is registered and what is assigned.
+- First-visit modal appears the first time a user opens `/conductor` with no preferences set; "Save & Start" unlocks after selecting a text model.
+- Inline gate fires correctly when a user attempts image generation with no image model assigned.
+- Inline model selector chips appear and are functional on: `/agents/creatives`, `/campaigns/[id]/generate`, `/repurpose`, `/brand`, `/agents/seo`.
+- Resolver correctly honours user preference → org default → auto-pick → stub priority chain.
+- Live model logs stream within 2s of a model call anywhere on the platform.
+- Metrics show 7-day call volume, cost, and latency percentiles per model.
+
+---
+
 #### S4-H. Observability dashboards **(P1)**
 **Stories**
 - **S4-H1** Grafana board for request latency / error rate / quota usage / cost.
@@ -556,6 +897,32 @@ Backend columns shipped (v1.1.1, PR #252). Sprint 4 surfaces them.
 
 ---
 
+#### S4-K. AEO — Answer Engine Optimization **(P1 stretch)**
+
+**Why now:** Sitefire (YC W2026) is funded specifically for this problem. HubSpot launched AEO in its Spring 2026 Spotlight. The market is moving from traditional SEO (rank in Google) to AEO (appear in ChatGPT / Perplexity / Claude answers). DClaw's existing SEO pipeline (H2 — Ahrefs MCP + blog pipeline) is 80% of the infrastructure needed. Adding AEO scoring here is a meaningful differentiator with low incremental cost.
+
+**What AEO is:** Optimising content so that AI search engines cite or surface it. Unlike traditional SEO (keyword density, backlinks), AEO focuses on: structured data / schema.org markup, FAQ-format fragments, entity clarity (does the content clearly name the product/company/people?), direct-answer density (does the content contain crisp, quotable sentences?), and authority signals (citations, expert attributions).
+
+**Stories**
+- **S4-K1** AEO scorer service (`app/services/aeo_scorer.py`): given a URL or `Asset` (blog draft), runs the following checks:
+  - **Entity clarity score** — NLP entity extraction via Claude (already available) to check product name, company, people mentions are consistent and unambiguous.
+  - **Direct-answer density** — count short (≤25-word) standalone declarative sentences that directly answer likely queries.
+  - **Schema markup presence** — check for `application/ld+json` blocks with `Article`, `FAQPage`, `HowTo`, `Product` schemas.
+  - **FAQ fragment count** — count question + answer pairs in the content.
+  - **Citing authority** — check for external citations / links to authoritative sources.
+  - Returns an `AEOReport {overall_score: 0-100, breakdown: {entity_clarity, direct_answer_density, schema_markup, faq_fragments, authority_signals}, suggestions: [str]}`.
+- **S4-K2** API endpoint: `POST /api/v1/seo/aeo-score {asset_id? url?}` → `AEOReport`. Runs as a Celery task for async scoring; result cached in `Asset.metadata_json`.
+- **S4-K3** AEO widget in `/agents/seo`: "AEO Score" card alongside the existing SEO metrics. Shows the overall score (0–100 gauge), breakdown bars, and top 3 improvement suggestions. "Re-score" button re-triggers the Celery task.
+- **S4-K4** Batch AEO audit: `POST /api/v1/seo/aeo-audit {project_id}` → queues scoring for all published blog assets in the project. Results appear in the Content Performance Heatmap (F2) as an additional dimension.
+- **S4-K5** (stretch) AI-powered fix suggestions: if the Claude model for `text` is available (via S4-M resolver), auto-generate a revised FAQ section or suggested schema markup JSON for the operator to copy-paste.
+
+**Definition of done**
+- Pasting a blog URL into the AEO widget returns a scored report in <10s (async job).
+- Batch audit of a 10-article blog project completes in <2 min.
+- AEO scores appear in the heatmap alongside existing SEO metrics.
+
+---
+
 ### Sprint 4 — out of scope (defer to Sprint 5+)
 - B7 Brand-Safe Image Editor
 - C5 SMS / WhatsApp
@@ -569,12 +936,14 @@ Backend columns shipped (v1.1.1, PR #252). Sprint 4 surfaces them.
 - Sandbox / dry-run UI polish (mechanism exists; full UX is Sprint 5)
 
 ### Sprint 4 — exit criteria for `v1.2.0`
+- **Model Registry live:** superadmin can configure Anthropic + OpenAI + Ollama + OpenAI-compatible providers; Feature Availability matrix accurately reflects what is and isn't possible; live model logs + metrics visible per model.
 - Conductor controls the platform end-to-end from one chat.
 - ≥ 3 channels publish real posts via real OAuth against a staging Org.
 - ≥ 4 generation MCPs (text · image · video · voice) wired with real keys + cost ledger reconciliation.
 - 5 workflow templates run dry-run and 1 runs live.
 - TOTP enrollment surfaced.
 - Observability dashboards exposed to the operator.
+- AEO scorer live in `/agents/seo` with batch audit capability.
 - Marketing collateral (operator-owned) ready alongside.
 
 ## What "Done" Looks Like for v1.2
