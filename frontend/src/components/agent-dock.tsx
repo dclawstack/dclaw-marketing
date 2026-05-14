@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MessageSquare, X } from "lucide-react";
 
 import { DkAgentChat, DkButton } from "@/components/dk";
+import { ModelSettingsPanel } from "@/components/model-settings-panel";
 import { useOrg } from "@/contexts/org-context";
 import { cn } from "@/lib/utils";
 
@@ -88,8 +89,13 @@ export function AgentDock() {
               <X className="h-4 w-4" />
             </DkButton>
           </header>
-          <div className="flex-1 overflow-hidden">
-            {open ? <DkAgentChat kind="conductor" /> : null}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="px-3 pt-3">
+              <ModelSettingsPanel orgId={currentOrg.id} />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {open ? <DkAgentChat kind="conductor" /> : null}
+            </div>
           </div>
         </div>
       </aside>
