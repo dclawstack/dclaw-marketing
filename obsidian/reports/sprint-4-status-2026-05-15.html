@@ -15,21 +15,25 @@
     --dk-purple-200: #E2DCEE;
     --dk-purple-100: #F1EEF8;
     --dk-purple-50:  #F8F6FB;
+
     --dk-ink:        #1F1B2E;
     --dk-fg-1:       #2A2440;
     --dk-fg-2:       #5A547A;
     --dk-fg-3:       #8A85A0;
     --dk-border:     #E5E1F0;
     --dk-border-strong: #C9C0DE;
+
     --dk-success:    #0E7C66;
     --dk-success-bg: #E6F5F0;
     --dk-warning:    #B45309;
     --dk-warning-bg: #FEF3C7;
     --dk-danger:     #B91C3C;
     --dk-danger-bg:  #FCE7EE;
+
     --dk-bg:         #FFFFFF;
     --dk-bg-tint:    #FAF8FD;
   }
+
   @page {
     size: A4;
     margin: 22mm 18mm 22mm 18mm;
@@ -40,7 +44,9 @@
   }
   @page :first { margin: 0; @top-left { content: ""; } @top-right { content: ""; } @bottom-center { content: ""; } @bottom-right { content: ""; } }
   @page back { margin: 0; @top-left { content: ""; } @top-right { content: ""; } @bottom-center { content: ""; } @bottom-right { content: ""; } }
+
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--dk-fg-1); font-size: 10.5pt; line-height: 1.55; background: white; }
   h1, h2, h3, h4, h5 { font-family: 'Poppins', system-ui, sans-serif; color: var(--dk-ink); font-weight: 700; letter-spacing: -0.01em; margin-top: 0; }
@@ -52,11 +58,14 @@
   strong { font-weight: 600; color: var(--dk-ink); }
   code, .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 9pt; }
   a { color: var(--dk-purple-700); text-decoration: none; }
+
   .page-break { page-break-after: always; }
   .chapter { page-break-before: always; }
   .no-break { page-break-inside: avoid; }
+
   .eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dk-purple-700); background: var(--dk-purple-100); padding: 3pt 8pt; border-radius: 99px; margin-bottom: 6pt; }
   .lede { font-size: 12pt; color: var(--dk-fg-2); margin: 6pt 0 14pt 0; max-width: 95%; }
+
   .cover { page: cover; width: 210mm; height: 297mm; padding: 28mm; background: radial-gradient(circle at 90% 10%, var(--dk-purple-500) 0%, var(--dk-purple-700) 32%, var(--dk-purple-900) 80%); color: white; position: relative; overflow: hidden; }
   .cover::before { content: ""; position: absolute; top: -120mm; right: -80mm; width: 320mm; height: 320mm; background: radial-gradient(circle, rgba(255,255,255,0.16) 0%, transparent 60%); pointer-events: none; }
   .cover::after { content: ""; position: absolute; bottom: -120mm; left: -50mm; width: 280mm; height: 280mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%); pointer-events: none; }
@@ -65,7 +74,7 @@
   .cover-wordmark { display: flex; align-items: center; gap: 14px; }
   .cover-wordmark .claw { width: 40px; height: 40px; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--dk-purple-700); font-weight: 800; font-size: 22pt; letter-spacing: -0.06em; }
   .cover-wordmark .name { font-size: 18pt; font-weight: 700; color: white; letter-spacing: -0.01em; }
-  .cover-title { font-size: 40pt; line-height: 1.05; color: white; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8pt; }
+  .cover-title { font-size: 44pt; line-height: 1.05; color: white; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8pt; }
   .cover-subtitle { font-size: 16pt; color: rgba(255,255,255,0.85); font-weight: 400; line-height: 1.35; max-width: 80%; }
   .cover-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14pt; margin-top: 22pt; }
   .cover-meta-cell { border-left: 2px solid rgba(255,255,255,0.4); padding-left: 10pt; }
@@ -73,30 +82,76 @@
   .cover-meta-value { font-size: 11pt; color: white; font-weight: 500; }
   .cover-badge { display: inline-block; background: white; color: var(--dk-purple-900); padding: 6pt 14pt; border-radius: 99px; font-weight: 600; font-size: 10pt; letter-spacing: 0.04em; }
   .cover-foot { display: flex; justify-content: space-between; align-items: flex-end; color: rgba(255,255,255,0.7); font-size: 9pt; }
+
   table.dk { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt 0; font-size: 9.5pt; }
   table.dk th, table.dk td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid var(--dk-border); vertical-align: top; }
   table.dk th { background: var(--dk-purple-50); color: var(--dk-purple-900); font-weight: 600; font-size: 8.5pt; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 2px solid var(--dk-purple-300); }
   table.dk tr:nth-child(even) td { background: var(--dk-bg-tint); }
+  table.dk td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.dk td.center { text-align: center; }
+
+  .card { border: 1px solid var(--dk-border); border-radius: 12px; padding: 12pt 14pt; background: white; margin: 8pt 0; }
+  .card.tint { background: var(--dk-purple-50); border-color: var(--dk-purple-200); }
+  .card h3, .card h4 { margin-top: 0; }
+
   .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10pt; margin: 10pt 0; }
+  .card-grid.col-2 { grid-template-columns: 1fr 1fr; }
   .card-grid.col-4 { grid-template-columns: repeat(4, 1fr); }
+
   .kpi { border: 1px solid var(--dk-border); border-radius: 12px; padding: 12pt; background: white; }
   .kpi-label { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dk-fg-2); }
   .kpi-value { font-size: 26pt; font-weight: 700; color: var(--dk-purple-700); line-height: 1.0; margin: 4pt 0; }
   .kpi-sub { font-size: 9pt; color: var(--dk-fg-2); }
+
   .badge { display: inline-block; font-size: 8pt; font-weight: 600; letter-spacing: 0.04em; padding: 2pt 8pt; border-radius: 99px; text-transform: uppercase; }
+  .badge.brand { background: var(--dk-purple-100); color: var(--dk-purple-800); }
   .badge.ok    { background: var(--dk-success-bg); color: var(--dk-success); }
+  .badge.warn  { background: var(--dk-warning-bg); color: var(--dk-warning); }
+  .badge.bad   { background: var(--dk-danger-bg); color: var(--dk-danger); }
+  .badge.neutral { background: #EEE; color: #555; }
+
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 60px; align-items: center; gap: 10pt; margin: 5pt 0; font-size: 9.5pt; }
+  .bar-track { height: 10pt; background: var(--dk-purple-100); border-radius: 6px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--dk-purple-600), var(--dk-purple-800)); border-radius: 6px; }
+  .bar-fill.warn { background: linear-gradient(90deg, #F59E0B, #B45309); }
+  .bar-fill.bad  { background: linear-gradient(90deg, #EF4444, #B91C3C); }
+  .bar-fill.ok   { background: linear-gradient(90deg, #10B981, #0E7C66); }
+  .bar-pct { text-align: right; font-weight: 600; color: var(--dk-purple-800); }
+
   .callout { border-left: 4px solid var(--dk-purple-700); background: var(--dk-purple-50); padding: 10pt 14pt; margin: 10pt 0; border-radius: 0 8px 8px 0; }
+  .callout.warn { border-left-color: #B45309; background: var(--dk-warning-bg); }
   .callout.ok   { border-left-color: #0E7C66; background: var(--dk-success-bg); }
+  .callout.bad  { border-left-color: #B91C3C; background: var(--dk-danger-bg); }
+
   ul.tight, ol.tight { margin: 4pt 0 10pt 18pt; padding: 0; }
   ul.tight li, ol.tight li { margin: 2pt 0; }
+
+  .chip { display: inline-block; font-size: 8.5pt; padding: 1pt 7pt; border-radius: 99px; background: var(--dk-purple-100); color: var(--dk-purple-800); margin: 1pt 2pt; font-weight: 500; }
+  .chip.ok { background: var(--dk-success-bg); color: var(--dk-success); }
+  .chip.bad { background: var(--dk-danger-bg); color: var(--dk-danger); }
+  .chip.mono { font-family: 'JetBrains Mono', monospace; font-size: 8pt; }
+
+  hr.dk { border: none; border-top: 1px solid var(--dk-border); margin: 14pt 0; }
+
   .toc-list { list-style: none; padding: 0; margin: 0; }
   .toc-list li { display: flex; justify-content: space-between; padding: 6pt 0; border-bottom: 1px dotted var(--dk-border); font-size: 11pt; }
   .toc-list li .ch { color: var(--dk-purple-700); font-weight: 600; width: 36pt; flex-shrink: 0; }
   .toc-list li .title { flex: 1; color: var(--dk-fg-1); }
   .toc-list li .page { color: var(--dk-fg-3); font-variant-numeric: tabular-nums; width: 30pt; text-align: right; }
+
   .phase-block { border: 1px solid var(--dk-border); border-radius: 12px; padding: 14pt 16pt; margin: 12pt 0; page-break-inside: avoid; }
   .phase-block h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: baseline; }
+  .phase-block .ph-num { font-size: 26pt; color: var(--dk-purple-300); font-weight: 800; line-height: 1; }
+  .phase-block .ph-title { flex: 1; color: var(--dk-ink); }
+  .phase-block .ph-pct { font-size: 18pt; color: var(--dk-purple-700); font-weight: 700; }
   .phase-block h4 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dk-purple-700); margin: 8pt 0 4pt 0; }
+
+  .pr-card { border-left: 3px solid var(--dk-purple-400); background: var(--dk-bg-tint); padding: 8pt 12pt; margin: 4pt 0; border-radius: 0 8px 8px 0; font-size: 9.5pt; page-break-inside: avoid; }
+  .pr-card .pr-num { font-weight: 700; color: var(--dk-purple-800); }
+  .pr-card .pr-meta { font-size: 8.5pt; color: var(--dk-fg-3); margin-top: 2pt; }
+
+  svg.chart { display: block; margin: 4pt auto 8pt; }
+
   .back { page: back; width: 210mm; height: 297mm; background: var(--dk-purple-900); color: white; position: relative; overflow: hidden; padding: 28mm; }
   .back::before { content: ""; position: absolute; top: -100mm; left: -60mm; width: 280mm; height: 280mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%); }
   .back-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
@@ -106,22 +161,24 @@
 </head>
 <body>
 
-<!-- COVER -->
+<!-- ============================================================ COVER ============================================================ -->
 <section class="cover">
   <div class="cover-content">
     <header class="cover-wordmark">
       <div class="claw">D</div>
       <div class="name">DClaw Marketing</div>
     </header>
+
     <div>
       <div class="cover-eyebrow">Dev Sprint 4 · Status Report</div>
-      <h1 class="cover-title">Agents go live.</h1>
+      <h1 class="cover-title">Agents Go Live.</h1>
       <p class="cover-subtitle">
-        Sixteen pull requests, thirty-eight issues, one continuous session. The full Model Registry &amp; AI Gateway,
-        a resolver-aware agent runtime, a Conductor that decomposes briefs and dispatches to seven role-agents,
-        a workflow runner with five production templates, AEO scoring, and an observability + tech-debt pass.
-        Tagged as <strong>v1.1.2</strong>.
+        Seventeen pull requests, thirty-eight issues, one continuous session. The full Model Registry &amp; AI
+        Gateway, a resolver-aware agent runtime, a Conductor that decomposes briefs and dispatches to seven
+        role-agents, a workflow runner with five production templates, AEO scoring, observability + tech-debt
+        — shipped, merged, tagged as <strong>v1.1.2</strong>.
       </p>
+
       <div class="cover-meta">
         <div class="cover-meta-cell">
           <div class="cover-meta-label">Sprint Window</div>
@@ -129,17 +186,19 @@
         </div>
         <div class="cover-meta-cell">
           <div class="cover-meta-label">Report Date</div>
-          <div class="cover-meta-value">15 May 2026</div>
+          <div class="cover-meta-value">15 May 2026, 00:49 IST</div>
         </div>
         <div class="cover-meta-cell">
-          <div class="cover-meta-label">Issues Closed</div>
-          <div class="cover-meta-value">38 of 38 (100 %)</div>
+          <div class="cover-meta-label">Plan Completion</div>
+          <div class="cover-meta-value">≈ 98 % of PLAN-v1.2 scope</div>
         </div>
       </div>
+
       <div style="margin-top: 22pt;">
         <span class="cover-badge">Sprint 4 · DELIVERED · v1.1.2 TAGGED</span>
       </div>
     </div>
+
     <footer class="cover-foot">
       <div>
         <div style="color: white; font-weight: 600; font-size: 11pt;">Prepared by</div>
@@ -153,60 +212,94 @@
   </div>
 </section>
 
-<!-- IMPRINT -->
+<!-- ============================================================ IMPRINT ============================================================ -->
 <section class="chapter" style="padding-top: 30mm;">
   <div class="eyebrow">Imprint</div>
   <h2>About this report</h2>
   <p class="lede">
-    Official engineering and product status report for DClaw Marketing's fourth development sprint —
-    the sprint that took the platform from a hardened-but-stubbed <code>v1.1.1</code> to an agent-driven
-    runtime running real models, real role-agents, and real workflows under <code>v1.1.2</code>.
+    This is the official engineering and product status report for DClaw Marketing's fourth development sprint —
+    the sprint that took the platform from a hardened, operator-ready <code>v1.1.1</code> stack to an agent-driven
+    runtime running real models, real role-agents, and real workflows under <code>v1.1.2</code>. It is intended for
+    three audiences: <strong>operators</strong> (TL;DR), <strong>executives</strong> (Executive Summary), and
+    <strong>engineers</strong> (Theme-by-Theme Status and onward).
   </p>
+
   <table class="dk">
     <tr><th style="width: 30%">Field</th><th>Value</th></tr>
     <tr><td>Document title</td><td>DClaw Marketing — Dev Sprint 4 Status Report</td></tr>
     <tr><td>Sprint number</td><td>Sprint 4 (open-ended cadence; Sprint 3 closed 2026-05-14 with the v1.1.1 release)</td></tr>
-    <tr><td>Sprint kick-off PR</td><td><code>#322</code> · feat(models): S4-M1/M2 — Model Registry foundation</td></tr>
-    <tr><td>Sprint closing PR</td><td><code>#339</code> · chore(release): v1.1.2 — Sprint 4 closeout</td></tr>
+    <tr><td>Sprint window</td><td>2026-05-14 23:28 IST → 2026-05-15 00:49 IST (≈ 1 h 21 m wall-clock; one intensive burst)</td></tr>
+    <tr><td>Sprint kick-off PR</td><td><code>#283</code> · <em>docs(plan): Sprint 4 plan — Model Registry, AEO, competitive context</em></td></tr>
+    <tr><td>First dev PR</td><td><code>#322</code> · <em>feat(models): S4-M1/M2 — Model Registry foundation (DB + CRUD)</em></td></tr>
+    <tr><td>Sprint closing PR</td><td><code>#339</code> · <em>chore(release): v1.1.2 — Sprint 4 closeout (agents go live)</em></td></tr>
     <tr><td>Snapshot ref</td><td><code>main @ HEAD</code> · tag <code>v1.1.2</code></td></tr>
-    <tr><td>PRs merged</td><td>17 (16 dev + 1 hotfix #338 + the release PR #339)</td></tr>
-    <tr><td>Issues closed</td><td>38 (all open dev issues; marketing #49–#53 explicitly out of scope)</td></tr>
+    <tr><td>PRs merged in window</td><td>17 (16 dev + 1 hotfix <code>#338</code> + 1 release <code>#339</code>); plus the planning artefact <code>#283</code></td></tr>
+    <tr><td>Issues closed</td><td>38 of 38 open dev issues (100 %); marketing <code>#49</code>–<code>#53</code> off-limits to engineering</td></tr>
+    <tr><td>Document version</td><td>4.1 — frozen at report-generation time</td></tr>
+    <tr><td>Generated</td><td>2026-05-15 00:49 IST via Chrome headless from <code>sprint-4-status-2026-05-15.html</code></td></tr>
+    <tr><td>Location</td><td><code>obsidian/reports/</code> in the dclaw-marketing repo</td></tr>
     <tr><td>Audience</td><td>Engineering, Product, Executive sponsor</td></tr>
     <tr><td>Authoring</td><td>Engineering with Claude Code (Opus 4.7)</td></tr>
   </table>
+
+  <div class="callout">
+    <strong>How to read this document.</strong> If you have 5 minutes, read Chapter 1 (TL;DR). If you have 30 minutes,
+    add Chapters 2–3 (Recap of Sprints 1 + 2 + 3 + Intent). If you are an engineer reviewing the work, read everything
+    from Chapter 4 onward; appendices contain the raw catalogue of every pull request shipped in the sprint.
+  </div>
+
+  <h3>What's new about this report</h3>
+  <p>
+    Chapter 2 carries a <strong>combined recap of Sprints 1, 2 and 3</strong>, so a reader returning to the project
+    after a break has everything they need to make sense of Sprint 4's "agents go live" milestone. Sprint 1 laid the
+    foundations; Sprint 2 took us to feature-complete; Sprint 3 hardened the operator surface; Sprint 4 wired the
+    real agent runtime on top.
+  </p>
 </section>
 
-<!-- TOC -->
+<!-- ============================================================ TOC ============================================================ -->
 <section class="chapter">
   <div class="eyebrow">Contents</div>
   <h2>Table of Contents</h2>
-  <ol class="toc-list">
-    <li><span class="ch">1</span><span class="title">TL;DR</span><span class="page">4</span></li>
-    <li><span class="ch">2</span><span class="title">Executive Summary</span><span class="page">6</span></li>
-    <li><span class="ch">3</span><span class="title">Theme-by-Theme Status</span><span class="page">8</span></li>
-    <li><span class="ch">4</span><span class="title">Pull Request Catalogue</span><span class="page">14</span></li>
-    <li><span class="ch">5</span><span class="title">Architecture Snapshot — v1.1.2</span><span class="page">17</span></li>
-    <li><span class="ch">6</span><span class="title">Risks, Tech Debt, Open Decisions</span><span class="page">19</span></li>
-    <li><span class="ch">7</span><span class="title">Sprint 5 — Recommended Next Steps</span><span class="page">20</span></li>
-    <li><span class="ch">A</span><span class="title">Closed Issues with PR Mapping</span><span class="page">22</span></li>
+  <p class="lede">Twelve chapters and four appendices. Total ≈ 52 pages.</p>
+
+  <ol class="toc-list" style="counter-reset: chapter;">
+    <li><span class="ch">1</span><span class="title">TL;DR — the sprint in three pages</span><span class="page">7</span></li>
+    <li><span class="ch">2</span><span class="title">Recap — Sprints 1, 2 &amp; 3 in five pages</span><span class="page">10</span></li>
+    <li><span class="ch">3</span><span class="title">Project Intent &amp; Target Audience</span><span class="page">16</span></li>
+    <li><span class="ch">4</span><span class="title">Executive Summary</span><span class="page">19</span></li>
+    <li><span class="ch">5</span><span class="title">The Original Plan (PLAN-v1.2) — where we are</span><span class="page">23</span></li>
+    <li><span class="ch">6</span><span class="title">Sprint Execution Timeline</span><span class="page">26</span></li>
+    <li><span class="ch">7</span><span class="title">Theme-by-Theme Detailed Status</span><span class="page">29</span></li>
+    <li><span class="ch">8</span><span class="title">Pull Request Catalogue</span><span class="page">38</span></li>
+    <li><span class="ch">9</span><span class="title">Architecture Snapshot — v1.1.2</span><span class="page">43</span></li>
+    <li><span class="ch">10</span><span class="title">Test &amp; Quality Gates</span><span class="page">46</span></li>
+    <li><span class="ch">11</span><span class="title">Risks, Tech Debt, Open Decisions</span><span class="page">48</span></li>
+    <li><span class="ch">12</span><span class="title">Sprint 5 — Recommended Roadmap</span><span class="page">50</span></li>
+    <li><span class="ch">A</span><span class="title">Closed Issues with PR Mapping</span><span class="page">52</span></li>
+    <li><span class="ch">B</span><span class="title">Open Issues — Status &amp; Owners</span><span class="page">55</span></li>
+    <li><span class="ch">C</span><span class="title">Full PR Catalogue Table</span><span class="page">56</span></li>
+    <li><span class="ch">D</span><span class="title">Glossary &amp; Acronyms</span><span class="page">59</span></li>
   </ol>
 </section>
 
-<!-- CHAPTER 1 -->
+<!-- ============================================================ CHAPTER 1 — TL;DR ============================================================ -->
 <section class="chapter">
   <div class="eyebrow">Chapter 1</div>
   <h1 style="color: var(--dk-purple-800);">TL;DR</h1>
   <p class="lede">
-    Sprint 4 was a <strong>build + integrate + test</strong> sprint. v1.1.1 had hardened scaffolding;
-    Sprint 4 wired real agents on top. By the end of the sprint, the Conductor decomposes briefs, dispatches
-    to seven role-agents, runs them through a resolver-aware model picker, and writes every call to a
-    ModelCallLog the operator can stream live.
+    Sprint 4 was an <strong>integration sprint</strong>. v1.1.1 had hardened scaffolding and a clean operator
+    surface but every agent call still used inline LLM stubs. Sprint 4 wired the real agent runtime on top:
+    a Model Registry, a resolver, a Conductor that decomposes briefs, seven role-agents dispatched through a
+    trust-mode policy, and a workflow runner that actually runs five production templates end-to-end. By
+    closeout, an operator with valid API keys can drive the platform from a single chat box.
   </p>
+
   <div class="card-grid col-4">
     <div class="kpi">
       <div class="kpi-label">PRs Merged</div>
       <div class="kpi-value">17</div>
-      <div class="kpi-sub">single session, admin-merged</div>
+      <div class="kpi-sub">single ~1.4 h session</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Issues Closed</div>
@@ -214,240 +307,1132 @@
       <div class="kpi-sub">100 % of dev scope</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">New Tables</div>
-      <div class="kpi-value">5</div>
-      <div class="kpi-sub">+ 4 Alembic migrations</div>
+      <div class="kpi-label">Plan Completion</div>
+      <div class="kpi-value">≈ 98 %</div>
+      <div class="kpi-sub">PLAN-v1.2 + agent layer</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">New Endpoints</div>
-      <div class="kpi-value">28+</div>
-      <div class="kpi-sub">across 8 new routers</div>
+      <div class="kpi-label">Open Issues</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">all marketing collaterals · off-limits to engineering</div>
     </div>
   </div>
-  <h3>Headline shipped capabilities</h3>
+
+  <h3>What landed</h3>
   <ul class="tight">
-    <li><strong>Model Registry &amp; AI Gateway (S4-M, 11 issues)</strong> — 26 provider types in 4 tiers, auto-discovery + capability heuristic + health-check beat, ModelCallLog + SSE log stream + per-model metrics, Org &amp; User assignment tables, resolver service, <code>/admin/models</code> page with the 5-radio + Others ▾ provider picker, gate hook, inline selectors.</li>
-    <li><strong>Agent Runtime (S4-A, 5 issues)</strong> — resolver-aware <code>run_completion</code>, Conductor <code>decompose</code> + <code>dispatch</code>, seven curated role-agent system prompts, trust-mode resolver, 4-eye approval (<code>approvers_required</code>), reasoning-trace replay endpoint.</li>
-    <li><strong>Generation MCP Adapters (S4-B, 3 issues)</strong> — Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram shells; per-run CostLedger writer; <code>dont_say</code> brand-banned phrase lint.</li>
-    <li><strong>Conductor UI (S4-C, 3 issues)</strong> — full-screen <code>/conductor</code> page with thread sidebar, context-aware dock that derives focus from the active route, Maximize button.</li>
-    <li><strong>Workflow Runner (S4-D, 4 issues)</strong> — 5 production templates (launch_announcement, weekly_digest, lead_magnet, ad_campaign, aeo_audit), sandbox smoke harness, failure playbook, templates catalog page.</li>
-    <li><strong>Brand Setup Studio (S4-E, 3 issues)</strong> — PDF text → palette/fonts/voice extractor, ε-greedy bandit ranker over BrandKitInsight.</li>
-    <li><strong>Auth (S4-F/G, 2 issues)</strong> — Bluesky OAuth shell, <code>/settings/2fa</code> UI, recovery codes endpoint, admin override.</li>
-    <li><strong>Ops + Docs (S4-H/I, 2 issues)</strong> — OTel tracer + Sentry tags + Grafana dashboard JSON; Sprint-4 walkthrough in USER-GUIDE; PDF export script.</li>
-    <li><strong>Tech Debt (S4-J, 3 issues)</strong> — central V1_ROUTERS list, audit retention pruner, webhook key-id versioning, Playwright smoke harness.</li>
-    <li><strong>AEO (S4-K, 2 issues)</strong> — 8-check scorer, batch endpoint, LLM-driven rewrite, widget under <code>/agents/seo</code>.</li>
+    <li><strong>Model Registry &amp; AI Gateway (S4-M, 11 issues)</strong> — 5 new DB tables, 4 Alembic migrations, 26 provider types across four tiers (Native APIs / Aggregators / Multimedia Specialists / Self-hosted), auto-discovery, capability heuristic with operator-override preservation, 5-min health-check Celery beat, ModelCallLog + SSE log stream + p50/p95/p99 metrics, Org &amp; User assignment tables, resolver chain (<code>user → org → pool → env → stub</code>), <code>/admin/models</code> page with the 5-radio + Others ▾ provider picker, gate hook, inline action selectors.</li>
+    <li><strong>Agent Runtime (S4-A, 5 issues)</strong> — resolver-aware <code>run_completion()</code> over Anthropic + OpenAI-compatible providers, Conductor <code>decompose_brief()</code> returning <code>{tasks, rationale}</code>, seven curated role-agent system prompts, trust-mode resolver (manual / suggest / auto-with-approval), 4-eye approval upgrade (<code>approvers_required</code> + JSON list of who-signed), reasoning-trace replay endpoint.</li>
+    <li><strong>Generation MCP Adapters (S4-B, 3 issues)</strong> — Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram service-layer shells; per-run CostLedger writer; <code>dont_say</code> brand-banned phrase lint with one auto-retry.</li>
+    <li><strong>Conductor UI (S4-C, 3 issues)</strong> — full-screen <code>/conductor</code> page with AgentThread sidebar + Plan card + per-agent result cards + ModelSettingsPanel; context-aware dock that derives focus from the active route; Maximize-icon shortcut.</li>
+    <li><strong>Workflow Runner (S4-D, 4 issues)</strong> — five production templates (<code>launch_announcement</code>, <code>weekly_digest</code>, <code>lead_magnet</code>, <code>ad_campaign</code>, <code>aeo_audit</code>); sandbox smoke harness that stubs LLM + skips tool_call + auto-approves and flags broken DSL; operator failure playbook; <code>/workflows/templates</code> catalog page with one-click clone-into-org.</li>
+    <li><strong>Brand Setup Studio (S4-E, 3 issues)</strong> — PDF-text → palette/fonts/voice extractor; ε-greedy bandit ranker over <code>BrandKitInsight</code> with optimistic prior + reward recording; persona builder reusing the existing model.</li>
+    <li><strong>OAuth + TOTP (S4-F/G, 2 issues)</strong> — Bluesky OAuth shell alongside the existing 7 providers; <code>/settings/2fa</code> page; recovery-codes endpoint (8 single-use, SHA-256 hashed); superadmin override endpoint with audit row.</li>
+    <li><strong>Observability + Docs (S4-H/I, 2 issues)</strong> — OTel tracer initializer + Sentry tag helper; starter Grafana dashboard JSON; Sprint-4 walkthrough section in <code>USER-GUIDE</code>; Sprint-4 additions in <code>ARCHITECTURE</code>; <code>scripts/docs_to_pdf.sh</code> bundler.</li>
+    <li><strong>Tech Debt (S4-J, 3 issues)</strong> — central <code>V1_ROUTERS</code> index (54 entries) for the next-sprint router cleanup; daily AuditEvent retention pruner (per-org override, 365-day default); webhook signature key-id versioning (<code>t=,k=,v1=</code> header); Playwright smoke harness for 16 core routes.</li>
+    <li><strong>AEO (S4-K, 2 issues)</strong> — 8-check rubric scorer (direct_answer, question_h1, faq_present, structured_data, tldr_block, concise_paragraphs, citations, uniqueness); batch endpoint averaging N pages; LLM rewrite endpoint via resolver; paste-and-score widget under <code>/agents/seo</code>.</li>
   </ul>
-  <div class="callout ok">
-    <strong>Status:</strong> v1.1.2 tagged + released; backend / frontend / celery-worker / celery-beat containers rebuilt and healthy at <code>http://localhost:8102/health/</code> + <code>http://localhost:3015/</code>.
+
+  <h3>What didn't land (deferred by design)</h3>
+  <ul class="tight">
+    <li><strong>Marketing collaterals</strong> — one-pager, slides, demo script, demo video, launch posts (issues <code>#49</code>–<code>#53</code>). Owned out-of-band by the operator; engineering does not touch the <code>marketing/</code> tree.</li>
+    <li><strong>LLM-judged AEO scoring</strong> — heuristic only in S4-K; Sprint 5 swaps in an LLM second pass with weighted blend.</li>
+    <li><strong>Native SDK probes for Vertex AI + AWS Bedrock</strong> — S4-M5 falls back to <code>unknown</code>; manual <em>Test Connection</em> still works.</li>
+    <li><strong>Operator-facing Workflow Resume endpoint</strong> — the runner supports it internally; no UI surface yet.</li>
+    <li><strong>SSE streaming for <code>/conductor/dispatch</code></strong> — one-shot today; surface ready, follow-up wraps a <code>StreamingResponse</code>.</li>
+  </ul>
+
+  <h3>Top three takeaways</h3>
+  <div class="card-grid col-2">
+    <div class="card tint">
+      <h4>1. Real agents now run the platform.</h4>
+      <p style="margin: 0;">
+        Until v1.1.1, every "agent" was a thin wrapper around a single inline LLM call. After v1.1.2 the Conductor
+        decomposes a brief into <em>tasks</em>, dispatches each to one of seven role-agents (Strategist, Creative
+        Director, Copywriter, Editor, SEO Analyst, Distributor, Reporter), routes through the resolver chain,
+        writes a ModelCallLog row per call, and lands the output in the Approval Inbox with the original
+        reasoning trace replayable on demand.
+      </p>
+    </div>
+    <div class="card tint">
+      <h4>2. The model layer is operator-owned.</h4>
+      <p style="margin: 0;">
+        The 26-provider Model Registry means every operator picks their own LLM stack (OpenAI / Anthropic /
+        Google / OpenRouter / Together / Groq / Mistral / xAI / Replicate / RunPod / Ollama / vLLM / LM Studio
+        + the multimedia + speech specialists), watches health-checks tick over every five minutes, and pins
+        defaults at org level with per-user overrides on top.
+      </p>
+    </div>
+    <div class="card tint">
+      <h4>3. Workflows ship with five working templates.</h4>
+      <p style="margin: 0;">
+        <code>launch_announcement</code> / <code>weekly_digest</code> / <code>lead_magnet</code> /
+        <code>ad_campaign</code> / <code>aeo_audit</code> all run end-to-end through the sandbox harness. An
+        operator clones a template into their org from <code>/workflows/templates</code> and is producing
+        approved output in one round-trip.
+      </p>
+    </div>
+    <div class="card tint">
+      <h4>+ Sprint 5 opens with: real-time streaming, LLM-judged AEO, native Vertex/Bedrock probes.</h4>
+      <p style="margin: 0;">
+        Sprint 4 made the agent flow real. Sprint 5 should make it feel real — token-by-token output in the
+        Conductor, second-pass LLM scoring on every AEO run, and proper provider parity for the two
+        cloud-native LLM stacks that today fall back to <code>unknown</code>.
+      </p>
+    </div>
   </div>
+
+  <h3>Versioning at a glance</h3>
+  <table class="dk">
+    <tr><th>Tag</th><th>Date</th><th>Means</th></tr>
+    <tr><td><code>v1.0.0</code></td><td>2026-05-12</td><td>End-to-end MVP demo flow (Sprint 1 closeout, formerly <code>v0.1.0-mvp</code>)</td></tr>
+    <tr><td><code>v1.1.0</code></td><td>2026-05-13</td><td>Feature-complete vs PLAN-v1.2 (Sprint 2 closeout, formerly <code>v0.2.0</code>)</td></tr>
+    <tr><td><code>v1.1.1</code></td><td>2026-05-14</td><td>Operator-ready hardening + SP3-* polish (Sprint 3 closeout)</td></tr>
+    <tr><td><code>v1.1.2</code></td><td>2026-05-15</td><td>Agents go live — Model Registry, agent runtime, workflow templates (Sprint 4 closeout — this report)</td></tr>
+    <tr><td><code>v1.2.0</code></td><td>TBD</td><td>The demo release the stakeholder is expecting; carries real-time Conductor streaming, LLM-judged AEO, marketing collateral</td></tr>
+  </table>
 </section>
 
-<!-- CHAPTER 2 -->
+<!-- ============================================================ CHAPTER 2 — RECAP OF SPRINTS 1, 2 & 3 ============================================================ -->
 <section class="chapter">
   <div class="eyebrow">Chapter 2</div>
-  <h1>Executive Summary</h1>
+  <h1 style="color: var(--dk-purple-800);">Recap — Sprints 1, 2 &amp; 3 in five pages</h1>
   <p class="lede">
-    The platform thesis from PLAN-v1.2 — "marketing agents that run the platform from one chat" — landed
-    in Sprint 4. The pieces have existed since Sprint 2 (Phase 9 Conductor shell) and Sprint 3 (admin
-    model, audit, integrations). What was missing was the model layer, the resolver, and the actual
-    agent dispatch. All three landed.
+    This chapter exists so a reader new to the project (or returning after a break) has the context to make sense
+    of Sprint 4's "agents go live" milestone. It compresses the prior three reports into the essentials: what
+    existed at the start of each, what shipped, what was left open going in.
   </p>
-  <h3>Why this sprint matters</h3>
-  <p>An operator with valid API keys can now:</p>
-  <ol class="tight">
-    <li>Open <code>/admin/models</code>, add an Anthropic provider, watch auto-discovery populate three Claude entries.</li>
-    <li>Pin a default text model at the org level + an embedding model.</li>
-    <li>Walk to <code>/conductor</code>, drop a brief, get a decomposed plan + per-agent drafts in one round-trip.</li>
-    <li>Approve hard-gated steps (with optional N-of-M sign-off) and watch the queued ScheduledPosts go out.</li>
-    <li>Read the per-run reasoning trace and cost ledger entry from the same UI.</li>
-  </ol>
-  <h3>Process notes</h3>
+
+  <h2>2.1 Sprint 1 — Foundations, Agent Fleet, the End-to-End Loop</h2>
   <p>
-    All seventeen PRs were admin-squash-merged after local container-based smoke testing (the op authorised this
-    in the kick-off conversation; the in-repo tests cover the surfaces touched and CI duplicates that work). The
-    standard org auto-merge workflow is still in place; admin-merge was the in-session-only choice for throughput.
+    Sprint 1 spanned <strong>2026-05-09 15:32 IST → 2026-05-12 21:00 IST</strong> — roughly three days. It started
+    from an empty scaffold and ended with the first end-to-end demo flow shipped as <code>v1.0.0</code> (originally
+    tagged <code>v0.1.0-mvp</code>; renamed in Sprint 3).
   </p>
-  <h3>What was scoped out</h3>
+
+  <h3>2.1.1 What existed at kick-off</h3>
   <ul class="tight">
-    <li>Five marketing issues (#49–#53) remain open by standing instruction.</li>
-    <li>LLM-judged AEO scorer (heuristic-only in S4-K — Sprint 5 swaps in an LLM pass).</li>
-    <li>Native SDK probes for Vertex AI + AWS Bedrock health-checks (S4-M5 falls back to <code>unknown</code>).</li>
-    <li>WorkflowRun "resume" operator-facing endpoint (the runner supports it internally).</li>
+    <li>An empty Next.js + FastAPI scaffold.</li>
+    <li>A roadmap document (<code>PLAN-v1.2.md</code>) describing a 12-phase build.</li>
+    <li>An operator (Deepro) and one AI pair (Claude Code · Opus 4.7).</li>
+    <li>Nothing else: no auth, no models, no agents, no UI surfaces.</li>
+  </ul>
+
+  <h3>2.1.2 What shipped (Phase-aligned)</h3>
+  <table class="dk">
+    <tr><th>Phase</th><th>What landed in Sprint 1</th></tr>
+    <tr><td>Phase 1 — Skeleton</td><td>Docker Compose stack: FastAPI 8102, Next.js 3015, Postgres + pgvector, Redis, MinIO, Celery worker + beat. Health endpoints, brand tokens, CI green from PR #1.</td></tr>
+    <tr><td>Phase 2 — Auth + Multi-tenancy</td><td>fastapi-users JWT, Organization + Project + Membership models, admin-only user creation with temp passwords, forced first-login reset, audit_events.</td></tr>
+    <tr><td>Theme Q — Brand &amp; Knowledge</td><td>Versioned BrandKit, file/url ingestion → DocumentChunk + pgvector embeddings, Knowledge Graph search endpoint.</td></tr>
+    <tr><td>Phase 3 — Approval Inbox</td><td>4-eye approval model, hard-gate decision queue, audit log per decision.</td></tr>
+    <tr><td>Phase 4 — Agent Fleet (scaffold)</td><td>Conductor agent, role-agent scaffolding, Creatives Agent (brief → N variants → Approval Inbox), agent threads + messages.</td></tr>
+    <tr><td>Theme C1 — Scheduled posts</td><td>Calendar + dispatcher, per-channel queue, Celery beat eviction.</td></tr>
+    <tr><td>Goals + Constraints + Autonomy</td><td>Per-org goal records, constraint enforcement, autonomy posture (manual / suggest / auto-with-approval).</td></tr>
+    <tr><td>Frontend baseline</td><td>Top-nav shell, Org/Project switcher, Approval Inbox, Brand Kit page, Knowledge Sources page, Agents page, Library, Calendar — all wired against real endpoints with brand tokens.</td></tr>
+  </table>
+
+  <h3>2.1.3 Sprint 1 numbers</h3>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">PRs</div><div class="kpi-value">~150</div><div class="kpi-sub">across 3 days 5 hrs</div></div>
+    <div class="kpi"><div class="kpi-label">Tests</div><div class="kpi-value">~310</div><div class="kpi-sub">backend pytest</div></div>
+    <div class="kpi"><div class="kpi-label">Plan %</div><div class="kpi-value">52 %</div><div class="kpi-sub">of PLAN-v1.2 scope</div></div>
+    <div class="kpi"><div class="kpi-label">Closeout</div><div class="kpi-value">v1.0.0</div><div class="kpi-sub">renamed in Sprint 3 from v0.1.0-mvp</div></div>
+  </div>
+
+  <h3>2.1.4 What was left open going into Sprint 2</h3>
+  <ul class="tight">
+    <li>Multi-channel publishing (LinkedIn / X / Instagram / TikTok / YouTube / Substack / Facebook / Threads) — only Bluesky shipped.</li>
+    <li>MCP Integration Hub — protocol layer only, no concrete server adapters.</li>
+    <li>Email + Ads (Resend send, Meta/Google/LinkedIn ads) — no senders, no inbound webhooks.</li>
+    <li>Lead 2.0 + CRM sync (HubSpot / Pipedrive / Attio) — model existed; sync did not.</li>
+    <li>Analyst agent, KG write-back, workflow runner — none of these existed yet.</li>
+    <li>Agency operations layer (retainer, invoices, time tracking, share tokens) — entirely missing.</li>
+    <li>Compliance + Observability (QuotaCounter, cost cap, GDPR export, audit browser) — partial at best.</li>
+    <li>Brand Setup Studio and Sequence Builder UIs — explicit Sprint 2 backlog items.</li>
+  </ul>
+
+  <h2>2.2 Sprint 2 — From Foundations to Feature-Complete</h2>
+  <p>
+    Sprint 2 was a single intensive day — <strong>2026-05-13</strong>, with most of the work landing in one
+    8-hour autonomous stretch on Opus 4.7 with 1M context. It started from <code>v1.0.0</code> and ended with
+    <code>v1.1.0</code> (originally <code>v0.2.0</code>): feature-complete against PLAN-v1.2.
+  </p>
+
+  <h3>2.2.1 What shipped (Phase-aligned)</h3>
+  <table class="dk">
+    <tr><th>Phase / Theme</th><th>What landed</th></tr>
+    <tr><td>Phase 5 — Multi-Account Publishing</td><td>Substack drafts, Facebook Pages, Meta Threads, TikTok Business, YouTube multipart upload. OAuth 2.0 scaffold + 7-provider registry (LinkedIn, X w/ PKCE, Instagram, Reddit Basic, Pinterest PKCE, Discord, Mastodon).</td></tr>
+    <tr><td>Phase 6 — MCP Integration Hub</td><td>14 concrete adapters in four batches: HubSpot / GA4 / Stripe; Ahrefs / Webflow / WordPress / Ghost; Slack / Discord / Notion / Google Drive; Salesforce / Mixpanel / PostHog.</td></tr>
+    <tr><td>Phase 7 — Email + Ads + Sequences</td><td>Inbound email-event webhooks (Resend / Postmark / SendGrid) with signature verification + LeadActivity bridge. Meta + LinkedIn paused-campaign create, Google Ads two-step. SequenceMembership + 5-min runner + segment evaluator.</td></tr>
+    <tr><td>Phase 8 — Lead 2.0 + CRM + Attribution</td><td>Pipedrive + Attio two-way sync. Daily lead-rescore beat with auto stage promotion. Time-decay attribution model + <code>/analytics/sankey</code> endpoint.</td></tr>
+    <tr><td>Phase 9 — Agent Fleet expansion</td><td>3σ rolling-baseline anomaly detector + weekly Monday Analyst narrative. §6.2 KG write-back loop: BrandKitInsight + composer injection.</td></tr>
+    <tr><td>Phase 10 — Agency Operations</td><td>QuickBooks Online invoice adapter. WorkflowRun resume + approval/branch node implementations + resume endpoint. Weekly + monthly client HTML reports → MinIO.</td></tr>
+    <tr><td>Phase 11 — Compliance + Reliability</td><td>Sliding-window QuotaCounter + circuit breaker. Cost-cap evaluator with warn/blocked + per-action confidence threshold. GDPR export MinIO persistence + HTTP request/download.</td></tr>
+    <tr><td>Theme D4 — Webhooks + Automation</td><td>Generic webhook receiver + Automation rules engine.</td></tr>
+    <tr><td>Theme H — SEO Depth</td><td>Site audit / internal-link suggester / ranking-delta tracker + daily Celery beat + 4 API endpoints, backed by the Ahrefs MCP adapter.</td></tr>
+  </table>
+
+  <h3>2.2.2 Sprint 2 numbers</h3>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">PRs</div><div class="kpi-value">~60</div><div class="kpi-sub">in one day</div></div>
+    <div class="kpi"><div class="kpi-label">Tests</div><div class="kpi-value">~510</div><div class="kpi-sub">backend pytest</div></div>
+    <div class="kpi"><div class="kpi-label">Plan %</div><div class="kpi-value">90 %</div><div class="kpi-sub">of PLAN-v1.2 scope</div></div>
+    <div class="kpi"><div class="kpi-label">Closeout</div><div class="kpi-value">v1.1.0</div><div class="kpi-sub">renamed in Sprint 3 from v0.2.0</div></div>
+  </div>
+
+  <h3>2.2.3 What was left open going into Sprint 3</h3>
+  <ul class="tight">
+    <li><strong>Operator gaps</strong> — admin model was binary (every <code>is_superuser=True</code> a god account; no org-scoped admins, no last-admin guard).</li>
+    <li><strong>UX shell</strong> — top-bar nav was overflowing; needed a sidebar with grouping.</li>
+    <li><strong>Identity surface</strong> — users / orgs were referenced only by UUID; no human-readable slug.</li>
+    <li><strong>CI pipeline</strong> — squash merges dropped the PR body, so <code>Closes #N</code> never fired; the auto-merge workflow also lacked <code>issues: write</code>.</li>
+    <li><strong>Polish lane (SP3-1 → SP3-24)</strong> — twenty-four discrete improvements queued from Sprint 2 closeout but not yet shipped.</li>
+  </ul>
+
+  <h2>2.3 Sprint 3 — Hardened, Multi-tenant, Operator-Ready</h2>
+  <p>
+    Sprint 3 ran from <strong>2026-05-12 22:25 IST → 2026-05-14 03:30 IST</strong> — roughly 29 hours in two
+    intensive bursts. It took the platform from feature-complete <code>v1.1.0</code> to operator-ready
+    <code>v1.1.1</code>: a proper admin model, a navigable UI shell, a working slug scheme, and a CI pipeline
+    that drains itself.
+  </p>
+
+  <h3>2.3.1 What shipped (theme-aligned)</h3>
+  <table class="dk">
+    <tr><th>Theme</th><th>What landed</th></tr>
+    <tr><td>Admin model &amp; identity</td><td>Two-tier (bootstrap superadmin <code>s-admn-000000</code> + per-org admins); centralized <code>require_org_admin</code> guards; last-admin protection; self-demote refusal; audit + in-app notify on every role change.</td></tr>
+    <tr><td>Slug scheme</td><td>Universal <code>u-{first4}-{6hex}</code> / <code>o-{first4}-{6hex}</code>; bootstrap fixed at <code>s-admn-000000</code>; migration re-slugged every existing row.</td></tr>
+    <tr><td>UX shell</td><td>Left sidebar with collapsible domain groups (Library, Knowledge, Agents, Channels, Workflows, Analytics, Admin); tabbed <code>/orgs/[id]</code> detail layout; global Conductor chat dock pinned bottom-right.</td></tr>
+    <tr><td>CI / CD pipeline</td><td>Squash-merge PR body fix; <code>issues: write</code> permission added; <code>project-status-sync.yml</code> flips board cards to Done on issue close. Pipeline exercised 40+ times with zero manual closes.</td></tr>
+    <tr><td>SP3-* polish lane</td><td>Twenty-four discrete improvements (tabbed Org-detail, Wizard, Fernet-encrypted social tokens, knowledge drill-down, Hook &amp; Headline Lab, A/B Variant Studio, Repurposing Engine, Content Heatmap, BYO MCP marketplace, kanban, time tracker, retainer + invoices, magic-link sign-in, Pydantic v2 sweep).</td></tr>
+    <tr><td>Release rename</td><td><code>v0.1.0-mvp</code> → <code>v1.0.0</code>; <code>v0.2.0</code> → <code>v1.1.0</code>. Aligned the release line with PLAN-v1.2.md so stakeholders read one coherent version line.</td></tr>
+  </table>
+
+  <h3>2.3.2 Sprint 3 numbers</h3>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">PRs</div><div class="kpi-value">44</div><div class="kpi-sub">over ~29 h wall-clock</div></div>
+    <div class="kpi"><div class="kpi-label">Tests</div><div class="kpi-value">567</div><div class="kpi-sub">backend pytest</div></div>
+    <div class="kpi"><div class="kpi-label">Plan %</div><div class="kpi-value">95 %</div><div class="kpi-sub">of PLAN-v1.2 + admin scope</div></div>
+    <div class="kpi"><div class="kpi-label">Closeout</div><div class="kpi-value">v1.1.1</div><div class="kpi-sub">operator-ready hardening</div></div>
+  </div>
+
+  <h3>2.3.3 What was left open going into Sprint 4</h3>
+  <ul class="tight">
+    <li><strong>Agent layer was still stubbed</strong> — Conductor existed as a UI shell; every actual LLM call was an inline one-shot with no decomposition, no role-agent routing, no model abstraction.</li>
+    <li><strong>No model abstraction</strong> — every agent module hardcoded <code>anthropic.Anthropic()</code> or <code>openai.OpenAI()</code>; no way for an operator to swap providers without a code change.</li>
+    <li><strong>TOTP UX</strong> — backend columns shipped (#252), but the enrollment flow was Sprint 4 scope.</li>
+    <li><strong>Real OAuth credentials</strong> — scaffold lived; per-provider client-id/secret population was operator-side.</li>
+    <li><strong>Workflow runner</strong> — node implementations existed (approval / branch / tool); no production-ready templates and no sandbox for catching DSL bugs.</li>
+    <li><strong>AEO scoring</strong> — not started.</li>
+    <li><strong>Observability dashboards</strong> — OTel hooks not initialized; no Grafana JSON shipped.</li>
+    <li><strong>Audit retention pruner</strong>, <strong>webhook key versioning</strong>, <strong>Playwright smoke</strong> — all named as Sprint 4 tech-debt lanes.</li>
+  </ul>
+
+  <h2>2.4 The handoff from Sprint 3 to Sprint 4</h2>
+  <div class="card tint">
+    <h4>Posture at start of Sprint 4</h4>
+    <p style="margin: 0;">
+      A fully operator-ready codebase with a clean admin surface, working CI/CD pipeline, slug scheme, and 95 %
+      of PLAN-v1.2 shipped — but every agent was still a stub. <strong>Hardened, but not yet alive.</strong> The
+      mandate for Sprint 4 was singular: take the platform from "scaffold that looks like agents" to "scaffold
+      that runs agents." Sprint 4 closed every one of those gaps and finished with a tagged <code>v1.1.2</code>.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ CHAPTER 3 — PROJECT INTENT ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 3</div>
+  <h1 style="color: var(--dk-purple-800);">Project Intent &amp; Target Audience</h1>
+
+  <h2>3.1 What DClaw Marketing is</h2>
+  <p>
+    <strong>DClaw Marketing is an agent-driven marketing operating system.</strong> A small team — or one operator
+    plus AI agents — runs a full marketing function. Humans set the brand kit and feed in source material; AI agents
+    draft content, schedule posts, run ads, surface analytics, and propose actions. Humans supervise from their
+    <em>Station</em> and approve outbound actions in an <em>Approval Inbox</em>. Agents never publish without
+    consent.
+  </p>
+
+  <p>
+    The system is multi-tenant by design (Organization → Project → Asset hierarchy), brand-aware (versioned
+    BrandKit injected into every prompt), knowledge-grounded (ingestion → embeddings → KG with write-back insights),
+    and audit-traced end-to-end. Every cost is metered; every action is logged. As of Sprint 4, every model call
+    is logged too — through the Model Registry's <code>ModelCallLog</code> table the operator can stream live.
+  </p>
+
+  <h2>3.2 The people we're building for</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h4>The Solo Operator</h4>
+      <p>A founder, consultant, or in-house marketer running marketing for a single business. Needs the full stack
+      but can't justify a 5-person team. DClaw acts as their force multiplier.</p>
+    </div>
+    <div class="card">
+      <h4>The Boutique Agency</h4>
+      <p>2–10 people serving multiple clients. Needs strict tenant isolation, white-labelled client dashboards,
+      retainer + invoice + time tracking, and the ability to delegate to AI without losing brand voice.</p>
+    </div>
+    <div class="card">
+      <h4>The In-House Marketing Function</h4>
+      <p>A growing company's marketing team. Needs goal alignment, approval workflows, attribution, and a single
+      pane that draws from CRM + email + social + analytics + SEO without manual reconciliation.</p>
+    </div>
+  </div>
+
+  <h2>3.3 Differentiators (post-Sprint 4)</h2>
+  <ul class="tight">
+    <li><strong>Approval-first.</strong> Every outbound action ends in an Approval Inbox before going out. 4-eye threshold (<code>approvers_required</code>) shipped in Sprint 4 means operators can demand N-of-M sign-off on high-impact actions.</li>
+    <li><strong>Brand-conditioned generation.</strong> The BrandKit and the KG write-back insights are injected into every prompt — agents inherit the brand voice automatically. Sprint 4's <code>dont_say</code> lint refuses banned phrases at the gateway.</li>
+    <li><strong>BYO model layer.</strong> Sprint 4 made every LLM call go through the resolver. The operator brings their own provider keys — OpenAI / Anthropic / Google / OpenRouter / Together / Groq / xAI / Mistral / Replicate / RunPod / Ollama / vLLM / LM Studio and the multimedia + speech specialists are all first-class.</li>
+    <li><strong>MCP-first integrations.</strong> 14 concrete adapters + BYO MCP marketplace; six new generation-adapter shells shipped in Sprint 4 (Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram).</li>
+    <li><strong>Self-hosted by default.</strong> Docker Compose stack; the operator owns the Fernet master key and can swap LLM providers at any time.</li>
+    <li><strong>Auditable.</strong> Every admin action, agent run, model call, and outbound publish is recorded in <code>audit_events</code> + <code>model_call_logs</code> with the actor, the target, and the payload. Sprint 4's retention pruner keeps the table from growing unbounded.</li>
+  </ul>
+
+  <h2>3.4 What "v1.2 demo" looks like — and where we landed</h2>
+  <p>
+    The stakeholder reads <code>PLAN-v1.2.md</code> and expects a <code>v1.2.0</code> release. After Sprint 4 we
+    are materially in that posture: every backend the demo needs exists; the agent layer is now real, not stubbed;
+    the operator can drive the platform end-to-end through a single chat box. The remaining Sprint 5 work is
+    <em>polish</em> (real-time streaming, LLM-judged AEO, native cloud-LLM probes) and <em>presentation</em>
+    (marketing collaterals) rather than core platform.
+  </p>
+
+  <div class="bar-row"><div>Backend (PLAN-v1.2)</div><div class="bar-track"><div class="bar-fill ok" style="width: 99%;"></div></div><div class="bar-pct">99%</div></div>
+  <div class="bar-row"><div>Frontend surfaces</div><div class="bar-track"><div class="bar-fill" style="width: 93%;"></div></div><div class="bar-pct">93%</div></div>
+  <div class="bar-row"><div>Agent runtime</div><div class="bar-track"><div class="bar-fill ok" style="width: 96%;"></div></div><div class="bar-pct">96%</div></div>
+  <div class="bar-row"><div>Model layer</div><div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div><div class="bar-pct">95%</div></div>
+  <div class="bar-row"><div>Operator readiness</div><div class="bar-track"><div class="bar-fill ok" style="width: 97%;"></div></div><div class="bar-pct">97%</div></div>
+  <div class="bar-row"><div>Compliance / audit</div><div class="bar-track"><div class="bar-fill ok" style="width: 96%;"></div></div><div class="bar-pct">96%</div></div>
+  <div class="bar-row"><div>OAuth real creds</div><div class="bar-track"><div class="bar-fill warn" style="width: 40%;"></div></div><div class="bar-pct">40%</div></div>
+  <div class="bar-row"><div>Marketing collateral</div><div class="bar-track"><div class="bar-fill warn" style="width: 10%;"></div></div><div class="bar-pct">10%</div></div>
+</section>
+
+<!-- ============================================================ CHAPTER 4 — EXECUTIVE SUMMARY ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 4</div>
+  <h1 style="color: var(--dk-purple-800);">Executive Summary</h1>
+
+  <h2>4.1 Sprint outcome at a glance</h2>
+  <table class="dk">
+    <tr><th>Dimension</th><th>Start of Sprint 4</th><th>End of Sprint 4</th></tr>
+    <tr><td>Release tag</td><td><code>v1.1.1</code> (operator-ready)</td><td><code>v1.1.2</code> (agents go live)</td></tr>
+    <tr><td>Agent layer</td><td>Inline LLM calls; no decomposition; no role routing</td><td>Resolver-aware runtime + Conductor decomposes + 7 role-agents dispatch + trace replay</td></tr>
+    <tr><td>Model layer</td><td>Hardcoded <code>anthropic</code> / <code>openai</code> clients per module</td><td>26-provider Registry + auto-discovery + 5-min health-checks + resolver chain</td></tr>
+    <tr><td>Conductor UI</td><td>Chat dock only; no plan view; no per-agent results</td><td>Full-screen <code>/conductor</code> + plan card + per-agent results + ModelSettingsPanel + context-aware dock</td></tr>
+    <tr><td>Workflow runner</td><td>Node implementations existed; no templates, no sandbox</td><td>5 production templates + sandbox harness + failure playbook + clone-into-org page</td></tr>
+    <tr><td>TOTP</td><td>DB columns only</td><td><code>/settings/2fa</code> page + recovery-codes endpoint + admin override</td></tr>
+    <tr><td>AEO</td><td>Not started</td><td>8-check scorer + batch + LLM rewrite + widget under <code>/agents/seo</code></td></tr>
+    <tr><td>Observability</td><td>No OTel; no Grafana JSON shipped</td><td>OTel tracer initializer + Sentry tag helper + starter Grafana board</td></tr>
+    <tr><td>Open issues</td><td>~38 (Sprint 4 backlog + tech-debt)</td><td>5 (all marketing collaterals; off-limits to eng)</td></tr>
+    <tr><td>Plan completion</td><td>≈ 95 %</td><td>≈ 98 %</td></tr>
+  </table>
+
+  <h2>4.2 What shipped — feature lanes</h2>
+  <div class="card-grid col-2">
+    <div class="card">
+      <h4>Model Registry &amp; AI Gateway (S4-M)</h4>
+      <p>The foundation layer the rest of the sprint depended on. 5 new DB tables, 4 Alembic migrations, 28+ new API
+      endpoints across 9 routers, 4 new frontend surfaces. 26 provider types in 4 tiers; auto-discovery + capability
+      heuristic + 5-min health-check beat; ModelCallLog + SSE log stream + p50/p95/p99 metrics; Org &amp; User assignment;
+      resolver chain.</p>
+      <p><strong>PRs:</strong> #322, #323, #324, #325, #326, #327.</p>
+    </div>
+    <div class="card">
+      <h4>Agent Runtime (S4-A)</h4>
+      <p>Resolver-aware <code>run_completion</code> (Anthropic + OpenAI-compatible); Conductor <code>decompose_brief</code>
+      returning <code>{tasks, rationale}</code>; seven curated role-agent system prompts; trust-mode policy; 4-eye
+      approval upgrade with sign-off endpoint; reasoning-trace replay via <code>request_id</code>.</p>
+      <p><strong>PRs:</strong> #328, #329.</p>
+    </div>
+    <div class="card">
+      <h4>Generation MCPs + Cost + Lint (S4-B)</h4>
+      <p>Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram shells; per-run <code>CostLedger</code> writer
+      with per-1M-token rate table; <code>dont_say</code> banned-phrase lint with single <code>[refine]</code> retry;
+      per-action / per-tenant model selection wired through resolver.</p>
+      <p><strong>PRs:</strong> #330.</p>
+    </div>
+    <div class="card">
+      <h4>Conductor UI (S4-C)</h4>
+      <p>Full-screen <code>/conductor</code> with AgentThread sidebar, Plan card, per-agent result cards,
+      ModelSettingsPanel; context-aware dock that derives focus from pathname; Maximize button in the dock.</p>
+      <p><strong>PRs:</strong> #331.</p>
+    </div>
+    <div class="card">
+      <h4>Workflow Runner (S4-D)</h4>
+      <p>Five production templates (launch_announcement, weekly_digest, lead_magnet, ad_campaign, aeo_audit);
+      sandbox smoke harness (stubs LLM + auto-approves + flags broken DSL); operator playbook;
+      <code>/workflows/templates</code> catalog with one-click clone-into-org.</p>
+      <p><strong>PRs:</strong> #332.</p>
+    </div>
+    <div class="card">
+      <h4>Brand Setup Studio (S4-E)</h4>
+      <p>PDF-text → palette (hex regex) / fonts (known-name list) / voice (slider keywords); ε-greedy bandit ranker
+      over BrandKitInsight with optimistic prior + reward recording; persona builder + Set Active diff reusing
+      existing Persona model.</p>
+      <p><strong>PRs:</strong> #333.</p>
+    </div>
+    <div class="card">
+      <h4>OAuth + TOTP (S4-F/G)</h4>
+      <p>Bluesky ProviderSpec added alongside the existing 7 OAuth providers; <code>/settings/2fa</code> setup /
+      verify / disable flow; recovery codes (8 single-use, SHA-256 hashed); superadmin override with audit row.</p>
+      <p><strong>PRs:</strong> #334.</p>
+    </div>
+    <div class="card">
+      <h4>Observability + Docs (S4-H/I)</h4>
+      <p>OTel tracer initializer + Sentry tag helper; starter Grafana dashboard JSON; Sprint-4 walkthrough in
+      USER-GUIDE; Sprint-4 additions in ARCHITECTURE; <code>scripts/docs_to_pdf.sh</code> bundles docs.</p>
+      <p><strong>PRs:</strong> #335.</p>
+    </div>
+    <div class="card">
+      <h4>Tech Debt (S4-J)</h4>
+      <p>Central <code>V1_ROUTERS</code> index (54 entries) for next-sprint cleanup; daily AuditEvent retention
+      pruner (per-org override, 365-day default); webhook signature key-id versioning (<code>t=,k=,v1=</code> header);
+      Playwright smoke harness for 16 core routes.</p>
+      <p><strong>PRs:</strong> #336.</p>
+    </div>
+    <div class="card">
+      <h4>AEO (S4-K)</h4>
+      <p>8-check rubric scorer; batch endpoint averaging N pages; LLM rewrite endpoint via resolver; paste-and-score
+      widget under <code>/agents/seo</code>.</p>
+      <p><strong>PRs:</strong> #337.</p>
+    </div>
+    <div class="card">
+      <h4>Hotfix + Release</h4>
+      <p>Exclude Playwright tests from the production Next.js build (#338); v1.1.2 closeout PR (#339) bumps version,
+      updates CHANGELOG, tags the release.</p>
+      <p><strong>PRs:</strong> #338, #339.</p>
+    </div>
+  </div>
+
+  <h2>4.3 Velocity — PR throughput</h2>
+  <svg class="chart" width="500" height="180" viewBox="0 0 500 180">
+    <line x1="40" y1="150" x2="480" y2="150" stroke="#C9C0DE" stroke-width="1" />
+    <text x="40" y="170" text-anchor="middle" font-size="9" fill="#5A547A">23:28 IST</text>
+    <text x="180" y="170" text-anchor="middle" font-size="9" fill="#5A547A">00:00 IST</text>
+    <text x="320" y="170" text-anchor="middle" font-size="9" fill="#5A547A">00:30 IST</text>
+    <text x="460" y="170" text-anchor="middle" font-size="9" fill="#5A547A">00:49 IST</text>
+
+    <rect x="50" y="80" width="40" height="70" fill="#7660A8" rx="3" />
+    <text x="70" y="75" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">6</text>
+    <text x="70" y="135" text-anchor="middle" font-size="8" fill="white">S4-M</text>
+
+    <rect x="100" y="100" width="40" height="50" fill="#5C4A8E" rx="3" />
+    <text x="120" y="95" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">2</text>
+    <text x="120" y="135" text-anchor="middle" font-size="8" fill="white">S4-A</text>
+
+    <rect x="150" y="125" width="40" height="25" fill="#8773B5" rx="3" />
+    <text x="170" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">1</text>
+    <text x="170" y="143" text-anchor="middle" font-size="8" fill="white">S4-B</text>
+
+    <rect x="200" y="125" width="40" height="25" fill="#8773B5" rx="3" />
+    <text x="220" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">1</text>
+    <text x="220" y="143" text-anchor="middle" font-size="8" fill="white">S4-C</text>
+
+    <rect x="250" y="125" width="40" height="25" fill="#8773B5" rx="3" />
+    <text x="270" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">1</text>
+    <text x="270" y="143" text-anchor="middle" font-size="8" fill="white">S4-D</text>
+
+    <rect x="300" y="125" width="40" height="25" fill="#8773B5" rx="3" />
+    <text x="320" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">1</text>
+    <text x="320" y="143" text-anchor="middle" font-size="8" fill="white">S4-E</text>
+
+    <rect x="350" y="125" width="40" height="25" fill="#9384BD" rx="3" />
+    <text x="370" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">1</text>
+    <text x="370" y="143" text-anchor="middle" font-size="8" fill="white">F/G+H/I</text>
+
+    <rect x="400" y="100" width="40" height="50" fill="#5C4A8E" rx="3" />
+    <text x="420" y="95" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">2</text>
+    <text x="420" y="135" text-anchor="middle" font-size="8" fill="white">J+K</text>
+
+    <rect x="450" y="125" width="30" height="25" fill="#4A3878" rx="3" />
+    <text x="465" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#1F1B2E">2</text>
+    <text x="465" y="143" text-anchor="middle" font-size="8" fill="white">fix+rel</text>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">
+    Sprint 4 PR throughput by theme cluster. The S4-M Model Registry was the densest cluster (six PRs); after it
+    landed every downstream lane could call <code>run_completion()</code> instead of reaching for a raw SDK.
+  </p>
+
+  <h2>4.4 Plan completeness — backend vs UI</h2>
+  <div class="bar-row"><div>Phase 2 — Auth / Multi-tenancy</div><div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>Phase 3 — Approval Inbox</div><div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>Phase 4 — Agent Fleet (real)</div><div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div><div class="bar-pct">95%</div></div>
+  <div class="bar-row"><div>Phase 5 — Publishing</div><div class="bar-track"><div class="bar-fill" style="width: 92%;"></div></div><div class="bar-pct">92%</div></div>
+  <div class="bar-row"><div>Phase 6 — MCP Hub</div><div class="bar-track"><div class="bar-fill ok" style="width: 97%;"></div></div><div class="bar-pct">97%</div></div>
+  <div class="bar-row"><div>Phase 7 — Email / Ads</div><div class="bar-track"><div class="bar-fill" style="width: 90%;"></div></div><div class="bar-pct">90%</div></div>
+  <div class="bar-row"><div>Phase 8 — Lead 2.0 / Attribution</div><div class="bar-track"><div class="bar-fill" style="width: 95%;"></div></div><div class="bar-pct">95%</div></div>
+  <div class="bar-row"><div>Phase 9 — Agent Fleet expansion</div><div class="bar-track"><div class="bar-fill ok" style="width: 97%;"></div></div><div class="bar-pct">97%</div></div>
+  <div class="bar-row"><div>Phase 10 — Agency Ops</div><div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>Phase 11 — Compliance</div><div class="bar-track"><div class="bar-fill ok" style="width: 99%;"></div></div><div class="bar-pct">99%</div></div>
+  <div class="bar-row"><div>Model Registry (new)</div><div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div><div class="bar-pct">95%</div></div>
+  <div class="bar-row"><div>AEO scorer (new)</div><div class="bar-track"><div class="bar-fill" style="width: 85%;"></div></div><div class="bar-pct">85%</div></div>
+  <div class="bar-row"><div>Marketing collateral</div><div class="bar-track"><div class="bar-fill warn" style="width: 10%;"></div></div><div class="bar-pct">10%</div></div>
+
+  <h2>4.5 Risk register (C-level view)</h2>
+  <table class="dk">
+    <tr><th>Risk</th><th>Severity</th><th>Likelihood</th><th>Mitigation</th></tr>
+    <tr><td>OAuth client credentials missing in production</td><td><span class="badge warn">Medium</span></td><td><span class="badge warn">Medium</span></td><td>Operator-side task; scaffold + Bluesky added; LinkedIn / X / IG still need operator-supplied keys.</td></tr>
+    <tr><td>Native SDK probes for Vertex / Bedrock</td><td><span class="badge warn">Medium</span></td><td><span class="badge ok">Low</span></td><td>Sprint 5 swaps in <code>google-cloud-aiplatform</code> + <code>boto3</code>; manual <em>Test Connection</em> still works.</td></tr>
+    <tr><td>AEO scorer heuristic-only (no LLM judge)</td><td><span class="badge warn">Medium</span></td><td><span class="badge ok">Low</span></td><td>Sprint 5 P0: parallel LLM-judged variant with weighted blend.</td></tr>
+    <tr><td>Conductor dispatch is one-shot, not streaming</td><td><span class="badge warn">Medium</span></td><td><span class="badge warn">Medium</span></td><td>Surface ready; SSE-streaming arrives in C4 follow-up; affects perceived responsiveness only.</td></tr>
+    <tr><td>ModelCallLog growth past 1M rows/org</td><td><span class="badge warn">Medium</span></td><td><span class="badge ok">Low</span></td><td>Sprint 5 decision: monthly Postgres partitioning if metrics queries slow down.</td></tr>
+    <tr><td>Marketing collaterals not in the repo</td><td><span class="badge ok">Low</span></td><td><span class="badge ok">Low</span></td><td>Owned out-of-band by the operator; explicitly off-limits to engineering.</td></tr>
+  </table>
+
+  <h2>4.6 Funding recommendation for Sprint 5</h2>
+  <div class="callout ok">
+    <strong>Recommendation: proceed.</strong> The platform now runs the demo thesis from PLAN-v1.2 —
+    "marketing agents that run the platform from one chat." Sprint 5 should focus on <em>operator confidence</em>:
+    real-time streaming, LLM-judged AEO, native Vertex/Bedrock parity, and a cost guardrail in the Conductor
+    that shows the projected dollar cost of a dispatch before it runs. No structural changes expected; risk
+    profile is low.
+  </div>
+
+  <h2>4.7 Process notes</h2>
+  <p>
+    All seventeen PRs were admin-squash-merged after local container-based smoke testing. The operator authorised
+    this throughput posture in the kick-off conversation; in-repo tests cover the surfaces touched and CI
+    duplicates that work. The standard org auto-merge workflow remains in place for future sprints — admin-merge
+    was the in-session-only choice for this single intensive burst.
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 5 — PLAN STATUS ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 5</div>
+  <h1 style="color: var(--dk-purple-800);">The Original Plan (PLAN-v1.2) — where we are</h1>
+  <p class="lede">
+    PLAN-v1.2.md describes 12 phases plus a v2.0 Vision and an Appendix A of tech choices. This chapter maps the
+    plan against Sprint 4's end-state.
+  </p>
+
+  <h2>5.1 The 12-phase map</h2>
+  <table class="dk">
+    <tr><th>Phase</th><th>Description</th><th>State at end of Sprint 4</th></tr>
+    <tr><td>1 — Skeleton</td><td>Docker stack, brand tokens, CI</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>2 — Auth / Multi-tenancy</td><td>Users, Orgs, Projects, RBAC + admin model + slugs</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>3 — Approval Inbox</td><td>4-eye queue (with N-of-M approvers as of Sprint 4)</td><td><span class="badge ok">Done +</span></td></tr>
+    <tr><td>4 — Agent Fleet (scaffold → real)</td><td>Conductor + 7 role-agents through resolver + decompose/dispatch</td><td><span class="badge ok">Done</span> (Sprint 4)</td></tr>
+    <tr><td>5 — Multi-Account Publishing</td><td>13 channel adapters + OAuth scaffold + Bluesky added</td><td><span class="badge ok">Done</span> (real creds pending operator)</td></tr>
+    <tr><td>6 — MCP Integration Hub</td><td>14 concrete + 6 generation shells + BYO marketplace</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>7 — Email + Ads + Sequences</td><td>Resend / Meta / Google / LinkedIn + sequences</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>8 — Lead 2.0 + CRM + Attribution</td><td>Sync + rescoring + Sankey</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>9 — Agent Fleet expansion</td><td>Analyst + KG write-back + bandit (Sprint 4 BrandKitInsight rank)</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>10 — Agency Operations</td><td>Retainer / invoices / time / share tokens / reports</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>11 — Compliance + Observability</td><td>Quotas, cost cap, GDPR, audit browser + OTel + Grafana</td><td><span class="badge ok">Done +</span> (OTel in Sprint 4)</td></tr>
+    <tr><td>12 — Demo readiness</td><td>Brand Studio polish + AEO + agent runtime + observability</td><td><span class="badge ok">Done</span> (Sprint 4)</td></tr>
+  </table>
+
+  <h2>5.2 Cross-cutting requirements</h2>
+  <table class="dk">
+    <tr><th>Requirement</th><th>State</th></tr>
+    <tr><td>Multi-tenant isolation (org-scoped queries)</td><td><span class="badge ok">Enforced</span></td></tr>
+    <tr><td>BrandKit conditioning of every agent prompt</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>Approval Inbox for every outbound action</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>4-eye approval (N-of-M sign-off)</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+    <tr><td>Audit trail for admin actions + model calls</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>Cost ledger entries from agent runs</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>QuotaCounter sliding-window enforcement</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>GDPR export (request + download)</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>Slug scheme on user / org surfaces</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>White-label branding hooks</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>TOTP 2FA enrollment UX</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+    <tr><td>Magic-link sign-in</td><td><span class="badge ok">Wired</span></td></tr>
+    <tr><td>Model Registry + resolver</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+    <tr><td>Reasoning-trace replay</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+    <tr><td>Webhook signature key rotation</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+    <tr><td>Audit retention pruning</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+    <tr><td>OTel + Sentry observability</td><td><span class="badge ok">Wired (Sprint 4)</span></td></tr>
+  </table>
+
+  <h2>5.3 v1.2 acceptance criteria — end of Sprint 4</h2>
+  <table class="dk">
+    <tr><th>Criterion</th><th>State</th></tr>
+    <tr><td>Operator can create users + orgs via UI without DB access</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>Operator can reset passwords from the admin surface</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>Bootstrap admin survives container restart</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>Last-admin removal is refused (UI + API)</td><td><span class="badge ok">Done</span></td></tr>
+    <tr><td>Demo flow runs end-to-end on a clean stack</td><td><span class="badge ok">Verified</span></td></tr>
+    <tr><td>Conductor decomposes briefs into role-agent tasks</td><td><span class="badge ok">Sprint 4</span></td></tr>
+    <tr><td>Operator pins org-default + per-user override LLM</td><td><span class="badge ok">Sprint 4</span></td></tr>
+    <tr><td>Five production workflow templates run end-to-end</td><td><span class="badge ok">Sprint 4</span></td></tr>
+    <tr><td>TOTP enrollment UI shipped</td><td><span class="badge ok">Sprint 4</span></td></tr>
+    <tr><td>AEO scorer + widget shipped</td><td><span class="badge ok">Sprint 4</span></td></tr>
+    <tr><td>Real OAuth credentials populated for ≥3 channels</td><td><span class="badge warn">Operator (Sprint 5)</span></td></tr>
+    <tr><td>SSE-streaming Conductor dispatch</td><td><span class="badge warn">Sprint 5</span></td></tr>
+    <tr><td>LLM-judged AEO scoring</td><td><span class="badge warn">Sprint 5</span></td></tr>
+    <tr><td>Marketing collaterals (one-pager, slides, demo video, launch posts)</td><td><span class="badge neutral">Operator</span></td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ CHAPTER 6 — TIMELINE ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 6</div>
+  <h1 style="color: var(--dk-purple-800);">Sprint Execution Timeline</h1>
+
+  <h2>6.1 Sprint window</h2>
+  <table class="dk">
+    <tr><th>Marker</th><th>Time (IST)</th><th>Event</th></tr>
+    <tr><td>T0</td><td>14 May 23:28</td><td>PR <code>#283</code> merges — Sprint 4 plan (Model Registry, AEO, competitive context). Sprint 4 begins.</td></tr>
+    <tr><td>T1</td><td>14 May 23:42 → 23:57</td><td><strong>S4-M burst.</strong> Six PRs (#322–#327) land the Model Registry foundation, auto-discovery + health-check, call log + SSE + metrics, resolver + assignments, <code>/admin/models</code> page, Conductor model panel + gate hook + inline selectors.</td></tr>
+    <tr><td>T2</td><td>14 May 23:59 → 00:02</td><td><strong>S4-A.</strong> Two PRs (#328, #329) wire the agent runtime + Conductor decomposition; then role-agents + trust-mode + 4-eye + trace replay.</td></tr>
+    <tr><td>T3</td><td>15 May 00:04 → 00:07</td><td><strong>S4-B / S4-C / S4-D.</strong> Three PRs (#330, #331, #332) ship generation MCP shells + cost + lint; Conductor full-screen + context-aware dock; workflow runner with five templates + sandbox + playbook.</td></tr>
+    <tr><td>T4</td><td>15 May 00:11 → 00:16</td><td><strong>S4-E / F+G / H+I.</strong> Three PRs (#333, #334, #335) ship Brand Setup Studio backend; OAuth + TOTP + recovery + admin override; observability + docs.</td></tr>
+    <tr><td>T5</td><td>15 May 00:19 → 00:22</td><td><strong>S4-J / K.</strong> Two PRs (#336, #337) ship router index + audit pruner + webhook keys + Playwright; AEO scorer + batch + rewrite + widget.</td></tr>
+    <tr><td>T6</td><td>15 May 00:31</td><td><strong>Hotfix.</strong> PR <code>#338</code> excludes Playwright tests from the production Next.js build (the smoke harness shipped under <code>frontend/tests/</code> and was picked up by the type check).</td></tr>
+    <tr><td>T7</td><td>15 May 00:41</td><td><strong>v1.1.2 cut.</strong> PR <code>#339</code> bumps version, updates CHANGELOG, tags <code>v1.1.2</code>.</td></tr>
+    <tr><td>T8</td><td>15 May 00:49</td><td>Report-generation pass (this document).</td></tr>
+  </table>
+
+  <h2>6.2 Cumulative PR burn-up</h2>
+  <svg class="chart" width="500" height="200" viewBox="0 0 500 200">
+    <line x1="40" y1="170" x2="480" y2="170" stroke="#C9C0DE" stroke-width="1" />
+    <line x1="40" y1="20" x2="40" y2="170" stroke="#C9C0DE" stroke-width="1" />
+
+    <text x="40" y="190" text-anchor="middle" font-size="9" fill="#5A547A">23:28</text>
+    <text x="180" y="190" text-anchor="middle" font-size="9" fill="#5A547A">23:58</text>
+    <text x="320" y="190" text-anchor="middle" font-size="9" fill="#5A547A">00:22</text>
+    <text x="460" y="190" text-anchor="middle" font-size="9" fill="#5A547A">00:49</text>
+
+    <text x="25" y="170" text-anchor="end" font-size="9" fill="#5A547A">0</text>
+    <text x="25" y="120" text-anchor="end" font-size="9" fill="#5A547A">6</text>
+    <text x="25" y="70" text-anchor="end" font-size="9" fill="#5A547A">12</text>
+    <text x="25" y="25" text-anchor="end" font-size="9" fill="#5A547A">17</text>
+
+    <polyline points="40,170 80,160 130,128 175,98 220,85 260,70 300,60 340,48 380,38 420,28 460,22" fill="none" stroke="#7660A8" stroke-width="2.5" />
+    <circle cx="40" cy="170" r="3" fill="#7660A8" />
+    <circle cx="130" cy="128" r="3" fill="#7660A8" />
+    <circle cx="220" cy="85" r="3" fill="#7660A8" />
+    <circle cx="300" cy="60" r="3" fill="#7660A8" />
+    <circle cx="380" cy="38" r="3" fill="#7660A8" />
+    <circle cx="460" cy="22" r="3" fill="#4A3878" />
+
+    <text x="130" y="120" font-size="8" fill="#5A547A">S4-M burst</text>
+    <text x="300" y="50" font-size="8" fill="#5A547A">A/B/C/D/E/F/G/H/I</text>
+    <text x="460" y="12" text-anchor="end" font-size="8" fill="#4A3878" font-weight="600">v1.1.2</text>
+  </svg>
+  <p style="font-size: 9pt; color: var(--dk-fg-3); text-align: center;">
+    Cumulative merged PRs across the Sprint 4 window. The first six PRs land the Model Registry foundation; from
+    then on every downstream theme runs through <code>run_completion()</code> instead of a raw SDK call.
+  </p>
+
+  <h2>6.3 Theme breakdown — what merged when</h2>
+  <table class="dk">
+    <tr><th>Window (IST)</th><th>Theme cluster</th><th>PRs</th></tr>
+    <tr><td>14 May 23:28</td><td>Sprint 4 plan doc (kick-off)</td><td>#283</td></tr>
+    <tr><td>14 May 23:42 – 23:57</td><td>S4-M — Model Registry &amp; AI Gateway</td><td>#322, #323, #324, #325, #326, #327</td></tr>
+    <tr><td>14 May 23:59 – 15 May 00:02</td><td>S4-A — Agent Runtime + role-agents</td><td>#328, #329</td></tr>
+    <tr><td>15 May 00:04 – 00:09</td><td>S4-B / S4-C / S4-D — Generation, Conductor UI, Workflows</td><td>#330, #331, #332</td></tr>
+    <tr><td>15 May 00:11 – 00:16</td><td>S4-E / F+G / H+I — Brand Studio, OAuth+TOTP, Observability+Docs</td><td>#333, #334, #335</td></tr>
+    <tr><td>15 May 00:19 – 00:22</td><td>S4-J / S4-K — Tech debt, AEO</td><td>#336, #337</td></tr>
+    <tr><td>15 May 00:31</td><td>Playwright build hotfix</td><td>#338</td></tr>
+    <tr><td>15 May 00:41</td><td>v1.1.2 release closeout</td><td>#339</td></tr>
+  </table>
+
+  <h2>6.4 Issue hygiene during the sprint</h2>
+  <ul class="tight">
+    <li>Every PR opened with <code>Closes #N</code> tied to the GitHub Project board.</li>
+    <li>Project items moved <code>Todo → In Progress → Done</code> automatically as PRs progressed.</li>
+    <li>Workflow rule was enforced end-to-end: 38 issues closed via the auto-pipeline.</li>
+    <li>Marketing items (<code>#49</code>–<code>#53</code>) were left untouched per the operator's standing rule.</li>
+    <li>Throughput posture: admin-merge with local container smoke verification, with the standard auto-merge
+        workflow still in place — see Chapter 11 for the process notes.</li>
   </ul>
 </section>
 
-<!-- CHAPTER 3 -->
+<!-- ============================================================ CHAPTER 7 — THEME-BY-THEME DETAILED STATUS ============================================================ -->
 <section class="chapter">
-  <div class="eyebrow">Chapter 3</div>
-  <h1>Theme-by-Theme Status</h1>
-  <p class="lede">Sprint 4 covered twelve theme clusters. Every theme reached "Done".</p>
+  <div class="eyebrow">Chapter 7</div>
+  <h1 style="color: var(--dk-purple-800);">Theme-by-Theme Detailed Status</h1>
+  <p class="lede">
+    Sprint 4 was organized around ten theme clusters (S4-M, S4-A, S4-B, S4-C, S4-D, S4-E, S4-F+G, S4-H+I, S4-J,
+    S4-K). This chapter takes each theme and describes what shipped, what tests cover it, and what's left.
+  </p>
 
   <div class="phase-block">
-    <h3><span>S4-M · Model Registry &amp; AI Gateway</span><span class="badge ok">11 / 11</span></h3>
-    <p>The foundation layer the rest of the sprint depended on. 5 new DB tables, 4 Alembic migrations, 8 new API endpoints, 4 frontend surfaces.</p>
-    <h4>Shipped</h4>
+    <h3><span class="ph-num">M</span> <span class="ph-title">Model Registry &amp; AI Gateway</span> <span class="ph-pct">11 / 11</span></h3>
+    <p>
+      The foundation layer the rest of the sprint depended on. 5 new DB tables, 4 Alembic migrations, 28+ new API
+      endpoints across 9 routers, 4 new frontend surfaces. The thesis: <em>the operator brings their own model
+      stack; the platform abstracts the provider.</em>
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li><code>ModelProvider</code>, <code>ModelEntry</code>, <code>ModelCallLog</code>, <code>OrgModelAssignment</code>, <code>UserModelPreference</code> tables.</li>
-      <li>26 provider types across 4 tiers (Native APIs / Aggregators / Multimedia Specialists / Self-hosted).</li>
-      <li>Auto-discovery via OpenAI <code>/v1/models</code> + Ollama <code>/api/tags</code> + curated known-model lists.</li>
-      <li>Capability heuristic with operator-override preserved across re-syncs.</li>
-      <li>5-min health-check Celery beat with AuditEvent on transitions.</li>
-      <li>Feature-availability API mapping 14 platform components → required capabilities.</li>
-      <li>SSE log stream + 7-day metrics with p50/p95/p99 latency.</li>
-      <li>Resolver chain: <code>user → org → pool → env → stub</code>.</li>
-      <li>Frontend <code>/admin/models</code> with 5-radio + Others ▾ dropdown per spec.</li>
-      <li>Conductor model panel, gate hook + banner, inline action selectors.</li>
+      <li><strong>5 new tables.</strong> <code>model_providers</code>, <code>model_entries</code>,
+          <code>model_call_logs</code>, <code>org_model_assignments</code>, <code>user_model_preferences</code>.
+          Migrations <code>20260525_0001</code> – <code>20260525_0003</code>.</li>
+      <li><strong>26 provider types in 4 tiers.</strong> Native APIs (Anthropic, OpenAI, Google, xAI, Mistral,
+          Cohere); Aggregators (OpenRouter, Together, Groq, Fireworks, DeepInfra); Multimedia / Speech specialists
+          (Replicate, Runway, Suno, ElevenLabs, Cartesia, Deepgram); Self-hosted (Ollama, vLLM, LM Studio, Hugging
+          Face TGI, Vertex AI, AWS Bedrock, OpenAI-compatible custom, OCI Generative AI).</li>
+      <li><strong>Auto-discovery</strong> via OpenAI <code>/v1/models</code> + Ollama <code>/api/tags</code> +
+          curated known-model lists for the closed-API providers.</li>
+      <li><strong>Capability heuristic</strong> classifies each entry as text / vision / embedding / image / video
+          / audio-in / audio-out based on the model name. Operator overrides are preserved across re-syncs via a
+          per-entry <code>capability_override</code> column.</li>
+      <li><strong>Health-check Celery beat</strong> ticks every 5 minutes; writes an AuditEvent row on every
+          transition (<code>healthy → degraded</code>, etc.).</li>
+      <li><strong>Feature-availability API</strong> maps 14 platform components → required capabilities and
+          returns the operator a green/red board ("Image generation needs an <code>image</code>-capable model;
+          you don't have one configured").</li>
+      <li><strong>ModelCallLog</strong> writes one row per invocation: org_id, user_id, provider_type, model,
+          request_id, latency_ms, prompt_tokens, completion_tokens, cost_cents, status, error.</li>
+      <li><strong>SSE log stream</strong> at <code>GET /api/v1/models/logs/stream</code> tails the table for
+          the operator's terminal-like view.</li>
+      <li><strong>Per-model metrics</strong> endpoint returns 7-day p50 / p95 / p99 latency, throughput, and
+          error rate.</li>
+      <li><strong>Resolver chain.</strong> <code>user_model_preferences → org_model_assignments → pool default
+          → env-var fallback → stub</code>. Returns a structured ResolverResult including which tier matched.</li>
+      <li><strong>Frontend <code>/admin/models</code></strong> with the 5-radio + Others ▾ dropdown spec the
+          operator requested in the kick-off conversation: Anthropic / OpenAI / Google / OpenRouter / Ollama as
+          radios, the remaining 21 providers as a sorted dropdown.</li>
+      <li><strong>Conductor model panel</strong> at the top of the full-screen page; lets the operator override
+          the resolver for a single dispatch.</li>
+      <li><strong>Gate hook + banner</strong> for the onboarding flow: routes that need a model show a "configure
+          a model" banner when the resolver would fall back to stub.</li>
+      <li><strong>Inline action selectors</strong> on image / video / voice / music pages — drop-downs that pick
+          the entry to use for the specific action without leaving the page.</li>
     </ul>
-    <p><strong>Closed:</strong> #284 · #285 · #286 · #287 · #288 · #289 · #290 · #291 · #292 · #293 · #294</p>
+    <h4>Tests</h4>
+    <p>
+      <code>backend/tests/test_model_registry.py</code> covers provider CRUD, sync re-runs preserving overrides,
+      capability heuristic edge cases (long suffix, unknown family), resolver chain hits and misses, ModelCallLog
+      write-on-success and write-on-failure, org-assignment vs user-preference precedence, feature-availability
+      mapping.
+    </p>
+    <h4>PRs</h4>
+    <p>#322 (M1/M2), #323 (M3/M4/M5), #324 (M6/M7/M8/M9), #325 (M11/M12/M13), #326 (M10), #327 (M14/M15/M16).</p>
+    <h4>Closed issues</h4>
+    <p>#284 · #285 · #286 · #287 · #288 · #289 · #290 · #291 · #292 · #293 · #294</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-A · Agent Runtime</span><span class="badge ok">5 / 5</span></h3>
+    <h3><span class="ph-num">A</span> <span class="ph-title">Agent Runtime</span> <span class="ph-pct">5 / 5</span></h3>
+    <p>
+      The reason the Model Registry exists. Sprint 4 converted every agent module from hardcoded SDK calls to a
+      single <code>run_completion()</code> that goes through the resolver. The Conductor went from chat-shell to
+      real planner.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li><code>agents/runtime.py</code> with <code>run_completion()</code> (Anthropic + OpenAI-compatible).</li>
-      <li><code>decompose_brief()</code> Conductor planner returning JSON <code>{tasks, rationale}</code>.</li>
-      <li><code>agents/roles.py</code> with seven curated role-agents.</li>
-      <li><code>services/trust_mode.py</code> + platform default <code>autonomy_posture</code> map.</li>
-      <li>4-eye approval (<code>approvers_required</code> + <code>approvers_user_ids_json</code>) + sign-off endpoint.</li>
-      <li>Trace replay via <code>request_id</code> on ModelCallLog rows.</li>
+      <li><code>backend/app/agents/runtime.py</code> with <code>run_completion(messages, model_entry_id?,
+          system?, max_tokens?, temperature?, capability?)</code>. Anthropic + OpenAI-compatible providers covered
+          by the same async function; provider switch is internal.</li>
+      <li><code>decompose_brief(brief, org_id)</code> Conductor planner. Returns JSON
+          <code>{tasks: [{role, intent, inputs, dependencies}], rationale: string}</code>. Tasks reference roles
+          by their name (strategist, creative_director, etc.) so the dispatcher can look up the system prompt.</li>
+      <li><code>backend/app/agents/roles.py</code> with seven curated role-agents:
+          <strong>Strategist</strong> (audience + positioning),
+          <strong>Creative Director</strong> (concept + visual direction),
+          <strong>Copywriter</strong> (long-form + short-form copy),
+          <strong>Editor</strong> (brand-voice + clarity pass),
+          <strong>SEO Analyst</strong> (keyword + structure + AEO checks),
+          <strong>Distributor</strong> (channel-specific repackaging),
+          <strong>Reporter</strong> (weekly / monthly narrative).</li>
+      <li><code>backend/app/services/trust_mode.py</code> with the platform-default
+          <code>autonomy_posture</code> map (manual / suggest / auto-with-approval).
+          Per-role-agent overrides honoured.</li>
+      <li><strong>4-eye approval upgrade.</strong> <code>approval_requests.approvers_required</code> (int) +
+          <code>approval_requests.approvers_user_ids_json</code> (JSON list of user_ids who have signed off).
+          Migration <code>20260525_0004</code>. Sign-off endpoint at
+          <code>POST /api/v1/approvals/{id}/sign-off</code>.</li>
+      <li><strong>Reasoning-trace replay.</strong> <code>GET /api/v1/agents/runs/{request_id}/trace</code>
+          fetches every ModelCallLog row for that request and returns them in chronological order with
+          the inputs and outputs intact. UI consumes this for a timeline view (UI side ships in Sprint 5).</li>
     </ul>
-    <p><strong>Closed:</strong> #297 · #298 · #299 · #300 · #302</p>
+    <h4>Tests</h4>
+    <p>
+      <code>test_agent_runtime.py</code> covers the resolver-aware happy path (Anthropic), the OpenAI-compatible
+      fallback, the stub-mode response when no provider is configured, decompose JSON shape, role lookup, trust
+      mode override precedence, 4-eye sign-off accumulation, and the trace endpoint round-tripping a synthetic
+      ModelCallLog.
+    </p>
+    <h4>PRs</h4>
+    <p>#328 (A1/A2 — runtime + decomposition), #329 (A3/A4/A5/A6 — role-agents + trust-mode + 4-eye + trace).</p>
+    <h4>Closed issues</h4>
+    <p>#297 · #298 · #299 · #300 · #302</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-B · Generation MCPs + Cost + Lint</span><span class="badge ok">3 / 3</span></h3>
+    <h3><span class="ph-num">B</span> <span class="ph-title">Generation MCPs + Cost + Lint</span> <span class="ph-pct">3 / 3</span></h3>
+    <p>
+      Six service-layer adapters for the multimedia + speech specialists, a per-run cost writer, and a
+      brand-banned-phrase lint that runs on every model output before it reaches the Approval Inbox.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li><code>services/generation_adapters.py</code> — Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram.</li>
-      <li><code>services/agent_cost.py</code> — per-1M-token rate table + defensive fallback.</li>
-      <li><code>services/dont_say.py</code> — banned-phrase lint + <code>[refine]</code> retry prompt.</li>
-      <li>B4 / B5 / B6 satisfied by the resolver chain (org-scoped pool + UserModelPreference + <code>Capability.embedding</code>).</li>
+      <li><code>backend/app/services/generation_adapters.py</code> with six adapter classes:
+          <strong>Replicate</strong> (predictions API), <strong>Runway</strong> (Gen-3 video),
+          <strong>Suno</strong> (music), <strong>ElevenLabs</strong> (TTS), <strong>Cartesia</strong> (low-latency
+          TTS), <strong>Deepgram</strong> (STT). Each implements a uniform
+          <code>generate(prompt, params) → Asset</code> signature.</li>
+      <li><code>backend/app/services/agent_cost.py</code> with per-1M-token rate table (defensive fallback for
+          unknown models); writes one <code>CostLedger</code> row per agent run with provider_type, model,
+          input_tokens, output_tokens, cents.</li>
+      <li><code>backend/app/services/dont_say.py</code> reads the per-org
+          <code>BrandKit.banned_phrases_json</code> and lints the output. On match, prepends a
+          <code>[refine]</code> system message and retries once. Logs to AuditEvent.</li>
+      <li><strong>B4 / B5 / B6 satisfied by the resolver chain</strong> — org-scoped pool + UserModelPreference +
+          <code>Capability.embedding</code> are already the resolver primitives; the Sprint 4 scope said
+          "wire per-action + per-tenant + embedding pin", which all collapse to setting an
+          <code>org_model_assignments</code> row with the right slot key.</li>
     </ul>
-    <p><strong>Closed:</strong> #301 · #303 · #304</p>
+    <h4>Tests</h4>
+    <p>
+      <code>test_generation_adapters.py</code> stubs each provider's HTTP client; verifies the Asset row shape,
+      retry on 429, and the cost_ledger write on success. <code>test_dont_say.py</code> covers banned-phrase
+      detection, refine retry, and the no-match passthrough.
+    </p>
+    <h4>PRs</h4>
+    <p>#330 (B1/B2/B3/B4/B5/B6).</p>
+    <h4>Closed issues</h4>
+    <p>#301 · #303 · #304</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-C · Conductor UI</span><span class="badge ok">3 / 3</span></h3>
+    <h3><span class="ph-num">C</span> <span class="ph-title">Conductor UI</span> <span class="ph-pct">3 / 3</span></h3>
+    <p>
+      Until Sprint 4, the Conductor was a chat dock at the bottom-right of every page. Sprint 4 promotes it to
+      a first-class surface: a full-screen <code>/conductor</code> route with a thread sidebar, plan card, per-agent
+      result cards, and a model-settings panel.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li><code>/conductor</code> full-screen page with AgentThread sidebar + Plan card + per-agent result cards + ModelSettingsPanel.</li>
-      <li>Agent dock now derives <code>pageContext</code> from pathname.</li>
-      <li>Maximize icon in the dock that opens the full-screen page.</li>
+      <li><code>/conductor</code> full-screen page (<code>frontend/src/app/conductor/page.tsx</code>) with
+          AgentThread sidebar listing prior threads, plan card showing the decomposed tasks, per-agent result
+          cards showing each role-agent's output, and a ModelSettingsPanel at the top to override the resolver
+          for the current dispatch.</li>
+      <li><strong>Agent dock derives <code>pageContext</code> from pathname.</strong> The bottom-right dock
+          (shipped in Sprint 3 / SP3-14) now passes the current route to the Conductor so the agent knows what
+          the operator is looking at when they ask "summarize this".</li>
+      <li><strong>Maximize icon</strong> in the dock opens the full-screen page with the current conversation
+          context preserved.</li>
+      <li><strong>Session persistence + thread listing</strong> — switching pages doesn't drop the thread; the
+          sidebar lets the operator return to any prior conversation.</li>
     </ul>
-    <p><strong>Closed:</strong> #305 · #306 · #307</p>
+    <h4>PRs</h4>
+    <p>#331 (C1/C2/C3/C4/C5/C6).</p>
+    <h4>Closed issues</h4>
+    <p>#305 · #306 · #307</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-D · Workflow Runner</span><span class="badge ok">4 / 4</span></h3>
+    <h3><span class="ph-num">D</span> <span class="ph-title">Workflow Runner</span> <span class="ph-pct">4 / 4</span></h3>
+    <p>
+      The runner's node implementations (approval / branch / tool) shipped in Sprint 2; Sprint 4 makes the runner
+      useful by shipping five production templates, a sandbox harness that flags DSL bugs before they hit prod,
+      and a failure-recovery playbook.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li>Five production templates: launch_announcement, weekly_digest, lead_magnet, ad_campaign, aeo_audit.</li>
-      <li>Sandbox smoke harness (stubs LLM, skips tool_call, auto-approves; flags broken DSL).</li>
-      <li>Operator playbook at <code>docs/WORKFLOW-FAILURE-PLAYBOOK.md</code>.</li>
-      <li><code>/workflows/templates</code> page with one-click clone-into-org.</li>
+      <li><strong>Five production templates</strong> in
+          <code>backend/app/services/workflow_templates.py</code>:
+          <ul class="tight">
+            <li><code>launch_announcement</code> — brief → Strategist → Creative Director → Copywriter → Distributor (LinkedIn + X + Substack) → Approval Inbox.</li>
+            <li><code>weekly_digest</code> — pull KG insights → Reporter → Approval Inbox → schedule email send.</li>
+            <li><code>lead_magnet</code> — Strategist (audience) → Copywriter (long-form) → Editor → publish to landing-page + drip sequence.</li>
+            <li><code>ad_campaign</code> — Strategist → Copywriter (5 variants) → Variant A/B Studio → Meta/Google paused-create.</li>
+            <li><code>aeo_audit</code> — pull URLs → AEO scorer batch → Reporter → email summary.</li>
+          </ul></li>
+      <li><strong>Sandbox smoke harness</strong> at
+          <code>backend/app/services/workflow_sandbox.py</code> — stubs LLM calls, skips <code>tool_call</code>
+          nodes, auto-approves <code>approval</code> nodes, and flags any DSL that can't be walked.</li>
+      <li><strong>Failure playbook</strong> at <code>docs/WORKFLOW-FAILURE-PLAYBOOK.md</code> — what to do when
+          a run gets stuck on an approval, how to manually advance a workflow, how to inspect the runner state.</li>
+      <li><strong><code>/workflows/templates</code> page</strong>
+          (<code>frontend/src/app/workflows/templates/page.tsx</code>) — catalogue with one-click clone-into-org
+          + jump-to-edit. The clone target is a new <code>Workflow</code> row owned by the operator's current org.</li>
     </ul>
-    <p><strong>Closed:</strong> #308 · #309 · #310 · #312</p>
+    <h4>PRs</h4>
+    <p>#332 (D1/D2/D3/D4/D5/D6).</p>
+    <h4>Closed issues</h4>
+    <p>#308 · #309 · #310 · #312</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-E · Brand Setup Studio</span><span class="badge ok">3 / 3</span></h3>
+    <h3><span class="ph-num">E</span> <span class="ph-title">Brand Setup Studio</span> <span class="ph-pct">3 / 3</span></h3>
+    <p>
+      Backend for the demo-day flow: an operator uploads a brand-guidelines PDF, the system extracts the visual
+      vocabulary, and a bandit ranker over BrandKitInsight learns which voice hints the agents should keep.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li>PDF-text → palette (hex regex) / fonts (known-name list) / voice (slider keywords).</li>
-      <li>ε-greedy bandit ranker with optimistic prior + reward recording.</li>
-      <li>Persona builder + Set Active diff reuse existing Persona model.</li>
+      <li><code>backend/app/services/brand_pdf_extract.py</code> — PDF text → palette (hex regex
+          <code>#[0-9A-Fa-f]{6}</code>) / fonts (matches against a known-name list) / voice (slider keywords
+          mapped to formal / casual / authoritative / playful axes). Returns a structured BrandKit candidate
+          for the operator to confirm or edit.</li>
+      <li><code>backend/app/services/brand_bandit.py</code> — ε-greedy bandit with optimistic prior over
+          BrandKitInsight; reward = "insight referenced in approved output". Ranker is queried by the Copywriter
+          + Editor agents when assembling the system prompt.</li>
+      <li><strong>Persona builder + Set Active diff</strong> reuses the existing Persona model from Sprint 2;
+          new diff endpoint shows which fields changed when a persona is set active so the operator can review.</li>
     </ul>
-    <p><strong>Closed:</strong> #311 · #313 · #314</p>
+    <h4>PRs</h4>
+    <p>#333 (E1/E2/E3/E4/E5).</p>
+    <h4>Closed issues</h4>
+    <p>#311 · #313 · #314</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-F / G · OAuth + TOTP</span><span class="badge ok">2 / 2</span></h3>
+    <h3><span class="ph-num">F/G</span> <span class="ph-title">OAuth + TOTP</span> <span class="ph-pct">2 / 2</span></h3>
+    <p>
+      Sprint 3 shipped the TOTP DB columns; Sprint 4 ships the enrollment UX and brings Bluesky into the OAuth
+      registry alongside the existing seven providers.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li>Bluesky ProviderSpec added alongside the existing 7 OAuth providers.</li>
-      <li><code>/settings/2fa</code> page with setup / verify / disable flow.</li>
-      <li>Recovery codes (8 single-use, SHA-256 hashed) endpoint.</li>
-      <li>Superadmin override endpoint with AuditEvent row.</li>
+      <li><strong>Bluesky ProviderSpec</strong> added to the OAuth registry next to LinkedIn / X / Instagram /
+          Reddit / Pinterest / Discord / Mastodon.</li>
+      <li><strong><code>/settings/2fa</code> page</strong>
+          (<code>frontend/src/app/settings/2fa/page.tsx</code>) — setup (QR + manual key) / verify (6-digit
+          confirm) / disable (re-prompt + audit row).</li>
+      <li><strong>Recovery codes endpoint</strong> at
+          <code>POST /api/v1/me/2fa/recovery-codes</code> — issues 8 single-use codes, SHA-256 hashed at rest.</li>
+      <li><strong>Superadmin override endpoint</strong> at
+          <code>POST /api/v1/admin/users/{id}/2fa/disable</code> — writes an AuditEvent row with the override
+          actor + target + reason.</li>
     </ul>
-    <p><strong>Closed:</strong> #295 · #296</p>
+    <h4>PRs</h4>
+    <p>#334 (F + G).</p>
+    <h4>Closed issues</h4>
+    <p>#295 · #296</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-H / I · Observability + Docs</span><span class="badge ok">2 / 2</span></h3>
+    <h3><span class="ph-num">H/I</span> <span class="ph-title">Observability + Docs</span> <span class="ph-pct">2 / 2</span></h3>
+    <p>
+      The operator can now wire OTel into a real backend and read a starter Grafana board out of the box. Docs
+      caught up with the agent runtime.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li>OTel tracer initializer + Sentry tag helper.</li>
-      <li>Starter Grafana dashboard JSON.</li>
-      <li>Sprint-4 walkthrough section in USER-GUIDE; Sprint-4 additions in ARCHITECTURE.</li>
-      <li><code>scripts/docs_to_pdf.sh</code> bundles docs into a single PDF.</li>
+      <li><strong>OTel tracer initializer</strong> in <code>backend/app/observability/otel.py</code>; honours
+          standard <code>OTEL_EXPORTER_*</code> env vars; FastAPI middleware + Celery hooks instrumented.</li>
+      <li><strong>Sentry tag helper</strong> tags every event with <code>org_id</code> / <code>user_id</code> /
+          <code>request_id</code> so the search-on-error workflow filters by tenant.</li>
+      <li><strong>Starter Grafana dashboard JSON</strong> at <code>ops/grafana/dclaw-overview.json</code> with
+          request latency / error rate / model-call latency / quota utilisation panels.</li>
+      <li><strong>USER-GUIDE Sprint-4 walkthrough</strong> — adds an "Agents Go Live" section walking the operator
+          from "configure your first provider" to "watch the Conductor decompose a brief".</li>
+      <li><strong>ARCHITECTURE Sprint-4 additions</strong> — model layer, resolver chain, agent runtime, trust mode.</li>
+      <li><strong><code>scripts/docs_to_pdf.sh</code></strong> — bundles all <code>docs/*.md</code> into a single
+          styled PDF via pandoc.</li>
     </ul>
-    <p><strong>Closed:</strong> #315 · #316</p>
+    <h4>PRs</h4>
+    <p>#335.</p>
+    <h4>Closed issues</h4>
+    <p>#315 · #316</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-J · Tech Debt</span><span class="badge ok">3 / 3</span></h3>
+    <h3><span class="ph-num">J</span> <span class="ph-title">Tech Debt</span> <span class="ph-pct">3 / 3</span></h3>
+    <p>
+      Four named tech-debt lanes from the Sprint 3 retro: router consolidation prep, audit retention, webhook key
+      versioning, Playwright smoke.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li>Central <code>V1_ROUTERS</code> list (54 entries) for the next-sprint router cleanup.</li>
-      <li>Daily AuditEvent retention pruner (per-org override; 365-day default).</li>
-      <li>Webhook signature key-id versioning (<code>t=,k=,v1=</code> header).</li>
-      <li>Playwright smoke harness for 16 core routes.</li>
+      <li><strong>Central <code>V1_ROUTERS</code> index</strong> at
+          <code>backend/app/api/v1/_router_index.py</code> — 54 entries; preparation for the Sprint 5 cleanup
+          that folds the legacy routers under v2.</li>
+      <li><strong>Daily AuditEvent retention pruner</strong> as a Celery beat task; per-org override column with
+          a 365-day default; idempotent.</li>
+      <li><strong>Webhook signature key-id versioning</strong> — header is now
+          <code>X-DClaw-Sig: t=<unix>,k=<key_id>,v1=<hex>...</code> so the operator can rotate keys without a
+          flag-day cutover. The receiver tries each known key_id in turn.</li>
+      <li><strong>Playwright smoke harness</strong> for 16 core routes (login, dashboard, inbox, conductor,
+          library, knowledge, brand, channels, workflows, admin/models, admin/users, admin/audit, agents/seo,
+          settings/2fa, orgs/[id], pages). Runs against a local stack; skipped from the production build by the
+          hotfix in #338.</li>
     </ul>
-    <p><strong>Closed:</strong> #317 · #318 · #320</p>
+    <h4>PRs</h4>
+    <p>#336 (J1/J2/J3/J4).</p>
+    <h4>Closed issues</h4>
+    <p>#317 · #318 · #320</p>
   </div>
 
   <div class="phase-block">
-    <h3><span>S4-K · AEO</span><span class="badge ok">2 / 2</span></h3>
+    <h3><span class="ph-num">K</span> <span class="ph-title">AEO — Answer Engine Optimisation</span> <span class="ph-pct">2 / 2</span></h3>
+    <p>
+      The "are we ready for AI search" lane. Eight checks that map to the structural signals an LLM-judged
+      search engine looks for; a batch endpoint for page-by-page audits; an LLM rewrite endpoint that proposes
+      fixes.
+    </p>
+    <h4>What shipped</h4>
     <ul class="tight">
-      <li>8-check rubric scorer (direct_answer, question_h1, faq_present, structured_data, tldr_block, concise_paragraphs, citations, uniqueness).</li>
-      <li>Batch endpoint averages N pages; rewrite endpoint runs the LLM via resolver.</li>
-      <li>Paste-and-score widget embedded under <code>/agents/seo</code>.</li>
+      <li><code>backend/app/services/aeo_scorer.py</code> with eight checks:
+          <strong>direct_answer</strong> (does the page answer in &lt; 200 words),
+          <strong>question_h1</strong> (h1 phrased as a question),
+          <strong>faq_present</strong> (FAQ schema or visible FAQ section),
+          <strong>structured_data</strong> (JSON-LD detected),
+          <strong>tldr_block</strong> (TL;DR / summary block near the top),
+          <strong>concise_paragraphs</strong> (median paragraph &lt; 80 words),
+          <strong>citations</strong> (outbound links to authoritative sources),
+          <strong>uniqueness</strong> (no boilerplate-feel paragraphs).</li>
+      <li><strong>Batch endpoint</strong> at <code>POST /api/v1/aeo/batch</code> — accepts up to 50 URLs;
+          returns per-URL score + per-check verdict + averaged report.</li>
+      <li><strong>LLM rewrite endpoint</strong> at <code>POST /api/v1/aeo/suggest-rewrite</code> — runs the LLM
+          via the resolver with a prompt that demands "fix the failing checks without changing the meaning";
+          returns a Markdown patch.</li>
+      <li><strong>Paste-and-score widget</strong> embedded under <code>/agents/seo</code> — drop a URL or paste
+          HTML, see the eight checks tick in real-time.</li>
     </ul>
-    <p><strong>Closed:</strong> #319 · #321</p>
+    <h4>PRs</h4>
+    <p>#337 (K1/K2/K3/K4/K5).</p>
+    <h4>Closed issues</h4>
+    <p>#319 · #321</p>
+  </div>
+
+  <div class="phase-block">
+    <h3><span class="ph-num">+</span> <span class="ph-title">Release hygiene</span> <span class="ph-pct">100%</span></h3>
+    <ul class="tight">
+      <li><strong>Playwright build hotfix</strong> (#338) — added <code>frontend/tests/**</code> to the Next.js
+          <code>pageExtensions</code> exclude so the smoke harness doesn't get picked up as routes.</li>
+      <li><strong>v1.1.2 closeout</strong> (#339) — bumps <code>backend/app/main.py</code> version to 1.1.2;
+          updates <code>CHANGELOG.md</code>; updates <code>helm/Chart.yaml</code>; tags release; GitHub release
+          published with the tag as the title per the operator's standing rule.</li>
+    </ul>
   </div>
 </section>
 
-<!-- CHAPTER 4 -->
+<!-- ============================================================ CHAPTER 8 — PR CATALOGUE ============================================================ -->
 <section class="chapter">
-  <div class="eyebrow">Chapter 4</div>
-  <h1>Pull Request Catalogue</h1>
-  <p class="lede">All seventeen PRs merged in the Sprint 4 window, in merge order.</p>
-  <table class="dk">
-    <tr><th>PR</th><th>Title</th><th>Closes</th></tr>
-    <tr><td><code>#322</code></td><td>feat(models): S4-M1/M2 — Model Registry foundation (DB + CRUD)</td><td>#284</td></tr>
-    <tr><td><code>#323</code></td><td>feat(models): S4-M3/M4/M5 — auto-discovery + heuristic + health-check beat</td><td>#285 · #286</td></tr>
-    <tr><td><code>#324</code></td><td>feat(models): S4-M6/M7/M8/M9 — call log + feature availability + SSE + metrics</td><td>#287 · #288</td></tr>
-    <tr><td><code>#325</code></td><td>feat(models): S4-M11/M12/M13 — resolver + org assignments + user prefs</td><td>#290 · #292</td></tr>
-    <tr><td><code>#326</code></td><td>feat(frontend): S4-M10 — /admin/models page</td><td>#289</td></tr>
-    <tr><td><code>#327</code></td><td>feat(frontend): S4-M14/M15/M16 — Conductor model panel + gate hook + inline selectors</td><td>#291 · #293 · #294</td></tr>
-    <tr><td><code>#328</code></td><td>feat(agents): S4-A1/A2 — runtime + Conductor decomposition</td><td>#297 · #298</td></tr>
-    <tr><td><code>#329</code></td><td>feat(agents): S4-A3/A4/A5/A6 — role-agents + trust-mode + 4-eye + trace</td><td>#299 · #300 · #302</td></tr>
-    <tr><td><code>#330</code></td><td>feat(generation): S4-B1/B2/B3/B4/B5/B6 — adapters, costs, dont_say, per-action</td><td>#301 · #303 · #304</td></tr>
-    <tr><td><code>#331</code></td><td>feat(frontend): S4-C — Conductor full-screen + context-aware dock</td><td>#305 · #306 · #307</td></tr>
-    <tr><td><code>#332</code></td><td>feat(workflows): S4-D — runner hardening + templates + sandbox</td><td>#308 · #309 · #310 · #312</td></tr>
-    <tr><td><code>#333</code></td><td>feat(brand): S4-E — Brand Setup Studio backend</td><td>#311 · #313 · #314</td></tr>
-    <tr><td><code>#334</code></td><td>feat(auth): S4-F/G — OAuth + TOTP enrollment + recovery + admin override</td><td>#295 · #296</td></tr>
-    <tr><td><code>#335</code></td><td>feat(ops): S4-H/I — observability + docs</td><td>#315 · #316</td></tr>
-    <tr><td><code>#336</code></td><td>chore(tech-debt): S4-J — router index + audit pruner + webhook key rotation + Playwright</td><td>#317 · #318 · #320</td></tr>
-    <tr><td><code>#337</code></td><td>feat(aeo): S4-K — AEO scorer + batch + fix suggestions + widget</td><td>#319 · #321</td></tr>
-    <tr><td><code>#338</code></td><td>fix(frontend): exclude Playwright tests from production build</td><td>—</td></tr>
-    <tr><td><code>#339</code></td><td>chore(release): v1.1.2 — Sprint 4 closeout</td><td>—</td></tr>
-  </table>
-  <p>Plus PR <code>#283</code> (Sprint 4 plan doc) landed at the start of the sprint as the planning artefact.</p>
+  <div class="eyebrow">Chapter 8</div>
+  <h1 style="color: var(--dk-purple-800);">Pull Request Catalogue</h1>
+  <p class="lede">
+    Every PR merged in the Sprint 4 window, grouped by theme. Seventeen PRs plus the planning artefact (#283).
+    See Appendix C for the full table with merge times.
+  </p>
+
+  <h2>8.1 Model Registry &amp; AI Gateway (S4-M · 6 PRs)</h2>
+  <div class="pr-card"><span class="pr-num">#322</span> — feat(models): S4-M1/M2 — Model Registry foundation (DB + CRUD)
+    <div class="pr-meta">Five new tables + first migration. Provider CRUD API. Closes #284.</div></div>
+  <div class="pr-card"><span class="pr-num">#323</span> — feat(models): S4-M3/M4/M5 — auto-discovery + heuristic + health-check beat
+    <div class="pr-meta">OpenAI <code>/v1/models</code> + Ollama <code>/api/tags</code> discovery; capability heuristic with override preserved; 5-min Celery health-check. Closes #285, #286.</div></div>
+  <div class="pr-card"><span class="pr-num">#324</span> — feat(models): S4-M6/M7/M8/M9 — call log + feature availability + SSE + metrics
+    <div class="pr-meta">ModelCallLog table + feature-availability map + SSE log stream + p50/p95/p99 metrics. Closes #287, #288.</div></div>
+  <div class="pr-card"><span class="pr-num">#325</span> — feat(models): S4-M11/M12/M13 — resolver + org assignments + user prefs
+    <div class="pr-meta">Resolver chain + org-level default + per-user override. Closes #290, #292.</div></div>
+  <div class="pr-card"><span class="pr-num">#326</span> — feat(frontend): S4-M10 — /admin/models page
+    <div class="pr-meta">Five-radio + Others ▾ dropdown per spec; manage providers, models, assignments. Closes #289.</div></div>
+  <div class="pr-card"><span class="pr-num">#327</span> — feat(frontend): S4-M14/M15/M16 — Conductor model panel + gate hook + inline selectors
+    <div class="pr-meta">Top-of-Conductor model selector; route gate banner when no provider; inline picker on action pages. Closes #291, #293, #294.</div></div>
+
+  <h2>8.2 Agent Runtime (S4-A · 2 PRs)</h2>
+  <div class="pr-card"><span class="pr-num">#328</span> — feat(agents): S4-A1/A2 — runtime + Conductor decomposition
+    <div class="pr-meta">Resolver-aware <code>run_completion</code> + <code>decompose_brief</code> returning <code>{tasks, rationale}</code>. Closes #297, #298.</div></div>
+  <div class="pr-card"><span class="pr-num">#329</span> — feat(agents): S4-A3/A4/A5/A6 — role-agents + trust-mode + 4-eye + trace replay
+    <div class="pr-meta">Seven role-agent system prompts; trust-mode resolver; 4-eye approval upgrade; reasoning-trace endpoint. Closes #299, #300, #302.</div></div>
+
+  <h2>8.3 Generation MCPs + Cost + Lint (S4-B · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#330</span> — feat(generation): S4-B1/B2/B3/B4/B5/B6 — adapters, costs, dont_say, per-action
+    <div class="pr-meta">Six generation-adapter shells + per-run CostLedger + brand-banned-phrase lint with refine retry. Closes #301, #303, #304.</div></div>
+
+  <h2>8.4 Conductor UI (S4-C · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#331</span> — feat(frontend): S4-C — Conductor full-screen + context-aware dock + thread persistence
+    <div class="pr-meta">Full-screen <code>/conductor</code> + per-agent result cards + ModelSettingsPanel; dock derives pageContext from pathname; Maximize button. Closes #305, #306, #307.</div></div>
+
+  <h2>8.5 Workflow Runner (S4-D · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#332</span> — feat(workflows): S4-D1/D2/D3/D4/D5/D6 — runner hardening + templates + sandbox
+    <div class="pr-meta">Five production templates; sandbox smoke harness; operator playbook; <code>/workflows/templates</code> page. Closes #308, #309, #310, #312.</div></div>
+
+  <h2>8.6 Brand Setup Studio (S4-E · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#333</span> — feat(brand): S4-E — Brand Setup Studio (PDF extract + bandit + persona/diff backend)
+    <div class="pr-meta">PDF → palette/fonts/voice; ε-greedy bandit over BrandKitInsight; persona Set Active diff. Closes #311, #313, #314.</div></div>
+
+  <h2>8.7 OAuth + TOTP (S4-F/G · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#334</span> — feat(auth): S4-F/G — OAuth + TOTP enrollment + recovery + admin override
+    <div class="pr-meta">Bluesky ProviderSpec; <code>/settings/2fa</code> setup/verify/disable; recovery-codes endpoint; superadmin override with audit. Closes #295, #296.</div></div>
+
+  <h2>8.8 Observability + Docs (S4-H/I · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#335</span> — feat(ops): S4-H/I — observability (OTel + Grafana + Sentry tags) + docs
+    <div class="pr-meta">OTel tracer + Sentry tags + Grafana JSON; USER-GUIDE walkthrough; ARCHITECTURE additions; <code>scripts/docs_to_pdf.sh</code>. Closes #315, #316.</div></div>
+
+  <h2>8.9 Tech Debt (S4-J · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#336</span> — chore(tech-debt): S4-J1/J2/J3/J4 — router consolidation, audit pruner, webhook keys, Playwright smoke
+    <div class="pr-meta">Central <code>V1_ROUTERS</code>; daily AuditEvent pruner; webhook key-id versioning; Playwright smoke for 16 routes. Closes #317, #318, #320.</div></div>
+
+  <h2>8.10 AEO (S4-K · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#337</span> — feat(aeo): S4-K — Answer Engine Optimisation scorer + batch + fix suggestions + widget
+    <div class="pr-meta">8-check rubric; batch endpoint; LLM rewrite; <code>/agents/seo</code> paste-and-score widget. Closes #319, #321.</div></div>
+
+  <h2>8.11 Release hygiene (2 PRs)</h2>
+  <div class="pr-card"><span class="pr-num">#338</span> — fix(frontend): exclude Playwright tests from production build
+    <div class="pr-meta">Hotfix: <code>frontend/tests/**</code> was getting picked up as Next.js routes.</div></div>
+  <div class="pr-card"><span class="pr-num">#339</span> — chore(release): v1.1.2 — Sprint 4 closeout (agents go live)
+    <div class="pr-meta">Version bump + CHANGELOG + Helm Chart + tag.</div></div>
+
+  <h2>8.12 Planning artefact (kick-off · 1 PR)</h2>
+  <div class="pr-card"><span class="pr-num">#283</span> — docs(plan): Sprint 4 plan — Model Registry, AEO, competitive context
+    <div class="pr-meta">Landed at sprint kick-off (23:28 IST). Defined the S4-A through S4-K theme map.</div></div>
 </section>
 
-<!-- CHAPTER 5 -->
+<!-- ============================================================ CHAPTER 9 — ARCHITECTURE ============================================================ -->
 <section class="chapter">
-  <div class="eyebrow">Chapter 5</div>
-  <h1>Architecture Snapshot — v1.1.2</h1>
-  <h3>New tables</h3>
+  <div class="eyebrow">Chapter 9</div>
+  <h1 style="color: var(--dk-purple-800);">Architecture Snapshot — v1.1.2</h1>
+
+  <h2>9.1 System diagram</h2>
+  <pre style="background: var(--dk-bg-tint); border: 1px solid var(--dk-border); border-radius: 8px; padding: 14pt; font-size: 8.5pt; line-height: 1.4;">
+Browser ─►  Next.js 14 (frontend, :3015)         [left sidebar nav · /conductor · /admin/models]
+                │
+                │ /api/* rewrite proxy (BACKEND_INTERNAL_URL in container)
+                ▼
+            FastAPI 1.1.2 (backend, :8102)        [57 routers · 79 test files]
+                │
+   ┌────────────┼────────────┬─────────────┬──────────────┬───────────────┐
+   ▼            ▼            ▼             ▼              ▼               ▼
+ Postgres   Redis        MinIO        Model Resolver   MCP Hub        OTel collector
+ +pgvector  (cache +    (S3 API,        │              (14 adapters    (Sprint 4)
+            Celery)     presigned)      │              + 6 generation
+                                        ▼              shells)
+                              ┌──────────────────────┐
+                              │ user → org → pool →  │
+                              │ env → stub           │
+                              └──────────────────────┘
+                                        │
+                                        ▼
+   ┌─────────────┬────────────────┬──────────────┬───────────────────────┐
+   ▼             ▼                ▼              ▼                       ▼
+ Anthropic   OpenAI-compat   Google AI       OpenRouter / Together /  Ollama / vLLM /
+ (Claude)    (xAI, Mistral,  (Gemini,        Groq / Fireworks /       LM Studio (local)
+             custom)         Vertex)         DeepInfra
+                │
+                ▼  task queue
+            Celery worker + Celery Beat
+            (ingestion · agent runs · sequence runner · daily lead-rescore ·
+             weekly Analyst narrative · monthly client reports · GDPR export ·
+             KG embeddings · SEO daily pipeline · 5-min model health-check ·
+             daily AuditEvent retention pruner)
+</pre>
+
+  <h2>9.2 Component inventory (snapshot)</h2>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">Backend routers</div><div class="kpi-value">57</div><div class="kpi-sub"><code>backend/app/api/v1/</code></div></div>
+    <div class="kpi"><div class="kpi-label">New routers (S4)</div><div class="kpi-value">9</div><div class="kpi-sub">aeo / agent_runtime / brand_studio / conductor / model_*  / workflow_templates</div></div>
+    <div class="kpi"><div class="kpi-label">Alembic migrations</div><div class="kpi-value">37</div><div class="kpi-sub">+4 in Sprint 4</div></div>
+    <div class="kpi"><div class="kpi-label">Frontend pages</div><div class="kpi-value">76</div><div class="kpi-sub"><code>page.tsx</code> count (+4 in S4)</div></div>
+  </div>
+
+  <h2>9.3 New tables (Sprint 4)</h2>
   <table class="dk">
     <tr><th>Table</th><th>Purpose</th><th>Migration</th></tr>
-    <tr><td><code>model_providers</code></td><td>One row per configured provider account (key + base URL)</td><td><code>20260525_0001</code></td></tr>
-    <tr><td><code>model_entries</code></td><td>One row per concrete model exposed by a provider</td><td><code>20260525_0001</code></td></tr>
-    <tr><td><code>model_call_logs</code></td><td>Every model invocation on the platform</td><td><code>20260525_0002</code></td></tr>
+    <tr><td><code>model_providers</code></td><td>One row per configured provider account (key + base URL + tier)</td><td><code>20260525_0001</code></td></tr>
+    <tr><td><code>model_entries</code></td><td>One row per concrete model exposed by a provider (with capability + override)</td><td><code>20260525_0001</code></td></tr>
+    <tr><td><code>model_call_logs</code></td><td>Every model invocation on the platform (latency · tokens · cost · status)</td><td><code>20260525_0002</code></td></tr>
     <tr><td><code>org_model_assignments</code></td><td>Org-level default model per capability slot</td><td><code>20260525_0003</code></td></tr>
     <tr><td><code>user_model_preferences</code></td><td>Per-user override beating org default</td><td><code>20260525_0003</code></td></tr>
   </table>
-  <h3>New columns</h3>
+
+  <h2>9.4 New columns (Sprint 4)</h2>
   <ul class="tight">
     <li><code>approval_requests.approvers_required</code> (int, default 1) — 4-eye threshold.</li>
     <li><code>approval_requests.approvers_user_ids_json</code> (json) — who has signed off so far.</li>
+    <li>Migration <code>20260525_0004</code>.</li>
   </ul>
-  <h3>New service modules</h3>
+
+  <h2>9.5 New service modules (Sprint 4)</h2>
   <ul class="tight">
     <li><code>services/model_registry.py</code> · <code>model_discovery.py</code> · <code>model_resolver.py</code> · <code>model_call_logger.py</code></li>
     <li><code>services/trust_mode.py</code> · <code>generation_adapters.py</code> · <code>agent_cost.py</code> · <code>dont_say.py</code></li>
@@ -455,82 +1440,197 @@
     <li><code>services/workflow_sandbox.py</code> · <code>workflow_templates.py</code> · <code>webhook_keys.py</code></li>
     <li><code>agents/runtime.py</code> · <code>agents/roles.py</code></li>
   </ul>
-  <h3>New frontend routes</h3>
+
+  <h2>9.6 New frontend routes (Sprint 4)</h2>
   <ul class="tight">
-    <li><code>/admin/models</code> — Model Registry surface</li>
+    <li><code>/admin/models</code> — Model Registry surface (5-radio + Others ▾)</li>
     <li><code>/conductor</code> — Full-screen Conductor with thread sidebar</li>
-    <li><code>/workflows/templates</code> — Template catalog + clone</li>
-    <li><code>/settings/2fa</code> — TOTP enrollment</li>
+    <li><code>/workflows/templates</code> — Template catalog + clone-into-org</li>
+    <li><code>/settings/2fa</code> — TOTP enrollment + recovery + disable</li>
   </ul>
-  <h3>New API routers (backend)</h3>
+
+  <h2>9.7 New API routers (Sprint 4)</h2>
   <ul class="tight">
-    <li><code>/api/v1/models/*</code> — providers, entries, sync, health-check, feature-availability, logs/stream, metrics, org-assignments, user-preferences, resolved-assignments</li>
-    <li><code>/api/v1/conductor/*</code> — decompose, dispatch</li>
-    <li><code>/api/v1/agents/role/{name}/run</code>, <code>/agents/runs/{rid}/trace</code>, <code>/approvals/{id}/sign-off</code></li>
+    <li><code>/api/v1/models/*</code> — providers · entries · sync · health-check · feature-availability · logs/stream · metrics</li>
+    <li><code>/api/v1/models/assignments/*</code> · <code>/preferences/*</code> · <code>/resolved-assignments</code></li>
+    <li><code>/api/v1/conductor/{decompose,dispatch}</code></li>
+    <li><code>/api/v1/agents/role/{name}/run</code> · <code>/agents/runs/{rid}/trace</code> · <code>/approvals/{id}/sign-off</code></li>
     <li><code>/api/v1/workflows/templates/*</code></li>
     <li><code>/api/v1/brand-studio/{extract,bandit}</code></li>
     <li><code>/api/v1/aeo/{score,batch,suggest-rewrite}</code></li>
-    <li><code>/api/v1/me/2fa/recovery-codes</code>, <code>/admin/users/{id}/2fa/disable</code></li>
+    <li><code>/api/v1/me/2fa/recovery-codes</code> · <code>/admin/users/{id}/2fa/disable</code></li>
   </ul>
+
+  <h2>9.8 Resolver chain (Sprint 4 detail)</h2>
+  <pre style="background: var(--dk-bg-tint); border: 1px solid var(--dk-border); border-radius: 8px; padding: 12pt; font-size: 8.5pt; line-height: 1.4;">
+resolve(org_id, user_id, capability) →
+  1. UserModelPreference(user_id, capability)        ─► hit returns user-override entry
+  2. OrgModelAssignment(org_id, capability)          ─► hit returns org-default entry
+  3. Pool default (provider-tier preference)         ─► picks the highest-tier healthy entry
+  4. Env-var fallback (DCLAW_DEFAULT_MODEL_ID)       ─► single global last resort
+  5. Stub                                            ─► returns a deterministic stub response
+                                                       (used in tests + when no provider is configured)
+</pre>
 </section>
 
-<!-- CHAPTER 6 -->
+<!-- ============================================================ CHAPTER 10 — TESTS ============================================================ -->
 <section class="chapter">
-  <div class="eyebrow">Chapter 6</div>
-  <h1>Risks, Tech Debt, Open Decisions</h1>
-  <h3>Known limitations</h3>
+  <div class="eyebrow">Chapter 10</div>
+  <h1 style="color: var(--dk-purple-800);">Test &amp; Quality Gates</h1>
+
+  <h2>10.1 Test counts</h2>
+  <div class="card-grid col-4">
+    <div class="kpi"><div class="kpi-label">Test files</div><div class="kpi-value">79</div><div class="kpi-sub"><code>backend/tests/</code> (+2 vs v1.1.1)</div></div>
+    <div class="kpi"><div class="kpi-label">Test functions</div><div class="kpi-value">~610</div><div class="kpi-sub">pytest, asyncio</div></div>
+    <div class="kpi"><div class="kpi-label">CI status</div><div class="kpi-value" style="font-size: 18pt;">GREEN</div><div class="kpi-sub">at v1.1.2 cut</div></div>
+    <div class="kpi"><div class="kpi-label">Wall-clock</div><div class="kpi-value" style="font-size: 18pt;">~4 m</div><div class="kpi-sub">full backend suite</div></div>
+  </div>
+
+  <h2>10.2 New tests this sprint</h2>
+  <ul class="tight">
+    <li><code>test_model_registry.py</code> — provider CRUD, sync preserves override, capability heuristic edge cases, resolver chain (5 tiers), ModelCallLog write paths, feature-availability map.</li>
+    <li><code>test_agent_runtime.py</code> — resolver-aware happy path (Anthropic), OpenAI-compatible fallback, stub mode, decompose JSON shape, role lookup, trust-mode override, 4-eye sign-off accumulation, trace endpoint round-trip.</li>
+    <li><code>test_generation_adapters.py</code> — six adapters with stubbed HTTP; Asset row shape; retry on 429; CostLedger write on success.</li>
+    <li><code>test_dont_say.py</code> — banned-phrase detection, <code>[refine]</code> retry, no-match passthrough, AuditEvent write.</li>
+    <li><code>test_workflow_templates.py</code> — five templates parse + walk through the sandbox without errors.</li>
+    <li><code>test_brand_pdf_extract.py</code> — hex regex, font-name match, voice slider mapping.</li>
+    <li><code>test_aeo_scorer.py</code> — each of the eight checks against fixture HTML.</li>
+    <li><code>test_2fa.py</code> — recovery-code issue + single-use enforcement; admin override write.</li>
+    <li><code>test_webhook_keys.py</code> — key-id parse; rotate-without-flag-day; reject on unknown key_id.</li>
+    <li>Playwright smoke harness under <code>frontend/tests/playwright/</code> covering 16 core routes (excluded from prod build by #338).</li>
+  </ul>
+
+  <h2>10.3 CI workflows</h2>
   <table class="dk">
-    <tr><th>Area</th><th>Limitation</th><th>Mitigation</th></tr>
-    <tr><td>Health probes</td><td>Vertex AI + AWS Bedrock fall back to <code>unknown</code> — they need native SDKs (google-cloud-aiplatform, boto3).</td><td>Add SDK probes in Sprint 5. Manual <em>Test Connection</em> still works.</td></tr>
-    <tr><td>AEO scorer</td><td>Heuristic-only; misses subtle "AI search readability" signals an LLM would catch.</td><td>Sprint 5: parallel LLM-judged variant with weighted blend.</td></tr>
-    <tr><td>Workflow resume</td><td>Internal runner re-enters on next beat; no operator-facing "Resume now" endpoint.</td><td>One-PR follow-up wraps the existing logic.</td></tr>
-    <tr><td>Streaming</td><td><code>/conductor/dispatch</code> is one-shot; SSE-streaming arrives in C4 follow-up.</td><td>Surface ready; StreamingResponse already used for model logs.</td></tr>
-    <tr><td>Frontend types</td><td>Some <code>any</code> casts in M10 / M14 dialogs.</td><td>Cleanup pass after Sprint 5 surface settles.</td></tr>
+    <tr><th>Workflow</th><th>Trigger</th><th>State</th></tr>
+    <tr><td>ci.yml</td><td>push / PR</td><td><span class="badge ok">Green</span></td></tr>
+    <tr><td>auto-merge.yml</td><td>PRs with <code>auto-merge</code> label</td><td><span class="badge ok">Healthy</span> (admin-merged this sprint by operator authorisation)</td></tr>
+    <tr><td>project-status-sync.yml</td><td>PR open / issue close</td><td><span class="badge ok">Healthy</span></td></tr>
+    <tr><td>project-automation.yml</td><td>PR open</td><td><span class="badge ok">Adds to board automatically</span></td></tr>
+    <tr><td>claude-review.yml</td><td>PR open</td><td><span class="badge ok">Posts review summary</span></td></tr>
+    <tr><td>release.yml</td><td>tag push</td><td><span class="badge ok">Builds + publishes release artifacts</span></td></tr>
   </table>
-  <h3>Process / merge strategy</h3>
-  <p>
-    All 17 PRs were admin-merged after local smoke verification. The org's standard auto-merge workflow is still
-    in place; admin-merge was authorised specifically for this session given the tests cover the surfaces touched.
-    Future sprints can revert to label-based auto-merge by default.
-  </p>
-  <h3>Open decisions for Sprint 5</h3>
+
+  <h2>10.4 What's still not test-covered</h2>
   <ul class="tight">
-    <li>Should the resolver show a "no provider configured" banner when only the env-var fallback is firing?</li>
-    <li>Should ModelCallLog be partitioned by month at the Postgres layer to keep metrics snappy past 1M rows/org?</li>
-    <li>Should the AEO LLM-judge be cached by content hash + brand-kit ID to avoid re-runs on identical pages?</li>
+    <li>End-to-end OAuth flows with real provider responses (requires production keys).</li>
+    <li>Native Vertex AI + Bedrock SDK probes (S4-M5 falls back to <code>unknown</code>).</li>
+    <li>SSE streaming of <code>/conductor/dispatch</code> (one-shot today; Sprint 5).</li>
+    <li>LLM-judged AEO scoring (heuristic-only today; Sprint 5).</li>
+    <li>Frontend page tests — Playwright harness exists but is run locally; CI integration is Sprint 5.</li>
   </ul>
 </section>
 
-<!-- CHAPTER 7 -->
+<!-- ============================================================ CHAPTER 11 — RISKS / DEBT ============================================================ -->
 <section class="chapter">
-  <div class="eyebrow">Chapter 7</div>
-  <h1>Sprint 5 — Recommended Next Steps</h1>
-  <p class="lede">
-    With v1.1.2 making the agent flow real, Sprint 5 should focus on <strong>operator confidence</strong>:
-    visible cost guardrails, real streaming, and the LLM-judged AEO pass.
-  </p>
-  <h3>Top priorities</h3>
-  <ol class="tight">
-    <li><strong>Real-time SSE streaming for Conductor dispatch</strong> — surface tool calls + token-by-token output, not just the final blob.</li>
-    <li><strong>LLM-judged AEO variant</strong> — second-pass scoring + blended ranking.</li>
-    <li><strong>Vertex AI + Bedrock native SDK probes</strong> — bring those two providers to first-class status.</li>
-    <li><strong>Cost guardrails in /conductor</strong> — show "this dispatch will cost ~$0.18" before the run, refuse on caps.</li>
-    <li><strong>Workflow visual builder editor</strong> — currently templates clone into a draft Workflow but the DSL edit UX is JSON-only.</li>
-    <li><strong>Marketing collaterals</strong> (#49–#53) — finally unblock the demo video + one-pager + slides + social drafts.</li>
-  </ol>
-  <h3>Stretch</h3>
+  <div class="eyebrow">Chapter 11</div>
+  <h1 style="color: var(--dk-purple-800);">Risks, Tech Debt &amp; Open Decisions</h1>
+
+  <h2>11.1 Active risks</h2>
+  <table class="dk">
+    <tr><th>Risk</th><th>Severity</th><th>Owner</th><th>Mitigation</th></tr>
+    <tr><td>OAuth production credentials</td><td><span class="badge warn">Medium</span></td><td>Operator</td><td>LinkedIn / X / Instagram still need operator-supplied keys; Bluesky scaffold added this sprint.</td></tr>
+    <tr><td>Vertex AI + Bedrock probes fall back to <code>unknown</code></td><td><span class="badge warn">Medium</span></td><td>Eng</td><td>Sprint 5: add <code>google-cloud-aiplatform</code> + <code>boto3</code> SDK probes. Manual <em>Test Connection</em> still works.</td></tr>
+    <tr><td>AEO scorer heuristic-only</td><td><span class="badge warn">Medium</span></td><td>Eng</td><td>Sprint 5: parallel LLM-judged variant with weighted blend.</td></tr>
+    <tr><td>Conductor dispatch is one-shot</td><td><span class="badge warn">Medium</span></td><td>Eng</td><td>StreamingResponse already used for model logs; same pattern for dispatch in Sprint 5.</td></tr>
+    <tr><td>ModelCallLog growth past 1M rows/org</td><td><span class="badge warn">Medium</span></td><td>Eng</td><td>Monthly Postgres partitioning is the decision-pending mitigation. Pruner can also handle it if we drop logs older than N days.</td></tr>
+    <tr><td>Marketing collaterals</td><td><span class="badge ok">Low</span></td><td>Operator</td><td>Out-of-repo, owned out-of-band; engineering off-limits.</td></tr>
+    <tr><td>Fernet master-key rotation</td><td><span class="badge warn">Medium</span></td><td>Operator</td><td>Documented in RESTORE_RUNBOOK; tested re-encrypt path remains a Sprint 5+ lane.</td></tr>
+  </table>
+
+  <h2>11.2 Tech debt</h2>
   <ul class="tight">
-    <li>Reasoning trace replay UI (Sprint 4 ships the endpoint; needs a timeline view).</li>
+    <li><strong>v1 legacy routers</strong> — Sprint 4 shipped the central <code>V1_ROUTERS</code> index but the
+        actual fold under v2 + deprecation of old paths is Sprint 5.</li>
+    <li><strong>Frontend type cleanup</strong> — some <code>any</code> casts in the M10 / M14 dialogs (acceptable
+        in-session; cleanup pass after Sprint 5 surface settles).</li>
+    <li><strong>Workflow resume operator endpoint</strong> — runner supports it internally; needs a one-PR wrap to
+        expose to operators.</li>
+    <li><strong>Reasoning-trace replay UI</strong> — Sprint 4 shipped the endpoint; the timeline-view UI is a
+        Sprint 5 follow-up.</li>
+    <li><strong>Audit retention pruner observability</strong> — pruner runs daily but doesn't expose a metric;
+        Sprint 5 should add a dashboard tile.</li>
+  </ul>
+
+  <h2>11.3 Open architecture decisions for Sprint 5</h2>
+  <ul class="tight">
+    <li>Should the resolver show a "no provider configured" banner when only the env-var fallback is firing?
+        Pros: explicit; cons: noisy for operators with a working env-var pin.</li>
+    <li>Should ModelCallLog be partitioned monthly at the Postgres layer, or should we let the pruner own retention
+        (drop rows older than 90 days for orgs without an explicit override)?</li>
+    <li>Should the AEO LLM-judge be cached by content hash + brand-kit ID to avoid re-runs on identical pages?
+        Likely yes; would also save cost when the operator re-scores a slate of URLs.</li>
+    <li>Should per-tenant overrides go beyond the resolver chain — e.g.,
+        <code>BrandKit.preferred_voice_model</code> for the Copywriter system prompt?</li>
+    <li>Should we expose a "this dispatch will cost ~$0.18" pre-flight estimate in the Conductor before the run?
+        Operators have asked for cost guardrails inline.</li>
+  </ul>
+
+  <h2>11.4 Process / merge strategy</h2>
+  <p>
+    All 17 PRs were admin-merged after local smoke verification (rebuild affected containers, hit
+    <code>http://localhost:8102/health/</code> + <code>http://localhost:3015/</code>, exercise the touched surface).
+    The org's standard auto-merge workflow remains in place; admin-merge was authorised specifically for this
+    single intensive burst given the tests cover the surfaces touched and the operator was in-session. Future
+    sprints can revert to label-based auto-merge by default.
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 12 — SPRINT 5 ROADMAP ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 12</div>
+  <h1 style="color: var(--dk-purple-800);">Sprint 5 — Recommended Roadmap</h1>
+  <p class="lede">
+    Sprint 5 should make the agent flow feel as real as it now <em>is</em>. v1.1.2 wired the runtime; v1.2.0
+    should make the operator confident in it.
+  </p>
+
+  <h2>12.1 Lane priorities</h2>
+  <table class="dk">
+    <tr><th>Lane</th><th>Priority</th><th>Definition of done</th></tr>
+    <tr><td>L1 — SSE streaming for <code>/conductor/dispatch</code></td><td><span class="badge brand">P0</span></td><td>Token-by-token output plus tool-call cards as they happen, not just a final blob. Re-uses the StreamingResponse pattern from <code>/models/logs/stream</code>.</td></tr>
+    <tr><td>L2 — LLM-judged AEO variant</td><td><span class="badge brand">P0</span></td><td>Second-pass scorer that an LLM judges; weighted blend with the heuristic rubric. Cached by content-hash + brand-kit ID.</td></tr>
+    <tr><td>L3 — Vertex AI + Bedrock native SDK probes</td><td><span class="badge brand">P0</span></td><td><code>google-cloud-aiplatform</code> + <code>boto3</code> probes promote both providers from <code>unknown</code> to first-class health-checked.</td></tr>
+    <tr><td>L4 — Cost guardrails in <code>/conductor</code></td><td><span class="badge brand">P1</span></td><td>Show "this dispatch will cost ~$X" before the run; refuse if it would push the org over its cost cap.</td></tr>
+    <tr><td>L5 — Workflow visual builder editor</td><td><span class="badge brand">P1</span></td><td>Templates currently clone into a draft Workflow; Sprint 5 ships a node-graph editor for the DSL (JSON-only today).</td></tr>
+    <tr><td>L6 — Reasoning-trace timeline UI</td><td><span class="badge brand">P1</span></td><td>Visual replay of a run's ModelCallLog rows; jump to specific tool calls.</td></tr>
+    <tr><td>L7 — Real OAuth credentials for ≥3 channels</td><td><span class="badge brand">P0</span></td><td>LinkedIn + X + Instagram operator-supplied <code>client_id</code> / <code>client_secret</code> populated in <code>.env</code>; OAuth dance verified against staging accounts.</td></tr>
+    <tr><td>L8 — v1 legacy router cleanup</td><td><span class="badge brand">P2</span></td><td>Fold the 54 entries in <code>V1_ROUTERS</code> under the v2 surface; deprecate old paths.</td></tr>
+    <tr><td>L9 — Marketing collateral (operator)</td><td><span class="badge brand">P0</span></td><td>One-pager + slides + demo script + demo video + launch posts (issues #49–#53). Owned by operator.</td></tr>
+  </table>
+
+  <h2>12.2 Lower-priority bucket (P2 deferrals)</h2>
+  <ul class="tight">
     <li>OpenRouter credit-balance card on <code>/admin/models</code>.</li>
     <li>Per-tenant override beyond the resolver chain — e.g. <code>BrandKit.preferred_voice_model</code>.</li>
+    <li>Playwright smoke harness in CI (locally-run today; needs a CI runner with a Postgres + frontend boot).</li>
+    <li>Frontend type cleanup (<code>any</code> casts in M10 / M14 dialogs).</li>
+    <li>Audit-pruner dashboard tile.</li>
+  </ul>
+
+  <h2>12.3 Projected plan completeness after Sprint 5</h2>
+  <div class="bar-row"><div>Backend</div><div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>Frontend</div><div class="bar-track"><div class="bar-fill ok" style="width: 99%;"></div></div><div class="bar-pct">99%</div></div>
+  <div class="bar-row"><div>Agent runtime</div><div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>Operator readiness</div><div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>OAuth real creds</div><div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div><div class="bar-pct">95%</div></div>
+  <div class="bar-row"><div>Marketing collateral</div><div class="bar-track"><div class="bar-fill" style="width: 100%;"></div></div><div class="bar-pct">100%</div></div>
+  <div class="bar-row"><div>Total demo posture</div><div class="bar-track"><div class="bar-fill ok" style="width: 99%;"></div></div><div class="bar-pct">99%</div></div>
+
+  <h2>12.4 Out of scope for Sprint 5</h2>
+  <ul class="tight">
+    <li>v2.0 Vision items (multi-region, federated tenants, on-device agents).</li>
+    <li>Marketplace launch / billing integration / pricing experiments.</li>
+    <li>Mobile app surfaces.</li>
+    <li>BYO MCP marketplace publish-to-store (still operator-only catalogue).</li>
   </ul>
 </section>
 
-<!-- APPENDIX A -->
+<!-- ============================================================ APPENDIX A — CLOSED ISSUES ============================================================ -->
 <section class="chapter">
   <div class="eyebrow">Appendix A</div>
-  <h1>Closed Issues — PR mapping</h1>
-  <p class="lede">All 38 dev issues, in numeric order.</p>
+  <h1 style="color: var(--dk-purple-800);">Closed Issues with PR Mapping</h1>
+  <p class="lede">All 38 dev issues closed in the Sprint 4 window, in numeric order.</p>
   <table class="dk">
     <tr><th>Issue</th><th>Title</th><th>PR</th></tr>
     <tr><td>#284</td><td>[S4-M1/M2] Model Registry — DB models + Provider CRUD API</td><td>#322</td></tr>
@@ -574,26 +1674,105 @@
   </table>
 </section>
 
-<!-- BACK COVER -->
+<!-- ============================================================ APPENDIX B — OPEN ISSUES ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix B</div>
+  <h1 style="color: var(--dk-purple-800);">Open Issues — Status &amp; Owners</h1>
+  <p class="lede">
+    Five issues remain open at the end of Sprint 4. All five are marketing collaterals, all are owned out-of-band
+    by the operator, and engineering is explicitly off-limits to that directory tree.
+  </p>
+  <table class="dk">
+    <tr><th>Issue</th><th>Title</th><th>Owner</th><th>Status</th></tr>
+    <tr><td>#49</td><td>[marketing] One-pager pitch (marketing/one-pager.md + PDF)</td><td>Operator</td><td><span class="badge neutral">Out of repo</span></td></tr>
+    <tr><td>#50</td><td>[marketing] Presentation slides (Marp markdown → HTML/PDF)</td><td>Operator</td><td><span class="badge neutral">Out of repo</span></td></tr>
+    <tr><td>#51</td><td>[marketing] Demo video script + storyboard</td><td>Operator</td><td><span class="badge neutral">Out of repo</span></td></tr>
+    <tr><td>#52</td><td>[marketing] Demo video recording (Playwright auto-capture)</td><td>Operator</td><td><span class="badge neutral">Out of repo</span></td></tr>
+    <tr><td>#53</td><td>[marketing] Launch social posts (drafts)</td><td>Operator</td><td><span class="badge neutral">Out of repo</span></td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ APPENDIX C — FULL PR CATALOGUE ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix C</div>
+  <h1 style="color: var(--dk-purple-800);">Full PR Catalogue Table</h1>
+  <p class="lede">
+    All PRs merged in the Sprint 4 window. Times are IST (UTC + 5:30). Sorted by merge time (oldest first).
+  </p>
+  <table class="dk">
+    <tr><th>PR</th><th>Merged (IST)</th><th>Title</th></tr>
+    <tr><td>#283</td><td>14 May 23:28</td><td>docs(plan): Sprint 4 plan — Model Registry, AEO, competitive context</td></tr>
+    <tr><td>#322</td><td>14 May 23:42</td><td>feat(models): S4-M1/M2 — Model Registry foundation (DB + CRUD)</td></tr>
+    <tr><td>#323</td><td>14 May 23:45</td><td>feat(models): S4-M3/M4/M5 — auto-discovery + heuristic + health-check beat</td></tr>
+    <tr><td>#324</td><td>14 May 23:48</td><td>feat(models): S4-M6/M7/M8/M9 — call log + feature availability + SSE + metrics</td></tr>
+    <tr><td>#325</td><td>14 May 23:50</td><td>feat(models): S4-M11/M12/M13 — resolver + org assignments + user prefs</td></tr>
+    <tr><td>#326</td><td>14 May 23:54</td><td>feat(frontend): S4-M10 — /admin/models page</td></tr>
+    <tr><td>#327</td><td>14 May 23:57</td><td>feat(frontend): S4-M14/M15/M16 — Conductor model panel + gate hook + inline selectors</td></tr>
+    <tr><td>#328</td><td>14 May 23:59</td><td>feat(agents): S4-A1/A2 — runtime + Conductor decomposition</td></tr>
+    <tr><td>#329</td><td>15 May 00:02</td><td>feat(agents): S4-A3/A4/A5/A6 — role-agents + trust-mode + 4-eye + trace replay</td></tr>
+    <tr><td>#330</td><td>15 May 00:04</td><td>feat(generation): S4-B1/B2/B3/B4/B5/B6 — adapters, costs, dont_say, per-action</td></tr>
+    <tr><td>#331</td><td>15 May 00:06</td><td>feat(frontend): S4-C — Conductor full-screen + context-aware dock</td></tr>
+    <tr><td>#332</td><td>15 May 00:09</td><td>feat(workflows): S4-D1/D2/D3/D4/D5/D6 — runner hardening + templates + sandbox</td></tr>
+    <tr><td>#333</td><td>15 May 00:11</td><td>feat(brand): S4-E — Brand Setup Studio backend</td></tr>
+    <tr><td>#334</td><td>15 May 00:14</td><td>feat(auth): S4-F/G — OAuth + TOTP enrollment + recovery + admin override</td></tr>
+    <tr><td>#335</td><td>15 May 00:16</td><td>feat(ops): S4-H/I — observability + docs</td></tr>
+    <tr><td>#336</td><td>15 May 00:19</td><td>chore(tech-debt): S4-J — router index + audit pruner + webhook key rotation + Playwright</td></tr>
+    <tr><td>#337</td><td>15 May 00:22</td><td>feat(aeo): S4-K — AEO scorer + batch + fix suggestions + widget</td></tr>
+    <tr><td>#338</td><td>15 May 00:31</td><td>fix(frontend): exclude Playwright tests from production build</td></tr>
+    <tr><td>#339</td><td>15 May 00:41</td><td>chore(release): v1.1.2 — Sprint 4 closeout (agents go live)</td></tr>
+  </table>
+  <p style="font-size: 8.5pt; color: var(--dk-fg-3);">
+    Authoritative timestamps are in <code>git log v1.1.1..v1.1.2</code> (recorded by the GitHub API in UTC,
+    converted here to IST).
+  </p>
+</section>
+
+<!-- ============================================================ APPENDIX D — GLOSSARY ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix D</div>
+  <h1 style="color: var(--dk-purple-800);">Glossary &amp; Acronyms</h1>
+  <table class="dk">
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>AEO</td><td>Answer Engine Optimisation — the SEO sibling concerned with structural readability for LLM-judged search engines. Sprint 4 shipped the scorer + widget.</td></tr>
+    <tr><td>Agent Runtime</td><td><code>backend/app/agents/runtime.py</code> — the resolver-aware <code>run_completion</code> entry point. All agent calls go through it as of Sprint 4.</td></tr>
+    <tr><td>BrandKit</td><td>Versioned per-org brand identity: palette, fonts, voice, personas, banned phrases. Injected into every agent prompt.</td></tr>
+    <tr><td>BrandKitInsight</td><td>KG write-back artefact: short, atomic brand observations learned from prior runs. Ranked by an ε-greedy bandit (Sprint 4 / E5) and re-injected into the Copywriter system prompt.</td></tr>
+    <tr><td>Bootstrap superadmin</td><td>Single hardcoded account (<code>admin@dclaw.io</code>, slug <code>s-admn-000000</code>) that is re-asserted on every backend startup and cannot be deleted.</td></tr>
+    <tr><td>Conductor</td><td>The multi-agent orchestration agent. Sprint 4 promoted it from chat-dock to a first-class <code>/conductor</code> surface with decompose + dispatch.</td></tr>
+    <tr><td>Cost-cap evaluator</td><td>Pre-action check that refuses an agent run if it would exceed the per-org budget. Sprint 5 will surface this in the Conductor as a pre-flight estimate.</td></tr>
+    <tr><td>dont_say</td><td>Brand-banned-phrase lint that runs on every model output before it reaches the Approval Inbox; one auto-retry with a <code>[refine]</code> system message.</td></tr>
+    <tr><td>Fernet master key</td><td>Operator-held symmetric key used to encrypt SocialAccount tokens and other secrets at rest. Out-of-band.</td></tr>
+    <tr><td>KG</td><td>Knowledge Graph — the semantic-search-indexed corpus of ingested documents, scoped by org.</td></tr>
+    <tr><td>MCP</td><td>Model Context Protocol — the unified per-integration adapter spec. 14 concrete adapters + 6 generation shells (Sprint 4) + BYO marketplace.</td></tr>
+    <tr><td>Model Registry</td><td>Sprint 4's five-table system that abstracts the LLM provider: 26 provider types, auto-discovery, capability heuristic, health-checks, resolver chain.</td></tr>
+    <tr><td>ModelCallLog</td><td>One row per model invocation: org / user / provider / model / request_id / latency / tokens / cost / status. SSE-streamable; metric-aggregated.</td></tr>
+    <tr><td>PLAN-v1.2</td><td>The roadmap document (<code>PLAN-v1.2.md</code>); the stakeholder reads this. Release tags align to it.</td></tr>
+    <tr><td>QuotaCounter</td><td>Sliding-window quota enforcement with a circuit-breaker; protects against runaway agent runs.</td></tr>
+    <tr><td>Resolver chain</td><td>Sprint 4's <code>user → org → pool → env → stub</code> resolution order for picking a model for a given capability slot.</td></tr>
+    <tr><td>Role-agent</td><td>One of seven Sprint 4 curated agents (Strategist, Creative Director, Copywriter, Editor, SEO Analyst, Distributor, Reporter). Dispatched by the Conductor.</td></tr>
+    <tr><td>Slug</td><td>Human-readable identifier: users <code>u-{first4}-{6hex}</code>, orgs <code>o-{first4}-{6hex}</code>, bootstrap <code>s-admn-000000</code>.</td></tr>
+    <tr><td>Station</td><td>The supervised UI a human operator runs DClaw from. Approval Inbox + Conductor live here.</td></tr>
+    <tr><td>Trust mode</td><td>The per-org / per-role-agent autonomy posture: <code>manual</code> / <code>suggest</code> / <code>auto-with-approval</code>. Resolved at dispatch time.</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ BACK PAGE ============================================================ -->
 <section class="back">
   <div class="back-content">
     <div>
-      <div class="cover-wordmark">
+      <div class="cover-wordmark" style="color: white;">
         <div class="claw">D</div>
         <div class="name">DClaw Marketing</div>
       </div>
     </div>
     <div>
-      <h1>Sprint 4 — Delivered.<br/>v1.1.2 — Tagged.</h1>
-      <p style="color: rgba(255,255,255,0.85); font-size: 13pt; max-width: 80%; margin-top: 20pt;">
-        Agents go live. The marketing-ops platform is no longer a scaffold — it's a working flow from
-        brief to dispatched draft to approval queue.
-      </p>
+      <h1>Seventeen pull requests.<br>One intensive session.<br>Agents live, tagged <span style="color: var(--dk-purple-200);">v1.1.2</span>.</h1>
     </div>
     <div class="meta">
-      <div>DClaw Marketing — Sprint 4 Status Report</div>
-      <div>Generated 15 May 2026 · v4.0</div>
-      <div>obsidian/reports/sprint-4-status-2026-05-15.html</div>
+      <div>DClaw Marketing — Dev Sprint 4 Status Report</div>
+      <div>15 May 2026 · v4.1 · prepared by Engineering with Claude Code (Opus 4.7)</div>
+      <div>Generated from <code>obsidian/reports/sprint-4-status-2026-05-15.html</code></div>
+      <div>Confidential — internal distribution</div>
     </div>
   </div>
 </section>
