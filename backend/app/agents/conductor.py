@@ -443,6 +443,211 @@ async def reply_agentic(
     )
 
 
+async def reply_agentic_streaming(
+    user_text: str,
+    *,
+    history: Sequence[dict] | None,
+    images: list[tuple[str, bytes]] | None = None,
+    doc_summaries: list[str] | None = None,
+    tool_ctx,
+    max_iters: int = 6,
+    thinking_budget_tokens: int | None = None,
+):
+    """Streaming version of `reply_agentic`. Async generator that yields
+    SSE-ready event dicts as the agent thinks, calls tools, and writes
+    its final answer. Caller is responsible for SSE-serializing and
+    persisting the final state. (S5-CDR-D)
+
+    Event types yielded:
+      {"event": "agent_msg_start"}
+      {"event": "thinking_delta",   "text": "..."}
+      {"event": "text_delta",       "text": "..."}
+      {"event": "tool_call_start",  "name": "...", "tool_use_id": "...", "input": {...}}
+      {"event": "tool_call_result", "name": "...", "tool_use_id": "...", "result": {...}}
+      {"event": "done", "final_text": "...", "tool_calls": [...], "thinking": "..."}
+      {"event": "error", "error": "..."}
+
+    In stub mode (no ANTHROPIC_API_KEY) yields a single text_delta with
+    the deterministic stub reply, then `done`. Tool-use only fires with
+    real Claude.
+    """
+    from app.agents.anthropic_client import (
+        is_real_provider_configured,
+        messages_stream_raw,
+    )
+    from app.agents.tools import REGISTRY
+
+    if not is_real_provider_configured():
+        text_turn = await reply(
+            user_text,
+            history=history,
+            images=images,
+            doc_summaries=doc_summaries,
+        )
+        yield {"event": "agent_msg_start"}
+        yield {"event": "text_delta", "text": text_turn.text}
+        yield {
+            "event": "done",
+            "final_text": text_turn.text,
+            "tool_calls": [],
+            "thinking": "",
+        }
+        return
+
+    # Build initial messages list (same shape as reply_agentic).
+    import base64 as _b64
+    import json as _json
+
+    messages: list[dict] = []
+    for m in (history or [])[-10:]:
+        role = m.get("role", "user")
+        if role not in ("user", "assistant"):
+            continue
+        content = (m.get("content") or "").strip()
+        if not content:
+            continue
+        messages.append({"role": role, "content": content})
+
+    user_blocks: list[dict] = []
+    if images:
+        for mime, raw in images:
+            user_blocks.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mime,
+                        "data": _b64.b64encode(raw).decode("ascii"),
+                    },
+                }
+            )
+    text_parts: list[str] = []
+    if doc_summaries:
+        text_parts.append(
+            "ATTACHED DOCUMENTS:\n" + "\n".join(f"- {s}" for s in doc_summaries)
+        )
+    text_parts.append(user_text)
+    user_blocks.append({"type": "text", "text": "\n\n".join(text_parts)})
+    messages.append({"role": "user", "content": user_blocks})
+
+    tool_calls_trace: list[dict] = []
+    tools_schema = REGISTRY.as_claude_schema()
+    final_text_accum: list[str] = []
+    thinking_accum: list[str] = []
+
+    for _ in range(max_iters):
+        yield {"event": "agent_msg_start"}
+        # Each iteration may emit multiple tool_use_done events; we
+        # collect them, dispatch, then loop.
+        completed_tool_uses: list[dict] = []
+        # Track this iteration's text so we know the final answer.
+        iter_text: list[str] = []
+
+        async for ev in messages_stream_raw(
+            system=_AGENT_SYSTEM_PROMPT,
+            messages=messages,
+            tools=tools_schema,
+            max_tokens=1500,
+            thinking_budget_tokens=thinking_budget_tokens,
+        ):
+            etype = ev.get("type")
+            if etype == "text_delta":
+                t = ev.get("text", "")
+                iter_text.append(t)
+                yield {"event": "text_delta", "text": t}
+            elif etype == "thinking_delta":
+                t = ev.get("text", "")
+                thinking_accum.append(t)
+                yield {"event": "thinking_delta", "text": t}
+            elif etype == "tool_use_done":
+                completed_tool_uses.append(ev)
+            elif etype == "error":
+                yield {"event": "error", "error": ev.get("error", "")}
+                return
+            elif etype == "message_done":
+                stop_reason = ev.get("stop_reason")
+                # Capture iteration text into final accumulator only if
+                # this is the natural-exit iteration (no tool calls).
+                if not completed_tool_uses or stop_reason != "tool_use":
+                    final_text_accum.extend(iter_text)
+                break
+
+        if not completed_tool_uses:
+            # Natural exit — done.
+            break
+
+        # Add assistant turn with tool_use blocks to messages for next iter.
+        assistant_content: list[dict] = []
+        if iter_text:
+            assistant_content.append({"type": "text", "text": "".join(iter_text)})
+        for tu in completed_tool_uses:
+            assistant_content.append(
+                {
+                    "type": "tool_use",
+                    "id": tu.get("id", ""),
+                    "name": tu.get("name", ""),
+                    "input": tu.get("input", {}) or {},
+                }
+            )
+        messages.append({"role": "assistant", "content": assistant_content})
+
+        # Dispatch each tool, yield SSE events around each.
+        result_blocks: list[dict] = []
+        for tu in completed_tool_uses:
+            tool_name = tu.get("name", "")
+            tool_use_id = tu.get("id", "")
+            tu_input = tu.get("input", {}) or {}
+            yield {
+                "event": "tool_call_start",
+                "name": tool_name,
+                "tool_use_id": tool_use_id,
+                "input": tu_input,
+            }
+            tool = REGISTRY.get(tool_name)
+            if tool is None:
+                result = {"ok": False, "error": f"unknown tool: {tool_name}"}
+            else:
+                try:
+                    result = await tool.handler(tool_ctx, **tu_input)
+                except TypeError as e:
+                    result = {"ok": False, "error": f"tool args mismatch: {e}"}
+                except Exception as e:
+                    logger.exception("Conductor: streaming tool %s failed", tool_name)
+                    result = {"ok": False, "error": str(e)}
+            tool_calls_trace.append(
+                {
+                    "tool_use_id": tool_use_id,
+                    "name": tool_name,
+                    "input": tu_input,
+                    "result": result,
+                }
+            )
+            yield {
+                "event": "tool_call_result",
+                "name": tool_name,
+                "tool_use_id": tool_use_id,
+                "result": result,
+            }
+            result_blocks.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_id,
+                    "content": _json.dumps(result)[:50_000],
+                }
+            )
+
+        messages.append({"role": "user", "content": result_blocks})
+
+    final_text = "".join(final_text_accum).strip() or "Done."
+    thinking_blob = "".join(thinking_accum).strip()
+    yield {
+        "event": "done",
+        "final_text": final_text,
+        "tool_calls": tool_calls_trace,
+        "thinking": thinking_blob,
+    }
+
+
 async def reply(
     user_text: str,
     *,
