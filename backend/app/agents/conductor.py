@@ -91,12 +91,25 @@ def _format_history(history: Sequence[dict] | None) -> str:
     return "\n".join(lines)
 
 
+_SYSTEM_PROMPT_LITE = textwrap.dedent(
+    """
+    You are the Conductor, the manager-station assistant for DClaw
+    Marketing (an AI marketing platform). Respond conversationally in
+    2-4 sentences. Be concise and helpful. You do NOT need to output
+    JSON; plain text is preferred. Outbound posting requires human
+    approval — never claim to have published or sent anything.
+    """
+).strip()
+
+
 async def _claude_reply(
     user_text: str,
     history: Sequence[dict] | None,
     images: list[tuple[str, bytes]] | None = None,
     doc_summaries: list[str] | None = None,
 ) -> ConductorTurn:
+    from app.core.config import settings
+
     prior = _format_history(history)
     parts: list[str] = []
     if prior:
@@ -107,17 +120,34 @@ async def _claude_reply(
     parts.append(f"USER: {user_text}")
     user_block = "\n".join(parts)
 
+    # Small OpenAI-compat models (Ollama llama3.2:3b, etc.) struggle
+    # with the full JSON-output instruction and the route list. Use a
+    # stripped-down system prompt on that path — they reply in plain
+    # text and we wrap it in a ConductorTurn with no suggestions. (#369)
+    use_lite_prompt = (
+        bool(settings.openai_compat_base_url) and not settings.anthropic_api_key
+    )
+    system_prompt = _SYSTEM_PROMPT_LITE if use_lite_prompt else _SYSTEM_PROMPT
+
     try:
         raw = await complete(
-            system=_SYSTEM_PROMPT,
+            system=system_prompt,
             user=user_block,
-            max_tokens=600,
+            max_tokens=400 if use_lite_prompt else 600,
             n_variants_hint=1,
             images=images,
         )
     except Exception:
         logger.exception("Conductor: Claude call failed; using stub.")
         return _stub_reply(user_text)
+
+    # Lite mode returns plain text — no JSON parsing.
+    if use_lite_prompt:
+        return ConductorTurn(
+            text=raw.strip() or "(empty response)",
+            suggestions=[],
+            confidence=0.7,
+        )
 
     # Try to parse JSON. Tolerant of surrounding prose.
     parsed: dict | None = None
@@ -341,10 +371,33 @@ async def reply_agentic(
         messages_create_raw,
     )
     from app.agents.tools import REGISTRY
+    from app.core.config import settings
+
+    # Tool-use loop is calibrated for Claude. Small OpenAI-compat
+    # providers (Ollama on CPU, local vLLM, etc.) can't reliably handle
+    # the system-prompt + ~40 tool schemas payload — they 500 or emit
+    # garbage. So we fall back to text-only `reply()` whenever
+    # Anthropic isn't the active provider. Real tool-use returns when
+    # ANTHROPIC_API_KEY is set OR (future) a flag enables it for
+    # high-end OpenAI-compat providers.
+    anthropic_active = bool(settings.anthropic_api_key)
+    if not anthropic_active:
+        text_turn = await reply(
+            user_text,
+            history=history,
+            images=images,
+            doc_summaries=doc_summaries,
+        )
+        return ConductorAgenticTurn(
+            text=text_turn.text,
+            confidence=text_turn.confidence,
+            tool_calls=[],
+        )
 
     if not is_real_provider_configured():
         # Stub mode — defer to the text-only path so dev/CI behaves
-        # identically. Tool calling needs real Claude to work.
+        # identically. (Unreachable now that we short-circuit above
+        # when Anthropic isn't active; kept for defence in depth.)
         text_turn = await reply(
             user_text,
             history=history,
@@ -509,8 +562,13 @@ async def reply_agentic_streaming(
         messages_stream_raw,
     )
     from app.agents.tools import REGISTRY
+    from app.core.config import settings
 
-    if not is_real_provider_configured():
+    # Same rationale as reply_agentic: tool-use loop is Claude-shaped;
+    # small OpenAI-compat providers can't handle the payload reliably.
+    # When Anthropic isn't active, stream text-only via reply().
+    anthropic_active = bool(settings.anthropic_api_key)
+    if not anthropic_active or not is_real_provider_configured():
         text_turn = await reply(
             user_text,
             history=history,

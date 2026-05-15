@@ -172,6 +172,16 @@ class Settings(BaseSettings):
     tavily_api_key: str = ""
     brave_search_api_key: str = ""
 
+    # OpenAI-compatible escape hatch for the Conductor agent (#369).
+    # When `openai_compat_base_url` is set, the Conductor routes its
+    # text completions / streams / tool calls there instead of
+    # Anthropic. Supports Ollama (`http://host.docker.internal:11434`),
+    # Groq, Gemini OpenAI-compat, OpenRouter, Together AI, Fireworks AI,
+    # vLLM, LM Studio, or any other OpenAI-shape server.
+    openai_compat_base_url: str = ""
+    openai_compat_api_key: str = ""
+    openai_compat_model: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = False

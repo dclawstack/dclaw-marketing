@@ -6,6 +6,12 @@ when no API key is configured (so dev + CI work without external
 creds and tests are repeatable). When the user passes `images=[(mime,
 bytes)…]`, the wrapper builds proper Claude vision content blocks so
 the Conductor can reason about attached images (S5-CDR-B).
+
+Dispatch priority (#369):
+  1. `OPENAI_COMPAT_BASE_URL` set → route to `openai_compat_client`
+     (works with Ollama, Groq, Gemini-compat, OpenRouter, …)
+  2. `ANTHROPIC_API_KEY` set → real Anthropic SDK call
+  3. Neither → deterministic stub
 """
 
 from __future__ import annotations
@@ -23,8 +29,14 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
+def _is_openai_compat_active() -> bool:
+    return bool(
+        settings.openai_compat_base_url and settings.openai_compat_model
+    )
+
+
 def is_real_provider_configured() -> bool:
-    return bool(settings.anthropic_api_key)
+    return _is_openai_compat_active() or bool(settings.anthropic_api_key)
 
 
 def _stub_response(system: str, user: str, n_variants: int = 3) -> str:
@@ -61,7 +73,31 @@ async def complete(
     text — the stub path notes their count in the synthetic reply so
     tests can verify routing without burning credits.
     """
-    if not is_real_provider_configured():
+    # Route to OpenAI-compatible provider (Ollama, Groq, etc.) if
+    # configured. Images aren't supported on most OpenAI-compat
+    # providers — they get dropped and the agent sees a note in the
+    # prompt instead. (#369)
+    if _is_openai_compat_active():
+        from app.agents import openai_compat_client
+        if images:
+            user = (
+                f"[{len(images)} image attachment(s) — provider has no "
+                "vision support; describing by metadata only]\n\n"
+                + user
+            )
+        try:
+            return await openai_compat_client.complete(
+                system=system,
+                user=user,
+                max_tokens=max_tokens,
+                model=None,  # use settings.openai_compat_model
+                n_variants_hint=n_variants_hint,
+            )
+        except Exception:
+            logger.exception("OpenAI-compat complete failed; falling back to stub.")
+            return _stub_response(system, user, n_variants_hint)
+
+    if not settings.anthropic_api_key:
         if images:
             user = (
                 f"[{len(images)} image attachment(s) — stub mode]\n\n"
@@ -134,7 +170,26 @@ async def messages_create_raw(
     The stub fallback returns a simple end_turn text response so callers
     can still exercise the loop in dev/CI without an API key. (S5-CDR-C)
     """
-    if not is_real_provider_configured():
+    # Route to OpenAI-compatible provider when configured (#369).
+    if _is_openai_compat_active():
+        from app.agents import openai_compat_client
+        try:
+            return await openai_compat_client.messages_create_raw(
+                system=system,
+                messages=messages,
+                tools=tools,
+                max_tokens=max_tokens,
+                model=None,
+            )
+        except Exception:
+            logger.exception("OpenAI-compat messages_create_raw failed; falling back to stub.")
+            text = _stub_response(system, "", n_variants=1)
+            return {
+                "stop_reason": "end_turn",
+                "content": [{"type": "text", "text": text}],
+            }
+
+    if not settings.anthropic_api_key:
         last_user_text = ""
         for m in reversed(messages):
             if m.get("role") == "user":
@@ -222,7 +277,27 @@ async def messages_stream_raw(
     Stub fallback (no API key) yields a single text_delta + message_done
     so the SSE consumer can still drive the UI in dev. (S5-CDR-D)
     """
-    if not is_real_provider_configured():
+    # Route to OpenAI-compatible provider when configured (#369).
+    if _is_openai_compat_active():
+        from app.agents import openai_compat_client
+        try:
+            async for ev in openai_compat_client.messages_stream_raw(
+                system=system,
+                messages=messages,
+                tools=tools,
+                max_tokens=max_tokens,
+                model=None,
+                thinking_budget_tokens=thinking_budget_tokens,
+            ):
+                yield ev
+            return
+        except Exception as e:
+            logger.exception("OpenAI-compat stream failed; falling back to stub.")
+            yield {"type": "error", "error": str(e)}
+            yield {"type": "message_done", "stop_reason": "error"}
+            return
+
+    if not settings.anthropic_api_key:
         last_user_text = ""
         for m in reversed(messages):
             if m.get("role") == "user":
