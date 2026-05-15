@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  async redirects() {
+    return [
+      { source: "/agent", destination: "/conductor", permanent: true },
+    ];
+  },
   async rewrites() {
     // For the server-side proxy (Next.js running inside the frontend
     // container), we need a hostname reachable from THAT container —

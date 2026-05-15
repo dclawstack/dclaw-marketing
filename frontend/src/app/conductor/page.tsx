@@ -1,21 +1,31 @@
 "use client";
 
 /**
- * /conductor — full-screen Conductor page (S4-C3/C4/C5).
+ * /conductor — unified Conductor surface (S5-CDR-A).
  *
- * Left rail: AgentThread list (persisted server-side). Right pane: current
- * thread with brief input + plan + dispatched results + streaming trace.
+ * Single page combining the chat surface (DkAgentChat — primary) with the
+ * legacy brief-decompose-dispatch orchestrator (collapsible secondary). The
+ * threads sidebar and ModelSettingsPanel are shared. /agent redirects here.
+ *
+ * Future Sprint 5 issues layer on top of this page:
+ *   - #B: drag-drop file upload + vision
+ *   - #C: Claude Agent SDK + tool fleet (folds brief-orchestrate into chat)
+ *   - #D: streaming + extended thinking
+ *   - #E: web search + research modes
+ *   - #F: voice / prompt library / slash / message ops / markdown polish
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, Play, Sparkles } from "lucide-react";
 
 import {
+  DkAgentChat,
   DkButton,
   DkCard,
   DkCardContent,
   DkCardHeader,
   DkCardTitle,
+  DkEmptyState,
   DkPageHeader,
   DkTextarea,
 } from "@/components/dk";
@@ -114,112 +124,117 @@ export default function ConductorPage() {
     }
   };
 
-  if (!currentOrg) {
-    return (
-      <div className="p-8 text-sm text-slate-500">
-        Pick an organization in the top-bar switcher.
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <DkPageHeader
-        eyebrow="Agent · Conductor"
+        eyebrow="Agent · Manager Station"
         title="Conductor"
-        description="Hand the Conductor a brief — it decomposes the work, dispatches to role agents, and brings the drafts back here."
+        description="Your agentic chatbot for running the entire platform — chat, plan, and operate every feature from one place. Outbound posting is hard-gate by default — nothing goes live without you."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
-        {/* Thread list */}
-        <DkCard>
-          <DkCardHeader>
-            <DkCardTitle>Threads</DkCardTitle>
-          </DkCardHeader>
-          <DkCardContent className="space-y-2 text-sm">
-            {threads.length === 0 ? (
-              <div className="text-slate-500 text-xs">No threads yet.</div>
-            ) : (
-              threads.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setActiveThread(t.id)}
-                  className={`block w-full text-left px-2 py-1.5 rounded ${
-                    activeThread === t.id ? "bg-slate-100" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="font-medium truncate">{t.title || "(untitled)"}</div>
-                  <div className="text-xs text-slate-400 truncate">{t.kind}</div>
-                </button>
-              ))
-            )}
-          </DkCardContent>
-        </DkCard>
-
-        <div className="space-y-4">
-          <ModelSettingsPanel orgId={orgId!} defaultOpen />
-
+      {!currentOrg ? (
+        <DkEmptyState
+          icon={<Sparkles className="h-6 w-6" />}
+          title="Pick an organization"
+          description="Conductor threads are org-scoped — use the switcher in the nav."
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+          {/* LEFT — threads sidebar (visual today; chat-thread wiring lands in S5-CDR-F polish) */}
           <DkCard>
             <DkCardHeader>
-              <DkCardTitle>Brief</DkCardTitle>
+              <DkCardTitle>Threads</DkCardTitle>
             </DkCardHeader>
-            <DkCardContent className="space-y-3">
-              <DkTextarea
-                rows={4}
-                value={brief}
-                onChange={(e) => setBrief(e.target.value)}
-                placeholder="e.g. We're launching v1.1.2 next week. Plan a 1-week multi-channel push…"
-              />
-              <div className="flex justify-end gap-2">
-                <DkButton onClick={dispatch} disabled={busy || !brief.trim()}>
-                  {busy ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Play className="w-4 h-4" />
-                  )}
-                  {busy ? "Dispatching…" : "Dispatch"}
-                </DkButton>
-              </div>
-              {error && (
-                <div className="text-rose-600 text-sm">{error}</div>
+            <DkCardContent className="space-y-2 text-sm">
+              {threads.length === 0 ? (
+                <div className="text-slate-500 text-xs">No threads yet.</div>
+              ) : (
+                threads.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveThread(t.id)}
+                    className={`block w-full text-left px-2 py-1.5 rounded ${
+                      activeThread === t.id ? "bg-slate-100" : "hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="font-medium truncate">{t.title || "(untitled)"}</div>
+                    <div className="text-xs text-slate-400 truncate">{t.kind}</div>
+                  </button>
+                ))
               )}
             </DkCardContent>
           </DkCard>
 
-          {plan && (
-            <DkCard>
-              <DkCardHeader>
-                <DkCardTitle>
-                  <Sparkles className="w-4 h-4 inline mr-1" /> Plan
-                </DkCardTitle>
-              </DkCardHeader>
-              <DkCardContent>
-                <div className="text-sm text-slate-700 mb-2">{plan.rationale}</div>
-                <ul className="space-y-1 text-sm">
-                  {plan.tasks.map((t, i) => (
-                    <li key={i} className="border-l-2 border-brand pl-2">
-                      <span className="font-medium">{t.agent}</span> · {t.intent}
-                    </li>
-                  ))}
-                </ul>
-              </DkCardContent>
-            </DkCard>
-          )}
+          {/* RIGHT — model selector (page-level, visible by default), chat, and legacy orchestrate panel */}
+          <div className="space-y-4">
+            <ModelSettingsPanel orgId={orgId!} defaultOpen />
 
-          {results.map((r, i) => (
-            <DkCard key={i}>
-              <DkCardHeader>
-                <DkCardTitle>
-                  {r.agent} <span className="text-xs text-slate-400">{r.model_id}</span>
-                </DkCardTitle>
-              </DkCardHeader>
-              <DkCardContent className="text-sm whitespace-pre-wrap">
-                {r.text}
-              </DkCardContent>
-            </DkCard>
-          ))}
+            {/* PRIMARY: chat */}
+            <DkAgentChat kind="conductor" />
+
+            {/* SECONDARY: brief → decompose → dispatch (collapsed by default; folded into chat via tool-calls in S5-CDR-C) */}
+            <details className="rounded-lg border border-[var(--dk-border)] bg-white">
+              <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-[var(--dk-fg-1)]">
+                Orchestrate from a brief
+              </summary>
+              <div className="space-y-3 border-t border-[var(--dk-border)] p-4">
+                <DkTextarea
+                  rows={4}
+                  value={brief}
+                  onChange={(e) => setBrief(e.target.value)}
+                  placeholder="e.g. We're launching v1.1.2 next week. Plan a 1-week multi-channel push…"
+                />
+                <div className="flex justify-end gap-2">
+                  <DkButton onClick={dispatch} disabled={busy || !brief.trim()}>
+                    {busy ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                    {busy ? "Dispatching…" : "Dispatch"}
+                  </DkButton>
+                </div>
+                {error && (
+                  <div className="text-rose-600 text-sm">{error}</div>
+                )}
+
+                {plan && (
+                  <DkCard>
+                    <DkCardHeader>
+                      <DkCardTitle>
+                        <Sparkles className="w-4 h-4 inline mr-1" /> Plan
+                      </DkCardTitle>
+                    </DkCardHeader>
+                    <DkCardContent>
+                      <div className="text-sm text-slate-700 mb-2">{plan.rationale}</div>
+                      <ul className="space-y-1 text-sm">
+                        {plan.tasks.map((t, i) => (
+                          <li key={i} className="border-l-2 border-brand pl-2">
+                            <span className="font-medium">{t.agent}</span> · {t.intent}
+                          </li>
+                        ))}
+                      </ul>
+                    </DkCardContent>
+                  </DkCard>
+                )}
+
+                {results.map((r, i) => (
+                  <DkCard key={i}>
+                    <DkCardHeader>
+                      <DkCardTitle>
+                        {r.agent} <span className="text-xs text-slate-400">{r.model_id}</span>
+                      </DkCardTitle>
+                    </DkCardHeader>
+                    <DkCardContent className="text-sm whitespace-pre-wrap">
+                      {r.text}
+                    </DkCardContent>
+                  </DkCard>
+                ))}
+              </div>
+            </details>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
