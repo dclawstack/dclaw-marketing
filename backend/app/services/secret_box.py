@@ -17,22 +17,63 @@ Usage:
 
 from __future__ import annotations
 
+import logging
+
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.config import settings
 
 
+logger = logging.getLogger(__name__)
+
+
+# Default placeholder in config.py. If we see this at boot we know the
+# operator never set their own key, so we surface a clearer error
+# message at the call site than Fernet's raw "must be 32 url-safe
+# base64-encoded bytes."
+_PLACEHOLDER_KEY = "change-me-fernet-master-key-base64=="
+
+
+class SecretBoxNotConfiguredError(RuntimeError):
+    """Raised when seal()/unseal() can't operate because the master key
+    is missing or invalid. Callers should translate this into a clean
+    HTTP 500 with a configuration-hint message rather than letting the
+    raw cryptography exception bubble. (S5 #360)
+    """
+
+
 def _fernet() -> Fernet:
     key = settings.tenant_encryption_master_key
     if not key:
-        raise RuntimeError(
-            "tenant_encryption_master_key is unset; cannot seal secrets."
+        raise SecretBoxNotConfiguredError(
+            "TENANT_ENCRYPTION_MASTER_KEY is unset. Generate one with "
+            "`python -c \"from cryptography.fernet import Fernet; "
+            "print(Fernet.generate_key().decode())\"` and set it in the "
+            "environment."
         )
-    return Fernet(key.encode() if isinstance(key, str) else key)
+    if key == _PLACEHOLDER_KEY:
+        raise SecretBoxNotConfiguredError(
+            "TENANT_ENCRYPTION_MASTER_KEY is still set to the dev "
+            "placeholder. Generate a real Fernet key (see secret_box.py "
+            "docstring) and set TENANT_ENCRYPTION_MASTER_KEY in the "
+            "environment."
+        )
+    try:
+        return Fernet(key.encode() if isinstance(key, str) else key)
+    except (ValueError, TypeError) as e:
+        raise SecretBoxNotConfiguredError(
+            f"TENANT_ENCRYPTION_MASTER_KEY is set but invalid: {e}. "
+            "Must be a Fernet key (32 url-safe base64-encoded bytes)."
+        ) from e
 
 
 def seal(plaintext: str) -> bytes:
-    """Encrypt a UTF-8 string. Returns the raw Fernet token (bytes)."""
+    """Encrypt a UTF-8 string. Returns the raw Fernet token (bytes).
+
+    Raises `SecretBoxNotConfiguredError` (subclass of RuntimeError) if
+    the master key is missing / placeholder / malformed; callers should
+    catch this and translate to an HTTP 500 with a configuration hint.
+    """
     if plaintext is None:
         raise ValueError("Cannot seal None.")
     return _fernet().encrypt(plaintext.encode("utf-8"))

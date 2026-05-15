@@ -74,6 +74,11 @@ services:
       S3_BUCKET: dclaw-marketing
       S3_USE_SSL: "false"
       APP_ENV: production
+      # Dev-only Fernet key for encrypting per-tenant API credentials
+      # (model provider keys, OAuth tokens). MUST be replaced in prod
+      # with a freshly generated key — `python -c "from cryptography.
+      # fernet import Fernet; print(Fernet.generate_key().decode())"`.
+      TENANT_ENCRYPTION_MASTER_KEY: "bqUs7dvwPNfolchbYftyzRJNp60aCVZvkK96G4WwHbs="
     ports:
       - "8102:8102"
     depends_on:
@@ -98,6 +103,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_marketing
       REDIS_URL: redis://redis:6379/0
       APP_ENV: production
+      TENANT_ENCRYPTION_MASTER_KEY: "bqUs7dvwPNfolchbYftyzRJNp60aCVZvkK96G4WwHbs="
     depends_on:
       postgres:
         condition: service_healthy
@@ -118,6 +124,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_marketing
       REDIS_URL: redis://redis:6379/0
       APP_ENV: production
+      TENANT_ENCRYPTION_MASTER_KEY: "bqUs7dvwPNfolchbYftyzRJNp60aCVZvkK96G4WwHbs="
     depends_on:
       postgres:
         condition: service_healthy
