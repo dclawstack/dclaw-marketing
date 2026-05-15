@@ -114,6 +114,7 @@ These were the green-light items before v1.2 implementation could start. All loc
 - ⬜ **Sprint 4 P0** — Model Registry & AI Gateway (S4-M, new — multi-provider model config, health checks, feature-availability matrix, live logs + metrics) · Brand Setup Studio polish (Q1/S4-E) · real OAuth client credentials wired (C2/S4-F, all platforms) · TOTP enrollment UI (S4-G) · observability dashboards (Grafana + Sentry tags + `/admin/health` queue depth, S4-H) · user-guide refresh.
 - ⬜ **Sprint 4 P0 — Agent runtime headline** — Claude Agent SDK integration (S4-A) · real model connections via Model Registry (S4-B) · Conductor as all-in-one chat controller (S4-C) · end-to-end live workflow execution (S4-D). See "Sprint 4 Plan" below.
 - ⬜ **Sprint 4 P1** — Audit retention pruner · v1 legacy router consolidation · BrandKitInsight bandit ranking · AEO scorer (S4-K, new — Answer Engine Optimization for AI search).
+- ⬜ **Sprint 5 P0 — Conductor consolidation & top-of-the-line agentic chat (NEW headline, 2026-05-15)** — Single Conductor under Work at `/conductor` (S5-CDR-A) · drag-drop file/folder upload + vision (S5-CDR-B) · Claude Agent SDK + maximum tool fleet covering every sidebar feature (S5-CDR-C) · streaming responses + extended thinking (S5-CDR-D) · web search + light/deep research modes (S5-CDR-E) · Claude/ChatGPT-parity polish (S5-CDR-F) · plan doc update (S5-CDR-G). See "Sprint 5 Plan" below. Issues #347–#353.
 - ⬜ **Sprint 5+ P2** — Brand-Safe Image Editor (B7) · SMS / WhatsApp (C5) · Push / In-App (C6) · Competitor Tracker (F3) · Customer-Voice Mining (F4) · Topic Cluster Map (H3) · Client Portal (O) · Visual Workflow Builder (P) · Trend Radar / Comment Triage / Auto-Optimizer (G3-G5) · Sandbox dry-run UI polish.
 - ⬜ **Marketing collateral** — Issues #49–#53 (one-pager / slides / demo script / demo video / launch posts). **Operator-owned, out-of-band, off-limits to engineering** unless explicitly asked.
 
@@ -945,6 +946,45 @@ Providers are grouped into four tiers by their integration method.
 - Observability dashboards exposed to the operator.
 - AEO scorer live in `/agents/seo` with batch audit capability.
 - Marketing collateral (operator-owned) ready alongside.
+
+---
+
+## Sprint 5 Plan — Conductor consolidation & top-of-the-line agentic chat
+
+> **Headline (2026-05-15).** Sprint 5 is NOT a new-features sprint. It is a fix-and-elevate sprint with one focused epic: make the Conductor the unmistakable flagship of the platform. Today the Conductor is split across two sidebar entries pointing at two different page UIs, and the newer features have only landed on the "Conductor → Conductor" path while the "Work → Conductor" path is a stale chat wrapper. Sprint 5 fixes that and pushes Conductor to Claude/ChatGPT-parity — agentic, streaming, vision-capable, web-aware, voice-enabled, operating every feature on the platform from a single chat surface.
+>
+> **Why it matters.** The whole pitch of DClaw is "agentic chatbots that chat AND operate every marketing operation on the same platform." If the Conductor is not the best-in-class entry point for that, the platform has no center of gravity. Sprint 5 makes the Conductor the center.
+>
+> **Posture.** No new features outside the Conductor surface. Every other backlog item waits. PRs ship one issue at a time, in order; each PR must pass local tests, push, auto-merge, then move the issue to Done and rebuild the affected docker servers before the next issue starts.
+
+### Sprint 5 epic — Conductor (issues #347–#353)
+
+| # | ID | Issue | Priority | Track |
+|---|----|-------|----------|-------|
+| #347 | **S5-CDR-A** | Sidebar + page unification — single Conductor under Work at `/conductor`; `/agent` redirects; ModelSettingsPanel visible at page level; widget untouched. | P0 | code |
+| #348 | **S5-CDR-B** | Drag-and-drop file/folder upload + image paste + Claude vision; `AgentMessage.attachment_ids`; KG ingestion of doc attachments. | P0 | code |
+| #349 | **S5-CDR-C** | Claude Agent SDK swap + **maximum** tool fleet (~40 tools) covering every sidebar feature so Conductor operates the entire platform via chat. Inline tool-call cards. | P0 | code |
+| #350 | **S5-CDR-D** | SSE streaming responses + stop-generation + extended-thinking mode toggle. | P1 | code |
+| #351 | **S5-CDR-E** | `web_search` + `fetch_url` tools + Quick / Light Research / Deep Research mode toggle with multi-step research orchestrator. | P1 | code |
+| #352 | **S5-CDR-F** | Polish: voice input, prompt library, slash-command palette, copy/regen/edit, thread rename/pin/delete, markdown + code-block syntax highlighting, suggested-prompts empty state. | P2 | code |
+| #353 | **S5-CDR-G** | This plan-doc update. | P2 | docs |
+
+### Sprint 5 — exit criteria for `v1.2.1`
+
+- Left sidebar has **one** Conductor entry, under "Work", routing to `/conductor`. The widget (`agent-dock`) is intact and unchanged.
+- The unified `/conductor` page renders chat (primary) + decomposition/results panel (collapsible) + visible `ModelSettingsPanel`.
+- An operator can drag-drop a folder of files (or paste images) into chat, and the Conductor can reason about them (Claude vision for images, KG-ingest summaries for docs).
+- Conductor runs on the Claude Agent SDK with a tool fleet that covers every sidebar surface; any "do X on the platform" request resolves to a tool-call (and is rendered as an inline card in the message).
+- Conductor responses stream token-by-token with a working stop-generation button; users can toggle Extended Thinking.
+- Users can pick Quick / Light Research / Deep Research; Deep mode produces multi-source, multi-step answers with cited sources.
+- Polish parity with Claude.ai / ChatGPT: voice input, prompt library, slash commands, copy/regen/edit message ops, markdown + syntax-highlighted code, thread rename / pin / delete.
+
+### Sprint 5 — out of scope (defer to Sprint 6+)
+
+- Any non-Conductor feature work (those backlog items stay where they are).
+- MCP-style external tool federation beyond the in-process tool router (Sprint 6+).
+- Multi-agent collaboration UI (multiple agents visible in one thread) — keep Conductor as the single orchestrator surface for now.
+- Image generation rendered inline in chat (uses #C's `generate_creative` tool to drop the image into the Library; inline gallery preview is Sprint 6 polish).
 
 ## What "Done" Looks Like for v1.2
 
