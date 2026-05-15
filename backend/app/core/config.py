@@ -142,6 +142,8 @@ class Settings(BaseSettings):
     discord_client_secret: str = ""
     mastodon_client_id: str = ""
     mastodon_client_secret: str = ""
+    bluesky_client_id: str = ""
+    bluesky_client_secret: str = ""
 
     # Observability (§6.12). Both opt-in. Sentry DSN empty → no-op.
     sentry_dsn: str = ""
