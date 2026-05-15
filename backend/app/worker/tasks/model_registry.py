@@ -69,6 +69,7 @@ def _upsert_entry(db: Session, p: ModelProvider, m: DiscoveredModel) -> None:
                 capabilities=m.capabilities,
                 context_window=m.context_window,
                 max_output_tokens=m.max_output_tokens,
+                pricing_json=m.pricing,
                 status=HealthStatus.unknown,
             )
         )
@@ -81,6 +82,8 @@ def _upsert_entry(db: Session, p: ModelProvider, m: DiscoveredModel) -> None:
             existing.context_window = m.context_window
         if m.max_output_tokens:
             existing.max_output_tokens = m.max_output_tokens
+        # Pricing always overwrites — it's authoritative from the provider.
+        existing.pricing_json = m.pricing
 
 
 @celery_app.task(name="app.worker.tasks.model_registry.discover_provider_models")

@@ -147,6 +147,7 @@ class ModelEntryOut(BaseModel):
     capabilities: list[str]
     context_window: int | None
     max_output_tokens: int | None
+    pricing_json: dict | None = None
     status: HealthStatus
     health_error: str | None
     last_health_check_at: datetime | None
@@ -165,6 +166,7 @@ class ModelEntryOut(BaseModel):
             capabilities=list(m.capabilities or []),
             context_window=m.context_window,
             max_output_tokens=m.max_output_tokens,
+            pricing_json=m.pricing_json,
             status=m.status,
             health_error=m.health_error,
             last_health_check_at=m.last_health_check_at,

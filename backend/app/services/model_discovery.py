@@ -53,6 +53,48 @@ class DiscoveredModel:
     capabilities: list[str]
     context_window: int | None = None
     max_output_tokens: int | None = None
+    # Pricing dict (S5 #365). Shapes:
+    #   {"prompt": "0.000003", "completion": "0.000015", "currency": "USD"}
+    #   {"is_free": True}
+    #   None — unknown
+    pricing: dict | None = None
+
+
+def _parse_pricing_from_openrouter(obj: dict, model_id: str) -> dict | None:
+    """Extract per-token pricing from an OpenRouter model row.
+
+    OpenRouter ships rates as strings in USD-per-token, e.g.
+    `{"prompt": "0.000003", "completion": "0.000015"}`. We forward the
+    raw rate but also detect free-tier models so the UI can short-
+    circuit to a green chip. (S5 #365)
+    """
+    if model_id.endswith(":free"):
+        return {"is_free": True}
+    pr = obj.get("pricing") if isinstance(obj, dict) else None
+    if not isinstance(pr, dict):
+        return None
+
+    def _as_float(v) -> float | None:
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    prompt = _as_float(pr.get("prompt"))
+    completion = _as_float(pr.get("completion"))
+    # If both zero, treat as free.
+    if prompt == 0 and completion == 0:
+        return {"is_free": True}
+    out: dict = {"currency": "USD"}
+    if pr.get("prompt") is not None:
+        out["prompt"] = pr["prompt"]
+    if pr.get("completion") is not None:
+        out["completion"] = pr["completion"]
+    if pr.get("request") is not None:
+        out["request"] = pr["request"]
+    if pr.get("image") is not None:
+        out["image"] = pr["image"]
+    return out or None
 
 
 def _api_key(p: ModelProvider) -> str | None:
@@ -138,6 +180,7 @@ def _openai_compatible_discover(
                     if isinstance(obj, dict)
                     else None
                 ),
+                pricing=_parse_pricing_from_openrouter(obj, mid) if isinstance(obj, dict) else None,
             )
         )
     return out
