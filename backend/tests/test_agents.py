@@ -554,6 +554,125 @@ async def test_reply_agentic_stub_mode_returns_empty_tool_calls():
     assert turn.tool_calls == []
 
 
+# ============================================================
+# S5-CDR-D — Streaming + extended thinking
+# ============================================================
+
+@pytest.mark.asyncio
+async def test_stream_endpoint_emits_sse_in_stub_mode(client):
+    """End-to-end: POST /messages/stream returns text/event-stream and
+    yields the expected SSE event sequence in stub mode."""
+    from app.models.agent_thread import AgentKind, AgentThread
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    async with client.stream(
+        "POST",
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages/stream",
+        json={"content": "Hello conductor"},
+        headers={"Authorization": f"Bearer {token}"},
+    ) as response:
+        assert response.status_code == 200, await response.aread()
+        assert response.headers["content-type"].startswith("text/event-stream")
+        body = b""
+        async for chunk in response.aiter_bytes():
+            body += chunk
+    raw = body.decode("utf-8")
+
+    # Must surface the lifecycle events.
+    assert "event: user_msg_persisted" in raw
+    assert "event: agent_msg_start" in raw
+    assert "event: text_delta" in raw
+    assert "event: done" in raw
+    # Done payload must reference both ids.
+    assert '"agent_msg_id"' in raw
+    assert '"user_msg_id"' in raw
+
+
+@pytest.mark.asyncio
+async def test_stream_endpoint_rejects_invalid_thinking_budget(client):
+    """Pydantic guards reject out-of-range thinking budgets."""
+    from app.models.agent_thread import AgentKind, AgentThread
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    res = await client.post(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages/stream",
+        json={"content": "hi", "thinking_budget_tokens": 9_999_999},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_messages_stream_raw_stub_yields_text_then_done():
+    """Low-level stub path of messages_stream_raw yields one text_delta
+    followed by a message_done event."""
+    from app.agents.anthropic_client import messages_stream_raw
+
+    events: list[dict] = []
+    async for ev in messages_stream_raw(
+        system="sys",
+        messages=[{"role": "user", "content": "hi"}],
+    ):
+        events.append(ev)
+    # In stub mode: at least one text_delta, then message_done.
+    types = [e["type"] for e in events]
+    assert "text_delta" in types
+    assert types[-1] == "message_done"
+
+
+@pytest.mark.asyncio
+async def test_reply_agentic_streaming_stub_mode_done_payload():
+    """reply_agentic_streaming in stub mode emits agent_msg_start +
+    text_delta + done with empty tool_calls."""
+    from uuid import uuid4
+    from app.agents.conductor import reply_agentic_streaming
+    from app.agents.tools.registry import ToolContext
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        ctx = ToolContext(org_id=uuid4(), user_id=uuid4(), session=session)
+        events: list[dict] = []
+        async for ev in reply_agentic_streaming(
+            "Hello",
+            history=None,
+            tool_ctx=ctx,
+        ):
+            events.append(ev)
+    seq = [e["event"] for e in events]
+    assert "agent_msg_start" in seq
+    assert "text_delta" in seq
+    assert seq[-1] == "done"
+    assert events[-1]["tool_calls"] == []
+    assert isinstance(events[-1]["final_text"], str) and events[-1]["final_text"]
+
+
 @pytest.mark.asyncio
 async def test_conductor_message_posts_persist_role_tool_rows_with_stub(client):
     """End-to-end: POSTing a message to a Conductor thread in stub

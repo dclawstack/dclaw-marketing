@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  Brain,
   Check,
   ChevronDown,
   ChevronRight,
@@ -15,6 +16,7 @@ import {
   Paperclip,
   Send,
   Sparkles,
+  Square,
   Wrench,
   X,
 } from "lucide-react";
@@ -30,7 +32,7 @@ import {
   listAgentMessages,
   listAgentThreads,
   listAssets,
-  postAgentMessage,
+  streamAgentMessage,
   uploadFileToAsset,
 } from "@/lib/api";
 import { useOrg } from "@/contexts/org-context";
@@ -130,6 +132,30 @@ export function DkAgentChat({
   const [pending, setPending] = useState<PendingUpload[]>([]);
   const [assetMap, setAssetMap] = useState<Record<string, Asset>>({});
   const [dragOver, setDragOver] = useState(false);
+
+  // Streaming state (S5-CDR-D)
+  const [streamingText, setStreamingText] = useState("");
+  const [streamingThinking, setStreamingThinking] = useState("");
+  const [streamingTools, setStreamingTools] = useState<
+    { id: string; name: string; input: Record<string, unknown>; result?: Record<string, unknown> }[]
+  >([]);
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Persist thinking-mode preference per browser (server-side persistence
+  // is a follow-up — see plan). Read once on mount.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("dclaw:conductor:thinking");
+    if (saved === "1") setThinkingEnabled(true);
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      "dclaw:conductor:thinking",
+      thinkingEnabled ? "1" : "0",
+    );
+  }, [thinkingEnabled]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -267,28 +293,128 @@ export function DkAgentChat({
     [startUploads],
   );
 
-  // ---- Send ----------------------------------------------------------------
+  // ---- Send (streaming) ----------------------------------------------------
   async function send(promptOverride?: string) {
     const text = (promptOverride ?? input).trim();
     if ((!text && attached.length === 0) || !currentOrg || !thread) return;
     setSending(true);
     setError(null);
+    setStreamingText("");
+    setStreamingThinking("");
+    setStreamingTools([]);
+
+    const optimisticUserContent = text || "(see attachments)";
+    const optimisticAttachmentIds = attached.map((a) => a.id);
+
+    // Build & render an optimistic user bubble while waiting for the
+    // first server event with the persisted id.
+    const optimisticId = `optimistic-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: optimisticId,
+        thread_id: thread.id,
+        role: "user",
+        agent_kind: null,
+        content: optimisticUserContent,
+        tool_name: null,
+        tool_arguments: null,
+        tool_result: null,
+        attachment_asset_ids: optimisticAttachmentIds.length
+          ? optimisticAttachmentIds
+          : null,
+        metadata_json: null,
+        approval_request_id: null,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    setInput("");
+    setAttached([]);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const ids = attached.map((a) => a.id);
-      const next = await postAgentMessage(
-        currentOrg.id,
-        thread.id,
-        text || "(see attachments)",
-        ids,
-      );
-      setMessages((prev) => [...prev, ...next]);
-      setInput("");
-      setAttached([]);
+      await streamAgentMessage(currentOrg.id, thread.id, optimisticUserContent, {
+        attachmentAssetIds: optimisticAttachmentIds.length
+          ? optimisticAttachmentIds
+          : undefined,
+        thinkingBudgetTokens: thinkingEnabled ? 4_000 : undefined,
+        signal: controller.signal,
+        onEvent: (ev) => {
+          switch (ev.event) {
+            case "user_msg_persisted": {
+              const persistedId = ev.data.id;
+              setMessages((prev) =>
+                prev.map((m) => (m.id === optimisticId ? { ...m, id: persistedId } : m)),
+              );
+              break;
+            }
+            case "text_delta":
+              setStreamingText((s) => s + ev.data.text);
+              break;
+            case "thinking_delta":
+              setStreamingThinking((s) => s + ev.data.text);
+              break;
+            case "tool_call_start":
+              setStreamingTools((prev) => [
+                ...prev,
+                {
+                  id: ev.data.tool_use_id,
+                  name: ev.data.name,
+                  input: ev.data.input,
+                },
+              ]);
+              break;
+            case "tool_call_result":
+              setStreamingTools((prev) =>
+                prev.map((t) =>
+                  t.id === ev.data.tool_use_id ? { ...t, result: ev.data.result } : t,
+                ),
+              );
+              break;
+            case "agent_msg_start":
+              // For multi-iteration runs, the next iteration begins —
+              // we keep accumulating text/tools into the same UI block.
+              break;
+            case "error":
+              setError(ev.data.error || "Stream error");
+              break;
+            case "done":
+              // Stream complete — pull final canonical rows from server
+              // so historical refresh stays consistent (especially for
+              // attachment_asset_ids and tool_arguments/results).
+              break;
+          }
+        },
+      });
+      // Stream closed cleanly — refresh from server to fold in the
+      // persisted rows and drop the optimistic streaming state.
+      await refresh();
+      setStreamingText("");
+      setStreamingThinking("");
+      setStreamingTools([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Send failed.");
+      if ((err as { name?: string }).name === "AbortError") {
+        setError("Stopped.");
+      } else {
+        setError(err instanceof Error ? err.message : "Stream failed.");
+      }
+      // Optimistic message stays — refresh to reconcile with server
+      // (the user_msg is persisted before streaming begins, so it's
+      // still there even after abort).
+      await refresh().catch(() => {});
+      setStreamingText("");
+      setStreamingThinking("");
+      setStreamingTools([]);
     } finally {
+      abortRef.current = null;
       setSending(false);
     }
+  }
+
+  function stopStreaming() {
+    abortRef.current?.abort();
   }
 
   const placeholderText = placeholder ?? defaults.placeholder;
@@ -353,21 +479,31 @@ export function DkAgentChat({
               </p>
             </div>
           ) : (
-            messages.map((m) =>
-              m.role === "tool" ? (
-                <ToolCallCard key={m.id} message={m} />
-              ) : (
-                <MessageBubble
-                  key={m.id}
-                  message={m}
-                  assetMap={assetMap}
-                  userName={user?.full_name ?? user?.email ?? "you"}
-                  onSuggestionClick={(s) => {
-                    if (s.prompt) void send(s.prompt);
-                  }}
+            <>
+              {messages.map((m) =>
+                m.role === "tool" ? (
+                  <ToolCallCard key={m.id} message={m} />
+                ) : (
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    assetMap={assetMap}
+                    userName={user?.full_name ?? user?.email ?? "you"}
+                    onSuggestionClick={(s) => {
+                      if (s.prompt) void send(s.prompt);
+                    }}
+                  />
+                ),
+              )}
+              {/* Streaming-in-flight render (S5-CDR-D) */}
+              {sending && (streamingText || streamingThinking || streamingTools.length > 0) && (
+                <StreamingPreview
+                  text={streamingText}
+                  thinking={streamingThinking}
+                  tools={streamingTools}
                 />
-              ),
-            )
+              )}
+            </>
           )}
         </div>
 
@@ -440,6 +576,22 @@ export function DkAgentChat({
             >
               <Folder className="h-4 w-4" />
             </button>
+            <button
+              type="button"
+              onClick={() => setThinkingEnabled((v) => !v)}
+              className={cn(
+                "rounded-md p-2 transition-colors",
+                thinkingEnabled
+                  ? "bg-[var(--dk-purple-50)] text-brand"
+                  : "text-[var(--dk-fg-2)] hover:bg-[var(--dk-gray-50)] hover:text-ink",
+              )}
+              aria-label="Extended thinking"
+              aria-pressed={thinkingEnabled}
+              title={`Extended thinking: ${thinkingEnabled ? "on" : "off"}`}
+              disabled={sending}
+            >
+              <Brain className="h-4 w-4" />
+            </button>
           </div>
 
           <DkTextarea
@@ -457,20 +609,29 @@ export function DkAgentChat({
             }}
             className="flex-1 resize-none"
           />
-          <DkButton
-            onClick={() => void send()}
-            disabled={
-              (!input.trim() && attached.length === 0)
-              || sending
-              || isUploading
-            }
-            loading={sending}
-            aria-label="Send"
-            className="self-end"
-          >
-            <Send className="h-4 w-4" />
-            Send
-          </DkButton>
+          {sending ? (
+            <DkButton
+              onClick={stopStreaming}
+              aria-label="Stop generation"
+              className="self-end"
+              variant="secondary"
+            >
+              <Square className="h-4 w-4" />
+              Stop
+            </DkButton>
+          ) : (
+            <DkButton
+              onClick={() => void send()}
+              disabled={
+                (!input.trim() && attached.length === 0) || isUploading
+              }
+              aria-label="Send"
+              className="self-end"
+            >
+              <Send className="h-4 w-4" />
+              Send
+            </DkButton>
+          )}
         </div>
       </DkCard>
 
@@ -597,6 +758,10 @@ function MessageBubble({
   const suggestions = (message.metadata_json?.suggestions ??
     []) as Suggestion[];
   const attachmentIds = message.attachment_asset_ids ?? [];
+  const thinking =
+    !isUser && typeof message.metadata_json?.thinking === "string"
+      ? (message.metadata_json.thinking as string)
+      : "";
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
@@ -625,6 +790,8 @@ function MessageBubble({
             ))}
           </div>
         )}
+
+        {thinking && <ThinkingBlock text={thinking} />}
 
         <DkCard
           className={
@@ -665,6 +832,86 @@ function MessageBubble({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---- Streaming preview (in-flight rendering, S5-CDR-D) --------------------
+
+function StreamingPreview({
+  text,
+  thinking,
+  tools,
+}: {
+  text: string;
+  thinking: string;
+  tools: { id: string; name: string; input: Record<string, unknown>; result?: Record<string, unknown> }[];
+}) {
+  return (
+    <div className="flex gap-3 flex-row">
+      <div className="shrink-0">
+        <div className="flex h-8 w-8 items-center justify-center rounded-pill bg-brand text-white">
+          <Sparkles className="h-4 w-4" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 max-w-[80%] items-start w-full">
+        {thinking && <ThinkingBlock text={thinking} />}
+        {tools.map((t) => (
+          <div
+            key={t.id}
+            className="flex items-center gap-2 rounded-md border border-[var(--dk-border)] bg-white px-3 py-2 w-full"
+          >
+            {t.result ? (
+              <Check className="h-3 w-3 text-[var(--dk-success,#16a34a)]" />
+            ) : (
+              <Loader2 className="h-3 w-3 animate-spin text-[var(--dk-fg-2)]" />
+            )}
+            <Wrench className="h-3 w-3 text-brand" />
+            <span className="font-mono text-xs font-semibold text-ink">{t.name}</span>
+            <span className="text-xs text-[var(--dk-fg-2)] truncate">
+              {t.result ? toolResultSummary(t.result) : "running…"}
+            </span>
+          </div>
+        ))}
+        {(text || (!thinking && tools.length === 0)) && (
+          <DkCard className="bg-[var(--dk-bg-tint)]">
+            <DkCardContent className="px-4 py-2.5">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--dk-fg-1)]">
+                {text}
+                <span className="inline-block w-1.5 h-3.5 align-[-2px] ml-0.5 bg-brand animate-pulse" />
+              </p>
+            </DkCardContent>
+          </DkCard>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ThinkingBlock({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-md border border-dashed border-[var(--dk-border)] bg-[var(--dk-bg-tint)] w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--dk-fg-2)] hover:text-ink w-full text-left"
+      >
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        <Brain className="h-3 w-3" />
+        <span className="font-semibold">Thinking…</span>
+        {!open && (
+          <span className="truncate text-[var(--dk-fg-muted)]">
+            {text.slice(0, 80)}
+            {text.length > 80 ? "…" : ""}
+          </span>
+        )}
+      </button>
+      {open && (
+        <pre className="px-3 pb-3 text-xs whitespace-pre-wrap break-words font-sans text-[var(--dk-fg-2)] max-h-64 overflow-y-auto">
+          {text}
+        </pre>
+      )}
     </div>
   );
 }

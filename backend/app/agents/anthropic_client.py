@@ -197,9 +197,164 @@ async def messages_create_raw(
         }
 
 
+async def messages_stream_raw(
+    *,
+    system: str,
+    messages: list[dict],
+    tools: list[dict] | None = None,
+    max_tokens: int = 2000,
+    model: str = DEFAULT_MODEL,
+    thinking_budget_tokens: int | None = None,
+):
+    """Async generator yielding normalized streaming events from Claude.
+
+    Each event is a plain dict the agentic loop can SSE-forward without
+    touching the SDK types directly. Event shapes:
+
+      {"type": "text_delta", "text": "..."}
+      {"type": "thinking_delta", "text": "..."}
+      {"type": "tool_use_start", "id": "toolu_…", "name": "list_…"}
+      {"type": "tool_use_input", "id": "toolu_…", "partial_json": "…"}
+      {"type": "tool_use_done", "id": "toolu_…", "input": {…}}
+      {"type": "message_done", "stop_reason": "tool_use" | "end_turn" | …}
+      {"type": "error", "error": "..."}
+
+    Stub fallback (no API key) yields a single text_delta + message_done
+    so the SSE consumer can still drive the UI in dev. (S5-CDR-D)
+    """
+    if not is_real_provider_configured():
+        last_user_text = ""
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                c = m.get("content")
+                if isinstance(c, str):
+                    last_user_text = c
+                elif isinstance(c, list):
+                    for blk in c:
+                        if isinstance(blk, dict) and blk.get("type") == "text":
+                            last_user_text = blk.get("text", "")
+                            break
+                break
+        text = _stub_response(system, last_user_text, n_variants=1)
+        yield {"type": "text_delta", "text": text}
+        yield {"type": "message_done", "stop_reason": "end_turn"}
+        return
+
+    try:
+        from anthropic import AsyncAnthropic
+        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        kwargs: dict = {
+            "model": model,
+            "system": system,
+            "messages": messages,
+            "max_tokens": max_tokens,
+        }
+        if tools:
+            kwargs["tools"] = tools
+        if thinking_budget_tokens and thinking_budget_tokens > 0:
+            kwargs["thinking"] = {
+                "type": "enabled",
+                "budget_tokens": int(thinking_budget_tokens),
+            }
+
+        # Track open tool_use blocks so we can emit a final
+        # tool_use_done with the parsed input once the block closes.
+        pending_tool_inputs: dict[str, str] = {}
+        pending_tool_names: dict[str, str] = {}
+
+        async with client.messages.stream(**kwargs) as stream:
+            async for event in stream:
+                etype = getattr(event, "type", None)
+                if etype == "content_block_start":
+                    block = getattr(event, "content_block", None)
+                    btype = getattr(block, "type", None)
+                    if btype == "tool_use":
+                        tu_id = getattr(block, "id", "")
+                        tu_name = getattr(block, "name", "")
+                        pending_tool_inputs[tu_id] = ""
+                        pending_tool_names[tu_id] = tu_name
+                        yield {
+                            "type": "tool_use_start",
+                            "id": tu_id,
+                            "name": tu_name,
+                        }
+                elif etype == "content_block_delta":
+                    delta = getattr(event, "delta", None)
+                    dtype = getattr(delta, "type", None)
+                    if dtype == "text_delta":
+                        text = getattr(delta, "text", "") or ""
+                        if text:
+                            yield {"type": "text_delta", "text": text}
+                    elif dtype == "thinking_delta":
+                        text = getattr(delta, "thinking", "") or ""
+                        if text:
+                            yield {"type": "thinking_delta", "text": text}
+                    elif dtype == "input_json_delta":
+                        # input_json_delta blocks belong to the most
+                        # recently opened tool_use. The SDK ties them
+                        # together via the parent ContentBlock index
+                        # which we don't have a cheap handle on here,
+                        # so accumulate against the last-opened id.
+                        if pending_tool_inputs:
+                            last_id = next(reversed(pending_tool_inputs))
+                            partial = getattr(delta, "partial_json", "") or ""
+                            pending_tool_inputs[last_id] += partial
+                            yield {
+                                "type": "tool_use_input",
+                                "id": last_id,
+                                "partial_json": partial,
+                            }
+                elif etype == "content_block_stop":
+                    # Try to flush any tool_use whose JSON is now
+                    # complete. We don't know exactly which block
+                    # stopped without index tracking, so attempt to
+                    # parse each pending one and emit on success.
+                    import json as _json
+                    for tu_id in list(pending_tool_inputs.keys()):
+                        raw = pending_tool_inputs[tu_id]
+                        try:
+                            parsed = _json.loads(raw) if raw else {}
+                        except _json.JSONDecodeError:
+                            continue
+                        yield {
+                            "type": "tool_use_done",
+                            "id": tu_id,
+                            "name": pending_tool_names.get(tu_id, ""),
+                            "input": parsed,
+                        }
+                        pending_tool_inputs.pop(tu_id, None)
+                        pending_tool_names.pop(tu_id, None)
+                elif etype == "message_stop":
+                    final = await stream.get_final_message()
+                    stop_reason = getattr(final, "stop_reason", "end_turn") or "end_turn"
+                    # Anything still pending without a complete JSON?
+                    # Fall back to the assembled final message's
+                    # tool_use blocks for correctness.
+                    for blk in getattr(final, "content", []) or []:
+                        if getattr(blk, "type", None) != "tool_use":
+                            continue
+                        tu_id = getattr(blk, "id", "")
+                        if tu_id in pending_tool_inputs:
+                            yield {
+                                "type": "tool_use_done",
+                                "id": tu_id,
+                                "name": getattr(blk, "name", ""),
+                                "input": getattr(blk, "input", {}) or {},
+                            }
+                            pending_tool_inputs.pop(tu_id, None)
+                            pending_tool_names.pop(tu_id, None)
+                    yield {"type": "message_done", "stop_reason": stop_reason}
+                # Other event types are ignored.
+    except Exception as e:  # pragma: no cover — network/SDK hiccup
+        logger.exception("Anthropic stream failed; emitting error event.")
+        yield {"type": "error", "error": str(e)}
+        yield {"type": "message_done", "stop_reason": "error"}
+
+
 __all__ = [
     "complete",
     "messages_create_raw",
+    "messages_stream_raw",
     "is_real_provider_configured",
     "DEFAULT_MODEL",
 ]

@@ -1233,6 +1233,98 @@ export async function postAgentMessage(
   });
 }
 
+// ============================================================
+// Streaming agent messages (S5-CDR-D)
+// ============================================================
+
+export type StreamEvent =
+  | { event: "user_msg_persisted"; data: { id: string } }
+  | { event: "agent_msg_start"; data: Record<string, never> }
+  | { event: "text_delta"; data: { text: string } }
+  | { event: "thinking_delta"; data: { text: string } }
+  | { event: "tool_call_start"; data: { name: string; tool_use_id: string; input: Record<string, unknown> } }
+  | { event: "tool_call_result"; data: { name: string; tool_use_id: string; result: Record<string, unknown> } }
+  | { event: "done"; data: { user_msg_id: string; tool_msg_ids: string[]; agent_msg_id: string; tool_call_count: number } }
+  | { event: "error"; data: { error: string } };
+
+export interface StreamAgentMessageOptions {
+  attachmentAssetIds?: string[];
+  thinkingBudgetTokens?: number;
+  signal?: AbortSignal;
+  onEvent: (ev: StreamEvent) => void;
+}
+
+/**
+ * POST a chat message and consume the SSE stream. Resolves once the
+ * stream closes; rejects on network error. Use `options.signal` (an
+ * AbortController.signal) for the stop-generation button.
+ */
+export async function streamAgentMessage(
+  orgId: string,
+  threadId: string,
+  content: string,
+  { attachmentAssetIds, thinkingBudgetTokens, signal, onEvent }: StreamAgentMessageOptions,
+): Promise<void> {
+  const body: Record<string, unknown> = { content };
+  if (attachmentAssetIds && attachmentAssetIds.length) body.attachment_asset_ids = attachmentAssetIds;
+  if (thinkingBudgetTokens && thinkingBudgetTokens > 0) body.thinking_budget_tokens = thinkingBudgetTokens;
+
+  const response = await fetch(
+    `/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages/stream`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Stream failed: ${response.status} ${await response.text()}`);
+  }
+  if (!response.body) {
+    throw new Error("Stream has no body");
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    // SSE frames are separated by blank lines (\n\n).
+    let idx: number;
+    while ((idx = buffer.indexOf("\n\n")) >= 0) {
+      const frame = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      const ev = parseSseFrame(frame);
+      if (ev) onEvent(ev);
+    }
+  }
+}
+
+function parseSseFrame(raw: string): StreamEvent | null {
+  let eventName = "message";
+  const dataLines: string[] = [];
+  for (const line of raw.split(/\r?\n/)) {
+    if (line.startsWith("event:")) eventName = line.slice(6).trim();
+    else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+  }
+  if (dataLines.length === 0) return null;
+  try {
+    return { event: eventName, data: JSON.parse(dataLines.join("\n")) } as StreamEvent;
+  } catch {
+    return null;
+  }
+}
+
+// Read the user's saved getToken so streamAgentMessage can authenticate.
+// (api.ts already imports getToken at the top; we re-export the type
+// helper here for clarity but no new import is needed.)
+
 /**
  * One-shot helper that runs the full presigned-PUT upload flow for a
  * single File: startAssetUpload → PUT bytes → confirmAssetUpload. Used
