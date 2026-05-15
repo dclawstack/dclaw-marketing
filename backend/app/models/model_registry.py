@@ -211,6 +211,12 @@ class ModelEntry(Base):
     context_window: Mapped[int | None] = mapped_column(Integer, nullable=True)
     max_output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    # Pricing snapshot at last discovery (S5 #365). Two known shapes:
+    #   {"prompt": "0.000003", "completion": "0.000015", "currency": "USD"}
+    #   {"is_free": true}
+    # NULL when the provider didn't supply rate data.
+    pricing_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     status: Mapped[HealthStatus] = mapped_column(
         SQLEnum(HealthStatus, name="health_status_enum"),
         nullable=False,

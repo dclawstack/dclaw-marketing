@@ -61,6 +61,14 @@ interface ModelEntryRow {
   model_id: string;
   display_name: string;
   capabilities: string[];
+  pricing_json: {
+    prompt?: string;
+    completion?: string;
+    request?: string;
+    image?: string;
+    currency?: string;
+    is_free?: boolean;
+  } | null;
   status: "unknown" | "healthy" | "unhealthy" | "disabled";
   last_health_check_at: string | null;
   is_active: boolean;
@@ -179,9 +187,10 @@ export default function AdminModelsPage() {
     () => new Set((searchParams.get("cap") ?? "").split(",").filter(Boolean)),
     [searchParams],
   );
+  const freeOnly = searchParams.get("free") === "1";
 
   const updateParams = useCallback(
-    (mut: { q?: string; provider?: Set<string>; cap?: Set<string> }) => {
+    (mut: { q?: string; provider?: Set<string>; cap?: Set<string>; free?: boolean }) => {
       const next = new URLSearchParams(searchParams.toString());
       if (mut.q !== undefined) {
         if (mut.q) next.set("q", mut.q);
@@ -196,6 +205,10 @@ export default function AdminModelsPage() {
         const v = Array.from(mut.cap).filter(Boolean).join(",");
         if (v) next.set("cap", v);
         else next.delete("cap");
+      }
+      if (mut.free !== undefined) {
+        if (mut.free) next.set("free", "1");
+        else next.delete("free");
       }
       const qs = next.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname);
@@ -228,17 +241,16 @@ export default function AdminModelsPage() {
   const filteredEntries = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return entries.filter((e) => {
-      // Provider filter — empty set means "all".
       if (selectedProviders.size > 0 && !selectedProviders.has(e.provider_id)) {
         return false;
       }
-      // Capability filter — empty set means "all". OR within the set:
-      // a row matches if it has ANY of the selected caps.
       if (selectedCaps.size > 0) {
         const hit = e.capabilities.some((c) => selectedCaps.has(c));
         if (!hit) return false;
       }
-      // Search — substring on model_id, display_name, provider name.
+      if (freeOnly && !isFreeEntry(e)) {
+        return false;
+      }
       if (needle) {
         const provName = providers.find((p) => p.id === e.provider_id)?.name ?? "";
         const hay = `${e.model_id} ${e.display_name} ${provName}`.toLowerCase();
@@ -246,10 +258,10 @@ export default function AdminModelsPage() {
       }
       return true;
     });
-  }, [entries, providers, q, selectedProviders, selectedCaps]);
+  }, [entries, providers, q, selectedProviders, selectedCaps, freeOnly]);
 
   const hasActiveFilters =
-    !!q || selectedProviders.size > 0 || selectedCaps.size > 0;
+    !!q || selectedProviders.size > 0 || selectedCaps.size > 0 || freeOnly;
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -418,6 +430,11 @@ export default function AdminModelsPage() {
                     />
                   ))}
                 </div>
+                <FilterChip
+                  label="Free only"
+                  active={freeOnly}
+                  onClick={() => updateParams({ free: !freeOnly })}
+                />
                 {hasActiveFilters && (
                   <button
                     type="button"
@@ -450,6 +467,7 @@ export default function AdminModelsPage() {
                         <th className="py-2 px-2">Model</th>
                         <th className="py-2 px-2">Provider</th>
                         <th className="py-2 px-2">Capabilities</th>
+                        <th className="py-2 px-2 whitespace-nowrap">Pricing</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -467,6 +485,9 @@ export default function AdminModelsPage() {
                                   </DkChip>
                                 ))}
                               </div>
+                            </td>
+                            <td className="py-2 px-2 whitespace-nowrap">
+                              <PricingCell entry={e} />
                             </td>
                           </tr>
                         );
@@ -682,3 +703,50 @@ function FilterChip({
   );
 }
 
+
+// ---- Pricing helpers (#365) ----------------------------------------------
+
+function isFreeEntry(e: ModelEntryRow): boolean {
+  if (e.pricing_json?.is_free) return true;
+  if (e.model_id.endsWith(":free")) return true;
+  const pr = e.pricing_json;
+  if (!pr) return false;
+  const p = Number(pr.prompt ?? 0);
+  const c = Number(pr.completion ?? 0);
+  return p === 0 && c === 0 && !pr.image && !pr.request;
+}
+
+function _fmtRate(perToken: string | undefined): string | null {
+  if (perToken === undefined || perToken === null) return null;
+  const n = Number(perToken);
+  if (!Number.isFinite(n)) return null;
+  if (n === 0) return "$0";
+  // $/M tokens. Use 3 sig-fig style for very small numbers.
+  const perMillion = n * 1_000_000;
+  if (perMillion < 0.01) return `$${perMillion.toFixed(4)}`;
+  if (perMillion < 1) return `$${perMillion.toFixed(3)}`;
+  return `$${perMillion.toFixed(2)}`;
+}
+
+function PricingCell({ entry }: { entry: ModelEntryRow }) {
+  if (isFreeEntry(entry)) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-medium">
+        Free
+      </span>
+    );
+  }
+  const pr = entry.pricing_json;
+  if (!pr) return <span className="text-slate-400">—</span>;
+  const prompt = _fmtRate(pr.prompt);
+  const completion = _fmtRate(pr.completion);
+  if (!prompt && !completion) return <span className="text-slate-400">—</span>;
+  return (
+    <span className="text-xs font-mono text-slate-700">
+      {prompt ?? "—"}
+      <span className="text-slate-400"> / </span>
+      {completion ?? "—"}
+      <span className="text-slate-400 ml-1">/M</span>
+    </span>
+  );
+}
