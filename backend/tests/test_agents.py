@@ -765,6 +765,114 @@ async def test_stream_endpoint_accepts_research_mode(client):
     assert "event: done" in raw
 
 
+# ============================================================
+# S5-CDR-F — Thread ops (rename / pin / delete)
+# ============================================================
+
+@pytest.mark.asyncio
+async def test_patch_thread_rename_and_pin(client):
+    from app.models.agent_thread import AgentKind, AgentThread
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+            title="orig",
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    res = await client.patch(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}",
+        json={"title": "renamed", "is_pinned": True},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["title"] == "renamed"
+    assert body["is_pinned"] is True
+
+
+@pytest.mark.asyncio
+async def test_delete_thread_returns_204(client):
+    from app.models.agent_thread import AgentKind, AgentThread
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    res = await client.delete(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 204
+
+    # GET after delete → 404
+    res2 = await client.get(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_threads_orders_pinned_first(client):
+    from app.models.agent_thread import AgentKind, AgentThread
+    from datetime import datetime, timedelta, timezone
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    now = datetime.now(timezone.utc)
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        older_pinned = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+            title="older but pinned",
+            is_pinned=True,
+            updated_at=now - timedelta(days=5),
+        )
+        newer_unpinned = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+            title="newer unpinned",
+            updated_at=now,
+        )
+        session.add_all([older_pinned, newer_unpinned])
+        await session.commit()
+
+    res = await client.get(
+        f"/api/v1/orgs/{org.id}/agent-threads",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 200
+    rows = res.json()
+    assert rows[0]["title"] == "older but pinned"
+    assert rows[0]["is_pinned"] is True
+    assert rows[1]["title"] == "newer unpinned"
+
+
 @pytest.mark.asyncio
 async def test_conductor_message_posts_persist_role_tool_rows_with_stub(client):
     """End-to-end: POSTing a message to a Conductor thread in stub

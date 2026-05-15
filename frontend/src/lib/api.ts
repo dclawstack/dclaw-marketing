@@ -1178,6 +1178,7 @@ export interface AgentThread {
   parent_thread_id: string | null;
   kind: AgentKind;
   title: string | null;
+  is_pinned?: boolean;
   started_by_user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -1214,6 +1215,21 @@ export async function createAgentThread(
 
 export async function listAgentMessages(orgId: string, threadId: string): Promise<AgentMessage[]> {
   return fetchJson<AgentMessage[]>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`);
+}
+
+export async function patchAgentThread(
+  orgId: string,
+  threadId: string,
+  patch: { title?: string | null; is_pinned?: boolean },
+): Promise<AgentThread> {
+  return fetchJson<AgentThread>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function deleteAgentThread(orgId: string, threadId: string): Promise<void> {
+  await fetchJson<void>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}`, { method: "DELETE" });
 }
 
 export async function postAgentMessage(

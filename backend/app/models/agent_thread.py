@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     Enum as SQLEnum,
     ForeignKey,
@@ -72,6 +73,11 @@ class AgentThread(Base):
 
     kind: Mapped[AgentKind] = mapped_column(SQLEnum(AgentKind), nullable=False)
     title: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    # Pinned threads stick to the top of the sidebar (S5-CDR-F).
+    is_pinned: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     started_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
