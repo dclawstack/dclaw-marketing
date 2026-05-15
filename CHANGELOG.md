@@ -8,7 +8,8 @@ All notable changes to this project. Format roughly follows [Keep a Changelog](h
 
 ### Changed — Infra
 - **Lean CI.** Removed `.github/workflows/ci.yml`. Backend `pytest` and frontend `npm run build` now run locally before push via `docker compose exec`; GitHub Actions does **only auto-merge** of `auto-merge`-labelled PRs. Cuts per-PR latency from 5–7 min to ~10 sec for docs-only PRs and ~2–3 min for code PRs (bounded by `claude-review`). See PR #343.
-- **Auto-merge self-block fix.** The `Poll and merge labeled PRs` workflow no longer reads its own `poll-and-merge` CheckRun when evaluating PR readiness — the rollup filter excludes the workflow's own check by both `.name` and `.workflowName`. Cron-fallback tightened 15 → 5 min.
+- **Auto-merge self-block fix.** The `Poll and merge labeled PRs` workflow no longer reads its own `poll-and-merge` CheckRun when evaluating PR readiness — the rollup filter excludes the workflow's own check by both `.name` and `.workflowName`. See PR #343.
+- **Instant-trigger on Claude Code Review completion.** Added `workflow_run: ["Claude Code Review"]` so the poller fires the moment claude-review concludes instead of waiting for cron. Cron-fallback tightened to every 1 minute (GitHub Actions floor). Expected end-to-end PR latency: ~10 sec docs-only / ~1 min code PRs. See PR #345.
 
 ---
 
