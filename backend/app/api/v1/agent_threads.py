@@ -63,11 +63,17 @@ class ThreadRead(BaseModel):
     parent_thread_id: UUID | None
     kind: AgentKind
     title: str | None
+    is_pinned: bool = False
     started_by_user_id: UUID | None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ThreadPatch(BaseModel):
+    title: str | None = Field(default=None, max_length=512)
+    is_pinned: bool | None = None
 
 
 class MessageCreate(BaseModel):
@@ -159,14 +165,54 @@ async def list_threads(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_db),
 ) -> list[ThreadRead]:
+    """List threads — pinned first, then by updated_at desc (S5-CDR-F)."""
     await _require_member(session, user, org_id)
     result = await session.execute(
         select(AgentThread)
         .where(AgentThread.organization_id == org_id)
-        .order_by(AgentThread.updated_at.desc())
+        .order_by(
+            AgentThread.is_pinned.desc(),
+            AgentThread.updated_at.desc(),
+        )
         .limit(100)
     )
     return [ThreadRead.model_validate(t) for t in result.scalars().all()]
+
+
+@router.patch("/{thread_id}", response_model=ThreadRead)
+async def patch_thread(
+    org_id: UUID,
+    thread_id: UUID,
+    body: ThreadPatch,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> ThreadRead:
+    """Rename / pin / unpin a thread (S5-CDR-F)."""
+    await _require_member(session, user, org_id)
+    thread = await _get_thread_or_404(session, org_id, thread_id)
+    if body.title is not None:
+        thread.title = body.title or None
+    if body.is_pinned is not None:
+        thread.is_pinned = body.is_pinned
+    await session.commit()
+    await session.refresh(thread)
+    return ThreadRead.model_validate(thread)
+
+
+@router.delete(
+    "/{thread_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_thread(
+    org_id: UUID,
+    thread_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete a thread (and all its messages cascade) (S5-CDR-F)."""
+    await _require_member(session, user, org_id)
+    thread = await _get_thread_or_404(session, org_id, thread_id)
+    await session.delete(thread)
+    await session.commit()
 
 
 @router.get(

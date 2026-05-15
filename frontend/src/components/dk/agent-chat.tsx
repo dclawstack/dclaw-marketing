@@ -3,18 +3,24 @@
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowRight,
   Brain,
   Check,
   ChevronDown,
   ChevronRight,
+  Copy,
   File as FileIcon,
   Folder,
   Globe,
   Image as ImageIcon,
   Loader2,
+  Mic,
+  MicOff,
   Paperclip,
+  RotateCw,
   Search,
   Send,
   Sparkles,
@@ -427,6 +433,15 @@ export function DkAgentChat({
     abortRef.current?.abort();
   }
 
+  /** Find the most-recent user message and re-send its content as a
+   *  fresh turn. Drops the previous agent reply visually; the new turn
+   *  is appended below. (S5-CDR-F) */
+  function regenerateLast() {
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (!lastUser) return;
+    void send(lastUser.content);
+  }
+
   const placeholderText = placeholder ?? defaults.placeholder;
   const isUploading = pending.some((p) => !p.error);
   const allAttachmentsForRender = useMemo(
@@ -487,10 +502,30 @@ export function DkAgentChat({
               <p className="text-sm text-[var(--dk-fg-2)] max-w-md">
                 {emptySubtitle ?? defaults.emptySubtitle}
               </p>
+              {kind === "conductor" && (
+                <div className="flex flex-wrap justify-center gap-2 max-w-xl pt-2">
+                  {[
+                    "What's pending in my inbox?",
+                    "Show the calendar for this week",
+                    "Open Analytics",
+                    "Draft a LinkedIn announcement for our Q2 release",
+                  ].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => void send(p)}
+                      className="inline-flex items-center gap-1.5 rounded-pill border border-[var(--dk-border-strong)] bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:border-brand hover:text-brand transition-all"
+                    >
+                      {p}
+                      <ArrowRight className="h-3 w-3" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <>
-              {messages.map((m) =>
+              {messages.map((m, idx) =>
                 m.role === "tool" ? (
                   <ToolCallCard key={m.id} message={m} />
                 ) : (
@@ -502,6 +537,11 @@ export function DkAgentChat({
                     onSuggestionClick={(s) => {
                       if (s.prompt) void send(s.prompt);
                     }}
+                    onRegenerate={
+                      m.role === "agent" && idx === messages.length - 1 && !sending
+                        ? () => regenerateLast()
+                        : undefined
+                    }
                   />
                 ),
               )}
@@ -607,23 +647,53 @@ export function DkAgentChat({
               onChange={setResearchMode}
               disabled={sending}
             />
+            <VoiceInputButton
+              onTranscript={(t) => setInput((cur) => (cur ? `${cur} ${t}` : t))}
+              disabled={sending}
+            />
           </div>
 
-          <DkTextarea
-            rows={2}
-            placeholder={placeholderText}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onPaste={onPaste}
-            disabled={sending || loading}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-            className="flex-1 resize-none"
-          />
+          <div className="flex-1 relative">
+            <DkTextarea
+              rows={2}
+              placeholder={placeholderText}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onPaste={onPaste}
+              disabled={sending || loading}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+              className="w-full resize-none"
+            />
+            {input.startsWith("/") && !sending && (
+              <SlashCommandPalette
+                query={input}
+                onPick={(action) => {
+                  switch (action.type) {
+                    case "clear":
+                      setMessages([]);
+                      setInput("");
+                      break;
+                    case "thinking":
+                      setThinkingEnabled(action.value);
+                      setInput("");
+                      break;
+                    case "research":
+                      setResearchMode(action.value);
+                      setInput("");
+                      break;
+                    case "voice":
+                      setInput("");
+                      break;
+                  }
+                }}
+              />
+            )}
+          </div>
           {sending ? (
             <DkButton
               onClick={stopStreaming}
@@ -763,11 +833,13 @@ function MessageBubble({
   userName,
   assetMap,
   onSuggestionClick,
+  onRegenerate,
 }: {
   message: AgentMessage;
   userName: string;
   assetMap: Record<string, Asset>;
   onSuggestionClick: (s: Suggestion) => void;
+  onRegenerate?: (messageId: string) => void;
 }) {
   const isUser = message.role === "user";
   const suggestions = (message.metadata_json?.suggestions ??
@@ -814,15 +886,22 @@ function MessageBubble({
           }
         >
           <DkCardContent className="px-4 py-2.5">
-            <p
-              className={`whitespace-pre-wrap text-sm leading-relaxed ${
-                isUser ? "text-white" : "text-[var(--dk-fg-1)]"
-              }`}
-            >
-              {message.content}
-            </p>
+            {isUser ? (
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
+                {message.content}
+              </p>
+            ) : (
+              <AgentMarkdown content={message.content} />
+            )}
           </DkCardContent>
         </DkCard>
+        {!isUser && (
+          <MessageActions
+            message={message}
+            onCopy={() => navigator.clipboard?.writeText(message.content)}
+            onRegenerate={onRegenerate}
+          />
+        )}
         {suggestions.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {suggestions.map((s, i) =>
@@ -847,6 +926,275 @@ function MessageBubble({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---- Voice input (S5-CDR-F) -----------------------------------------------
+
+function VoiceInputButton({
+  onTranscript,
+  disabled,
+}: {
+  onTranscript: (text: string) => void;
+  disabled?: boolean;
+}) {
+  const [supported, setSupported] = useState<boolean | null>(null);
+  const [listening, setListening] = useState(false);
+  const recRef = useRef<unknown>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setSupported(false);
+      return;
+    }
+    const w = window as unknown as {
+      SpeechRecognition?: new () => unknown;
+      webkitSpeechRecognition?: new () => unknown;
+    };
+    setSupported(Boolean(w.SpeechRecognition || w.webkitSpeechRecognition));
+  }, []);
+
+  if (supported === false) return null;
+
+  const toggle = () => {
+    if (listening) {
+      try {
+        (recRef.current as { stop?: () => void } | null)?.stop?.();
+      } catch {
+        /* swallow */
+      }
+      setListening(false);
+      return;
+    }
+    const w = window as unknown as {
+      SpeechRecognition?: new () => unknown;
+      webkitSpeechRecognition?: new () => unknown;
+    };
+    const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Ctor) return;
+    const rec = new Ctor() as {
+      continuous?: boolean;
+      interimResults?: boolean;
+      lang?: string;
+      onresult: ((ev: { results: { 0: { transcript: string } }[] }) => void) | null;
+      onend: (() => void) | null;
+      onerror: (() => void) | null;
+      start: () => void;
+      stop: () => void;
+    };
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = navigator.language || "en-US";
+    rec.onresult = (ev) => {
+      const text = Array.from(ev.results as unknown as ArrayLike<{ 0: { transcript: string } }>)
+        .map((r) => r[0]?.transcript ?? "")
+        .join(" ")
+        .trim();
+      if (text) onTranscript(text);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recRef.current = rec;
+    try {
+      rec.start();
+      setListening(true);
+    } catch {
+      setListening(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className={cn(
+        "rounded-md p-2 transition-colors",
+        listening
+          ? "bg-[var(--dk-danger-bg,#fef2f2)] text-[var(--dk-danger,#dc2626)]"
+          : "text-[var(--dk-fg-2)] hover:bg-[var(--dk-gray-50)] hover:text-ink",
+      )}
+      aria-label={listening ? "Stop listening" : "Voice input"}
+      aria-pressed={listening}
+      title={listening ? "Listening… click to stop" : "Voice input"}
+      disabled={disabled}
+    >
+      {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+    </button>
+  );
+}
+
+// ---- Slash-command palette (S5-CDR-F) -------------------------------------
+
+type SlashAction =
+  | { type: "clear" }
+  | { type: "thinking"; value: boolean }
+  | { type: "research"; value: ResearchMode }
+  | { type: "voice" };
+
+interface SlashCommand {
+  label: string;
+  description: string;
+  keys: string[];
+  action: SlashAction;
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  { label: "/clear", description: "Clear visible messages", keys: ["clear", "reset"], action: { type: "clear" } },
+  { label: "/thinking on", description: "Enable extended thinking", keys: ["thinking on", "think on"], action: { type: "thinking", value: true } },
+  { label: "/thinking off", description: "Disable extended thinking", keys: ["thinking off", "think off"], action: { type: "thinking", value: false } },
+  { label: "/research quick", description: "No web search unless asked", keys: ["research quick", "quick"], action: { type: "research", value: "quick" } },
+  { label: "/research light", description: "One web search per turn", keys: ["research light", "light"], action: { type: "research", value: "light" } },
+  { label: "/research deep", description: "Multi-step, cited sources", keys: ["research deep", "deep"], action: { type: "research", value: "deep" } },
+];
+
+function SlashCommandPalette({
+  query,
+  onPick,
+}: {
+  query: string;
+  onPick: (action: SlashAction) => void;
+}) {
+  const tail = query.slice(1).toLowerCase().trim();
+  const matches = tail
+    ? SLASH_COMMANDS.filter((c) =>
+        c.keys.some((k) => k.startsWith(tail) || k.includes(tail)),
+      )
+    : SLASH_COMMANDS;
+  if (matches.length === 0) return null;
+  return (
+    <div
+      className="absolute left-0 right-0 bottom-full mb-2 max-h-56 overflow-y-auto rounded-md border border-[var(--dk-border)] bg-white shadow-lg z-30"
+      role="listbox"
+    >
+      {matches.map((c) => (
+        <button
+          key={c.label}
+          type="button"
+          role="option"
+          onClick={() => onPick(c.action)}
+          className="block w-full text-left px-3 py-2 text-sm hover:bg-[var(--dk-bg-tint)]"
+        >
+          <div className="font-mono text-xs font-semibold text-brand">{c.label}</div>
+          <div className="text-xs text-[var(--dk-fg-2)]">{c.description}</div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---- Markdown + message actions (S5-CDR-F) --------------------------------
+
+function AgentMarkdown({ content }: { content: string }) {
+  return (
+    <div className="text-sm leading-relaxed text-[var(--dk-fg-1)] prose-conductor">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0">{children}</p>,
+          ul: ({ children }) => <ul className="list-disc pl-5 my-1.5 space-y-0.5">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal pl-5 my-1.5 space-y-0.5">{children}</ol>,
+          li: ({ children }) => <li>{children}</li>,
+          h1: ({ children }) => <h1 className="font-display text-base font-bold mt-2 mb-1">{children}</h1>,
+          h2: ({ children }) => <h2 className="font-display text-sm font-bold mt-2 mb-1">{children}</h2>,
+          h3: ({ children }) => <h3 className="font-display text-sm font-semibold mt-2 mb-1">{children}</h3>,
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-brand underline underline-offset-2 hover:no-underline"
+            >
+              {children}
+            </a>
+          ),
+          code: ({ className, children, ...rest }) => {
+            const isInline = !className;
+            if (isInline) {
+              return (
+                <code className="rounded bg-white/60 px-1 py-0.5 font-mono text-[0.78rem]" {...rest}>
+                  {children}
+                </code>
+              );
+            }
+            return (
+              <code
+                className={cn(
+                  "block rounded-md bg-[var(--dk-ink,#0b0b1a)] text-white p-3 font-mono text-xs overflow-x-auto",
+                  className,
+                )}
+                {...rest}
+              >
+                {children}
+              </code>
+            );
+          },
+          pre: ({ children }) => <pre className="my-2 not-prose">{children}</pre>,
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-brand pl-3 my-1.5 italic">
+              {children}
+            </blockquote>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-2">
+              <table className="text-xs border-collapse">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => (
+            <th className="border border-[var(--dk-border)] bg-white/40 px-2 py-1 font-semibold">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border border-[var(--dk-border)] px-2 py-1">{children}</td>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+function MessageActions({
+  message,
+  onCopy,
+  onRegenerate,
+}: {
+  message: AgentMessage;
+  onCopy: () => void;
+  onRegenerate?: (messageId: string) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    onCopy();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  };
+  return (
+    <div className="flex items-center gap-1 text-[var(--dk-fg-2)]">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs hover:bg-[var(--dk-gray-50)] hover:text-ink transition-colors"
+        title="Copy message"
+        aria-label="Copy message"
+      >
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        <span>{copied ? "Copied" : "Copy"}</span>
+      </button>
+      {onRegenerate && (
+        <button
+          type="button"
+          onClick={() => onRegenerate(message.id)}
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs hover:bg-[var(--dk-gray-50)] hover:text-ink transition-colors"
+          title="Regenerate"
+          aria-label="Regenerate"
+        >
+          <RotateCw className="h-3 w-3" />
+          <span>Regenerate</span>
+        </button>
+      )}
     </div>
   );
 }
