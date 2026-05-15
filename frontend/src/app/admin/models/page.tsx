@@ -11,7 +11,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, RefreshCw, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Plus, RefreshCw, Search, X } from "lucide-react";
 
 import {
   DkBadge,
@@ -137,6 +138,25 @@ function ComponentCard({
   );
 }
 
+// All canonical capabilities — must stay in sync with backend
+// app/models/model_registry.py::Capability. Used for the filter chip
+// set on the Models table.
+const ALL_CAPABILITIES = [
+  "text",
+  "embedding",
+  "multimodal_embedding",
+  "image_generation",
+  "image_understanding",
+  "audio_transcription",
+  "text_to_speech",
+  "text_to_video",
+  "text_to_music",
+  "function_calling",
+  "reasoning",
+  "reranking",
+  "web_search",
+] as const;
+
 export default function AdminModelsPage() {
   const [providerTypes, setProviderTypes] = useState<ProviderTypeInfo[]>([]);
   const [providers, setProviders] = useState<ProviderRow[]>([]);
@@ -145,6 +165,91 @@ export default function AdminModelsPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // URL-state-driven filters for the Models table (#363).
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q") ?? "";
+  const selectedProviders = useMemo(
+    () => new Set((searchParams.get("provider") ?? "").split(",").filter(Boolean)),
+    [searchParams],
+  );
+  const selectedCaps = useMemo(
+    () => new Set((searchParams.get("cap") ?? "").split(",").filter(Boolean)),
+    [searchParams],
+  );
+
+  const updateParams = useCallback(
+    (mut: { q?: string; provider?: Set<string>; cap?: Set<string> }) => {
+      const next = new URLSearchParams(searchParams.toString());
+      if (mut.q !== undefined) {
+        if (mut.q) next.set("q", mut.q);
+        else next.delete("q");
+      }
+      if (mut.provider) {
+        const v = Array.from(mut.provider).filter(Boolean).join(",");
+        if (v) next.set("provider", v);
+        else next.delete("provider");
+      }
+      if (mut.cap) {
+        const v = Array.from(mut.cap).filter(Boolean).join(",");
+        if (v) next.set("cap", v);
+        else next.delete("cap");
+      }
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [router, pathname, searchParams],
+  );
+
+  const toggleProvider = useCallback(
+    (id: string) => {
+      const s = new Set(selectedProviders);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      updateParams({ provider: s });
+    },
+    [selectedProviders, updateParams],
+  );
+  const toggleCap = useCallback(
+    (cap: string) => {
+      const s = new Set(selectedCaps);
+      if (s.has(cap)) s.delete(cap);
+      else s.add(cap);
+      updateParams({ cap: s });
+    },
+    [selectedCaps, updateParams],
+  );
+  const clearFilters = useCallback(() => {
+    router.replace(pathname);
+  }, [router, pathname]);
+
+  const filteredEntries = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return entries.filter((e) => {
+      // Provider filter — empty set means "all".
+      if (selectedProviders.size > 0 && !selectedProviders.has(e.provider_id)) {
+        return false;
+      }
+      // Capability filter — empty set means "all". OR within the set:
+      // a row matches if it has ANY of the selected caps.
+      if (selectedCaps.size > 0) {
+        const hit = e.capabilities.some((c) => selectedCaps.has(c));
+        if (!hit) return false;
+      }
+      // Search — substring on model_id, display_name, provider name.
+      if (needle) {
+        const provName = providers.find((p) => p.id === e.provider_id)?.name ?? "";
+        const hay = `${e.model_id} ${e.display_name} ${provName}`.toLowerCase();
+        if (!hay.includes(needle)) return false;
+      }
+      return true;
+    });
+  }, [entries, providers, q, selectedProviders, selectedCaps]);
+
+  const hasActiveFilters =
+    !!q || selectedProviders.size > 0 || selectedCaps.size > 0;
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -280,41 +385,97 @@ export default function AdminModelsPage() {
               No models discovered yet. Add a provider to begin.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-slate-500 border-b">
-                    <th className="py-2 px-2">Model</th>
-                    <th className="py-2 px-2">Provider</th>
-                    <th className="py-2 px-2">Capabilities</th>
-                    <th className="py-2 px-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((e) => {
-                    const p = providers.find((pp) => pp.id === e.provider_id);
-                    return (
-                      <tr key={e.id} className="border-b last:border-0">
-                        <td className="py-2 px-2 font-mono text-xs">{e.model_id}</td>
-                        <td className="py-2 px-2">{p?.name ?? "?"}</td>
-                        <td className="py-2 px-2">
-                          <div className="flex flex-wrap gap-1">
-                            {e.capabilities.map((c) => (
-                              <DkChip key={c} tone="neutral">
-                                {c}
-                              </DkChip>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-2 px-2">
-                          <StatusChip status={e.status} />
-                        </td>
+            <>
+              {/* Filter bar — search left, provider+capability chips wrap right (#363) */}
+              <div className="flex flex-wrap items-start gap-3 pb-4 border-b mb-3">
+                <div className="relative flex-shrink-0 min-w-[260px]">
+                  <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <DkInput
+                    value={q}
+                    onChange={(e) => updateParams({ q: e.target.value })}
+                    placeholder="Search models / providers…"
+                    className="pl-8"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+                  {providers.map((p) => (
+                    <FilterChip
+                      key={p.id}
+                      label={p.name}
+                      sublabel={p.provider_type}
+                      active={selectedProviders.has(p.id)}
+                      onClick={() => toggleProvider(p.id)}
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+                  {ALL_CAPABILITIES.map((cap) => (
+                    <FilterChip
+                      key={cap}
+                      label={cap}
+                      active={selectedCaps.has(cap)}
+                      onClick={() => toggleCap(cap)}
+                    />
+                  ))}
+                </div>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-xs text-slate-500 hover:text-ink underline underline-offset-2 self-center"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+              <div className="text-xs text-slate-500 mb-2">
+                Showing {filteredEntries.length} of {entries.length} models
+              </div>
+              {filteredEntries.length === 0 ? (
+                <div className="text-sm text-slate-500 py-6 text-center">
+                  No models match the current filters.
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="ml-2 underline underline-offset-2 hover:text-ink"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-slate-500 border-b">
+                        <th className="py-2 px-2">Model</th>
+                        <th className="py-2 px-2">Provider</th>
+                        <th className="py-2 px-2">Capabilities</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody>
+                      {filteredEntries.map((e) => {
+                        const p = providers.find((pp) => pp.id === e.provider_id);
+                        return (
+                          <tr key={e.id} className="border-b last:border-0">
+                            <td className="py-2 px-2 font-mono text-xs">{e.model_id}</td>
+                            <td className="py-2 px-2">{p?.name ?? "?"}</td>
+                            <td className="py-2 px-2">
+                              <div className="flex flex-wrap gap-1">
+                                {e.capabilities.map((c) => (
+                                  <DkChip key={c} tone="neutral">
+                                    {c}
+                                  </DkChip>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </DkCardContent>
       </DkCard>
@@ -487,3 +648,37 @@ function AddProviderDialog({
     </div>
   );
 }
+
+// ---- Filter chip used in the Models filter bar (#363) ---------------------
+
+function FilterChip({
+  label,
+  sublabel,
+  active,
+  onClick,
+}: {
+  label: string;
+  sublabel?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors " +
+        (active
+          ? "bg-[var(--dk-purple-50)] border-brand text-brand"
+          : "bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:text-ink")
+      }
+    >
+      <span>{label}</span>
+      {sublabel && (
+        <span className={active ? "text-brand/70" : "text-slate-400"}>· {sublabel}</span>
+      )}
+    </button>
+  );
+}
+
