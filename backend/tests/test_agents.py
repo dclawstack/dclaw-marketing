@@ -223,8 +223,10 @@ async def test_creatives_with_real_api_uses_fallback_path(client, monkeypatch):
     org = await _seed_org_with(user, OrganizationRole.creatives)
     token = await _login(client, "alice@example.com", "AlicePwd123!")
 
-    # Force the complete() fn to return a known string regardless of env
-    async def _fake_complete(*, system, user, max_tokens=2000, model="x", n_variants_hint=3):
+    # Force the complete() fn to return a known string regardless of env.
+    # Accept **kwargs so we don't break when future callers add new args
+    # (e.g. images= for vision in S5-CDR-B).
+    async def _fake_complete(*, system, user, max_tokens=2000, model="x", n_variants_hint=3, **_kwargs):
         return "VARIANT 1: forced.\n\nVARIANT 2: forced again.\n\nVARIANT 3: third."
     monkeypatch.setattr(creatives, "complete", _fake_complete)
 
@@ -236,3 +238,186 @@ async def test_creatives_with_real_api_uses_fallback_path(client, monkeypatch):
     assert res.status_code == 200
     results = res.json()["results"]
     assert any("forced" in r["variant"] for r in results)
+
+
+# ============================================================
+# S5-CDR-B — Conductor attachment / vision plumbing
+# ============================================================
+
+@pytest.mark.asyncio
+async def test_complete_with_images_stub_mode_annotates_prompt():
+    """In stub mode (no ANTHROPIC_API_KEY), complete(images=…) must not
+    crash and must surface the image count in the synthetic prompt so
+    downstream parsers can see the attachments are present."""
+    from app.agents.anthropic_client import complete
+
+    raw = await complete(
+        system="sys",
+        user="describe this",
+        images=[("image/png", b"\x89PNG\r\n"), ("image/jpeg", b"\xff\xd8\xff")],
+    )
+    # Stub mixes system+user into a deterministic hash-keyed payload.
+    # The image count annotation should be present in the stub response.
+    assert "2 image attachment(s)" in raw
+
+
+@pytest.mark.asyncio
+async def test_conductor_reply_accepts_images_and_doc_summaries():
+    """Conductor.reply must accept new keyword args without choking when
+    real Claude is not configured (stub fallback).
+    """
+    from app.agents import conductor
+
+    turn = await conductor.reply(
+        "What's in this image?",
+        history=None,
+        images=[("image/png", b"\x89PNG\r\n")],
+        doc_summaries=["document attachment: brief.pdf (application/pdf, 1234 bytes)"],
+    )
+    assert isinstance(turn.text, str)
+    assert turn.text  # non-empty
+
+
+@pytest.mark.asyncio
+async def test_post_message_with_attachment_stores_asset_ids(client):
+    """End-to-end: a user POSTs a message with attachment_asset_ids
+    pointing at a (non-image) Asset; the user message should persist
+    those ids and the agent reply should still come back successfully.
+    """
+    from app.models.agent_thread import AgentThread, AgentMessage, AgentKind, AgentMessageRole
+    from app.models.asset import Asset, AssetKind, AssetStatus
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    # Seed thread + asset directly so we don't need MinIO for the upload.
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        asset = Asset(
+            organization_id=org.id,
+            created_by_user_id=user.id,
+            kind=AssetKind.document,
+            mime_type="application/pdf",
+            original_filename="brief.pdf",
+            size_bytes=1234,
+            bucket="dclaw",
+            storage_key=f"orgs/{org.id}/test/brief.pdf",
+            status=AssetStatus.ready,
+        )
+        session.add_all([thread, asset])
+        await session.commit()
+        await session.refresh(thread)
+        await session.refresh(asset)
+        thread_id, asset_id = thread.id, asset.id
+
+    res = await client.post(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages",
+        json={
+            "content": "Summarize this brief for me",
+            "attachment_asset_ids": [str(asset_id)],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 201, res.text
+    body = res.json()
+    # Two messages back: user + agent.
+    assert len(body) == 2
+    user_msg, agent_msg = body
+    assert user_msg["role"] == "user"
+    assert user_msg["attachment_asset_ids"] == [str(asset_id)]
+    assert agent_msg["role"] == "agent"
+    assert isinstance(agent_msg["content"], str) and agent_msg["content"]
+
+    # And the user message row carries the ids in the DB.
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        rows = (
+            await session.execute(
+                select(AgentMessage).where(
+                    AgentMessage.thread_id == thread_id,
+                    AgentMessage.role == AgentMessageRole.user,
+                )
+            )
+        ).scalars().all()
+        assert len(rows) == 1
+        assert rows[0].attachment_asset_ids == [str(asset_id)]
+
+
+@pytest.mark.asyncio
+async def test_post_message_with_missing_attachment_404s(client):
+    """Unknown attachment ids must return 404, not silently drop."""
+    from uuid import uuid4
+    from app.models.agent_thread import AgentThread, AgentKind
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    bogus = uuid4()
+    res = await client.post(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages",
+        json={"content": "hi", "attachment_asset_ids": [str(bogus)]},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 404, res.text
+    assert "not found" in res.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_post_message_with_cross_org_attachment_403s(client):
+    """Attachments belonging to a different org must be rejected."""
+    from app.models.agent_thread import AgentThread, AgentKind
+    from app.models.asset import Asset, AssetKind, AssetStatus
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    # Seed a separate org for the asset to belong to.
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        other_org = Organization(slug="other", name="Other Co")
+        session.add(other_org)
+        await session.flush()
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        asset = Asset(
+            organization_id=other_org.id,
+            created_by_user_id=user.id,
+            kind=AssetKind.document,
+            mime_type="application/pdf",
+            original_filename="other.pdf",
+            size_bytes=10,
+            bucket="dclaw",
+            storage_key="orgs/other/x.pdf",
+            status=AssetStatus.ready,
+        )
+        session.add_all([thread, asset])
+        await session.commit()
+        await session.refresh(thread)
+        await session.refresh(asset)
+        thread_id, asset_id = thread.id, asset.id
+
+    res = await client.post(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages",
+        json={"content": "hi", "attachment_asset_ids": [str(asset_id)]},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 403, res.text

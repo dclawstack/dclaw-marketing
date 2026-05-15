@@ -1192,6 +1192,7 @@ export interface AgentMessage {
   tool_name: string | null;
   tool_arguments: Record<string, unknown> | null;
   tool_result: Record<string, unknown> | null;
+  attachment_asset_ids: string[] | null;
   metadata_json: Record<string, unknown> | null;
   approval_request_id: string | null;
   created_at: string;
@@ -1215,11 +1216,49 @@ export async function listAgentMessages(orgId: string, threadId: string): Promis
   return fetchJson<AgentMessage[]>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`);
 }
 
-export async function postAgentMessage(orgId: string, threadId: string, content: string): Promise<AgentMessage[]> {
+export async function postAgentMessage(
+  orgId: string,
+  threadId: string,
+  content: string,
+  attachmentAssetIds?: string[],
+): Promise<AgentMessage[]> {
   return fetchJson<AgentMessage[]>(`/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages`, {
     method: "POST",
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({
+      content,
+      ...(attachmentAssetIds && attachmentAssetIds.length
+        ? { attachment_asset_ids: attachmentAssetIds }
+        : {}),
+    }),
   });
+}
+
+/**
+ * One-shot helper that runs the full presigned-PUT upload flow for a
+ * single File: startAssetUpload → PUT bytes → confirmAssetUpload. Used
+ * by Conductor's drag-drop/paste/attach surfaces (S5-CDR-B).
+ */
+export async function uploadFileToAsset(
+  file: File,
+  orgId: string,
+): Promise<Asset> {
+  const mime = file.type || "application/octet-stream";
+  const kind = inferAssetKind(mime, file.name);
+  const start = await startAssetUpload({
+    filename: file.name,
+    mime_type: mime,
+    kind,
+    organization_id: orgId,
+  });
+  const put = await fetch(start.presigned_put_url, {
+    method: "PUT",
+    body: file,
+    headers: file.type ? { "Content-Type": file.type } : {},
+  });
+  if (!put.ok) {
+    throw new Error(`Upload to storage failed (${put.status})`);
+  }
+  return confirmAssetUpload(start.asset.id);
 }
 
 // ============================================================

@@ -35,8 +35,10 @@ from app.models.agent_thread import (
     AgentMessageRole,
     AgentThread,
 )
+from app.models.asset import Asset
 from app.models.organization import OrganizationMembership
 from app.models.user import User
+from app.services import storage as storage_service
 
 
 router = APIRouter(
@@ -66,6 +68,11 @@ class ThreadRead(BaseModel):
 
 class MessageCreate(BaseModel):
     content: str = Field(min_length=1, max_length=20_000)
+    # Asset UUIDs the user attached to this turn. The server resolves
+    # each to its bytes/metadata and threads it into the agent prompt
+    # — images become Claude vision blocks; docs become summary lines
+    # in the user-prompt. (S5-CDR-B)
+    attachment_asset_ids: list[UUID] | None = None
 
 
 class MessageRead(BaseModel):
@@ -77,6 +84,7 @@ class MessageRead(BaseModel):
     tool_name: str | None
     tool_arguments: dict | None
     tool_result: dict | None
+    attachment_asset_ids: list[str] | None = None
     metadata_json: dict | None
     approval_request_id: UUID | None
     created_at: datetime
@@ -194,11 +202,60 @@ async def post_message(
     await _require_member(session, user, org_id)
     thread = await _get_thread_or_404(session, org_id, thread_id)
 
+    # 0. Resolve attachments (S5-CDR-B). Each Asset must belong to the
+    #    same org as the thread, else we 403. Images become Claude
+    #    vision blocks; non-images become summary lines in the user
+    #    prompt and are queued for KG ingestion (see follow-up).
+    attachment_ids: list[str] | None = None
+    images: list[tuple[str, bytes]] = []
+    doc_summaries: list[str] = []
+    if body.attachment_asset_ids:
+        asset_rows = (
+            await session.execute(
+                select(Asset).where(
+                    Asset.id.in_(body.attachment_asset_ids),
+                )
+            )
+        ).scalars().all()
+        found_ids = {a.id for a in asset_rows}
+        missing = set(body.attachment_asset_ids) - found_ids
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Attachment(s) not found: {sorted(str(m) for m in missing)}",
+            )
+        for a in asset_rows:
+            if a.organization_id is not None and a.organization_id != org_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Attachment belongs to a different organization.",
+                )
+        attachment_ids = [str(a.id) for a in asset_rows]
+        for a in asset_rows:
+            if a.kind == "image" and a.mime_type:
+                try:
+                    raw = await storage_service.get_object_bytes(
+                        a.storage_key, bucket=a.bucket
+                    )
+                    images.append((a.mime_type, raw))
+                except Exception:  # pragma: no cover — storage hiccup
+                    doc_summaries.append(
+                        f"image (failed to fetch): {a.original_filename or a.id}"
+                    )
+            else:
+                doc_summaries.append(
+                    f"{a.kind} attachment: "
+                    f"{a.original_filename or a.id} "
+                    f"({a.mime_type or 'unknown mime'}, "
+                    f"{a.size_bytes or '?'} bytes)"
+                )
+
     # 1. User message
     user_msg = AgentMessage(
         thread_id=thread.id,
         role=AgentMessageRole.user,
         content=body.content,
+        attachment_asset_ids=attachment_ids,
     )
     session.add(user_msg)
     await session.flush()
@@ -217,6 +274,8 @@ async def post_message(
     ]
 
     # Route by AgentKind to the right role-agent module (Phase 9.2).
+    # Only the conductor consumes images/docs today — role-agents get
+    # the same support in subsequent issues (see S5-CDR-C tool fleet).
     _ROUTER = {
         AgentKind.conductor: conductor_agent.reply,
         AgentKind.smm: smm_agent.reply,
@@ -233,12 +292,20 @@ async def post_message(
             agent_kind=thread.kind,
             content=(
                 f"The {thread.kind.value} agent stub isn't online yet. "
-                "Bring requests to the Conductor at /agent for now."
+                "Bring requests to the Conductor at /conductor for now."
             ),
             metadata_json={"confidence": 0.4},
         )
     else:
-        turn = await runner(body.content, history=history)
+        if thread.kind == AgentKind.conductor:
+            turn = await runner(
+                body.content,
+                history=history,
+                images=images or None,
+                doc_summaries=doc_summaries or None,
+            )
+        else:
+            turn = await runner(body.content, history=history)
         agent_msg = AgentMessage(
             thread_id=thread.id,
             role=AgentMessageRole.agent,

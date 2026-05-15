@@ -92,14 +92,20 @@ def _format_history(history: Sequence[dict] | None) -> str:
 
 
 async def _claude_reply(
-    user_text: str, history: Sequence[dict] | None
+    user_text: str,
+    history: Sequence[dict] | None,
+    images: list[tuple[str, bytes]] | None = None,
+    doc_summaries: list[str] | None = None,
 ) -> ConductorTurn:
     prior = _format_history(history)
-    user_block = (
-        f"PRIOR CONVERSATION:\n{prior}\n\n---\nUSER: {user_text}"
-        if prior
-        else f"USER: {user_text}"
-    )
+    parts: list[str] = []
+    if prior:
+        parts.append(f"PRIOR CONVERSATION:\n{prior}\n\n---")
+    if doc_summaries:
+        joined = "\n".join(f"- {s}" for s in doc_summaries)
+        parts.append(f"ATTACHED DOCUMENTS:\n{joined}\n\n---")
+    parts.append(f"USER: {user_text}")
+    user_block = "\n".join(parts)
 
     try:
         raw = await complete(
@@ -107,6 +113,7 @@ async def _claude_reply(
             user=user_block,
             max_tokens=600,
             n_variants_hint=1,
+            images=images,
         )
     except Exception:
         logger.exception("Conductor: Claude call failed; using stub.")
@@ -244,14 +251,24 @@ async def reply(
     user_text: str,
     *,
     history: Sequence[dict] | None = None,
+    images: list[tuple[str, bytes]] | None = None,
+    doc_summaries: list[str] | None = None,
 ) -> ConductorTurn:
     """One-shot conductor reply.
 
     Uses Claude when ANTHROPIC_API_KEY is set; falls back to a
     deterministic intent stub otherwise so dev/CI work offline.
     `history` is the list of prior {role, content} messages on the
-    thread; only the last 10 are sent to Claude.
+    thread; only the last 10 are sent to Claude. `images` is a list of
+    `(mime_type, bytes)` pairs forwarded as Claude vision content
+    blocks (S5-CDR-B). `doc_summaries` is a list of brief lines (one
+    per non-image attachment) inlined into the user prompt.
     """
     if is_real_provider_configured():
-        return await _claude_reply(user_text, history)
+        return await _claude_reply(
+            user_text,
+            history,
+            images=images,
+            doc_summaries=doc_summaries,
+        )
     return _stub_reply(user_text)
