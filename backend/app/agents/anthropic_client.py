@@ -110,4 +110,96 @@ async def complete(
         return _stub_response(system, user, n_variants_hint)
 
 
-__all__ = ["complete", "is_real_provider_configured", "DEFAULT_MODEL"]
+async def messages_create_raw(
+    *,
+    system: str,
+    messages: list[dict],
+    tools: list[dict] | None = None,
+    max_tokens: int = 2000,
+    model: str = DEFAULT_MODEL,
+) -> dict:
+    """Low-level wrapper around Anthropic `messages.create` that exposes
+    the full structured response (content blocks + stop_reason).
+
+    Returns a plain dict so callers don't need to import the SDK types:
+
+        {
+          "stop_reason": "tool_use" | "end_turn" | "max_tokens" | …,
+          "content": [
+            {"type": "text", "text": "…"},
+            {"type": "tool_use", "id": "toolu_…", "name": "list_…", "input": {…}},
+          ],
+        }
+
+    The stub fallback returns a simple end_turn text response so callers
+    can still exercise the loop in dev/CI without an API key. (S5-CDR-C)
+    """
+    if not is_real_provider_configured():
+        last_user_text = ""
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                c = m.get("content")
+                if isinstance(c, str):
+                    last_user_text = c
+                elif isinstance(c, list):
+                    for blk in c:
+                        if isinstance(blk, dict) and blk.get("type") == "text":
+                            last_user_text = blk.get("text", "")
+                            break
+                break
+        # Deterministic stub — same digest scheme as `complete()`.
+        text = _stub_response(system, last_user_text, n_variants=1)
+        return {
+            "stop_reason": "end_turn",
+            "content": [{"type": "text", "text": text}],
+        }
+
+    try:
+        from anthropic import AsyncAnthropic
+        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        kwargs: dict = {
+            "model": model,
+            "system": system,
+            "messages": messages,
+            "max_tokens": max_tokens,
+        }
+        if tools:
+            kwargs["tools"] = tools
+        response = await client.messages.create(**kwargs)
+        # Normalize content into plain dicts. Anthropic SDK returns
+        # pydantic-style blocks — pull the fields we care about.
+        out_blocks: list[dict] = []
+        for block in response.content:
+            btype = getattr(block, "type", None)
+            if btype == "text":
+                out_blocks.append({"type": "text", "text": getattr(block, "text", "")})
+            elif btype == "tool_use":
+                out_blocks.append(
+                    {
+                        "type": "tool_use",
+                        "id": getattr(block, "id", ""),
+                        "name": getattr(block, "name", ""),
+                        "input": getattr(block, "input", {}) or {},
+                    }
+                )
+            # Other block types (image / thinking — for S5-CDR-D) are
+            # ignored here; the streaming path handles them separately.
+        return {
+            "stop_reason": getattr(response, "stop_reason", "end_turn") or "end_turn",
+            "content": out_blocks,
+        }
+    except Exception:
+        logger.exception("Anthropic messages_create_raw failed; using stub.")
+        text = _stub_response(system, "", n_variants=1)
+        return {
+            "stop_reason": "end_turn",
+            "content": [{"type": "text", "text": text}],
+        }
+
+
+__all__ = [
+    "complete",
+    "messages_create_raw",
+    "is_real_provider_configured",
+    "DEFAULT_MODEL",
+]

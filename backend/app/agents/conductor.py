@@ -247,6 +247,202 @@ def _stub_reply(user_text: str) -> ConductorTurn:
 # ----- Public entrypoint ----------------------------------------------------
 
 
+_AGENT_SYSTEM_PROMPT = textwrap.dedent(
+    """
+    You are the Conductor — the Manager-station agent for DClaw
+    Marketing, an AI-driven marketing operating system. You operate
+    the entire platform via tool calls (parity with Claude Code's tool
+    model). You can navigate the user to any page, query the database
+    for lists/summaries, queue posts / approvals / generations, and
+    coordinate role agents.
+
+    Hard rules:
+    - Outbound posting and external sends are hard-gated by the Approval
+      Inbox. Tools that fire external side-effects (publish_now,
+      send_email_test, create_ad_campaign, etc.) only RECORD intent —
+      the human approves in the Inbox before anything goes live.
+    - When the user asks to "open", "go to", or "show" a page, call
+      `navigate_to`. The frontend deep-links automatically.
+    - When the user asks about state ("what's pending", "what's queued"),
+      call the corresponding list_* tool first, THEN reply with the
+      findings.
+    - If the user references an attached image or document, you can see
+      it via Claude vision (images) or in the user message context (doc
+      summaries) — reason about them and call tools as needed.
+    - Be concise in the final natural-language reply (2–4 sentences max).
+      Tool-call cards already show structured detail.
+    - When you've called the tools you need, stop emitting tool_use and
+      return your final text answer.
+    """
+).strip()
+
+
+@dataclass
+class ConductorAgenticTurn:
+    """Result of an agentic Conductor run — final text + the trace of
+    every tool call that was executed along the way. The caller is
+    responsible for persisting the trace into AgentMessage rows.
+    """
+
+    text: str
+    confidence: float
+    tool_calls: list[dict]  # [{"name", "input", "result", "tool_use_id"}, …]
+
+
+async def reply_agentic(
+    user_text: str,
+    *,
+    history: Sequence[dict] | None,
+    images: list[tuple[str, bytes]] | None = None,
+    doc_summaries: list[str] | None = None,
+    tool_ctx,  # ToolContext — typed loosely to avoid circular import
+    max_iters: int = 6,
+) -> ConductorAgenticTurn:
+    """Run the Conductor in agentic tool-use mode.
+
+    Builds an Anthropic-style `messages` list from history + user_text
+    (plus image content blocks if present), invokes Claude with the
+    REGISTRY tool schema, and loops: dispatch tool_use blocks → feed
+    tool_result back → repeat until stop_reason != tool_use OR max_iters
+    hit. Falls back to text-only `reply()` when no API key is
+    configured.
+    """
+    from app.agents.anthropic_client import (
+        is_real_provider_configured,
+        messages_create_raw,
+    )
+    from app.agents.tools import REGISTRY
+
+    if not is_real_provider_configured():
+        # Stub mode — defer to the text-only path so dev/CI behaves
+        # identically. Tool calling needs real Claude to work.
+        text_turn = await reply(
+            user_text,
+            history=history,
+            images=images,
+            doc_summaries=doc_summaries,
+        )
+        return ConductorAgenticTurn(
+            text=text_turn.text,
+            confidence=text_turn.confidence,
+            tool_calls=[],
+        )
+
+    # Build messages: prior turns + current user turn.
+    messages: list[dict] = []
+    for m in (history or [])[-10:]:
+        role = m.get("role", "user")
+        if role not in ("user", "assistant"):
+            continue
+        content = (m.get("content") or "").strip()
+        if not content:
+            continue
+        messages.append({"role": role, "content": content})
+
+    # Current user turn — assemble content blocks for vision + docs.
+    import base64 as _b64
+    user_blocks: list[dict] = []
+    if images:
+        for mime, raw in images:
+            user_blocks.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mime,
+                        "data": _b64.b64encode(raw).decode("ascii"),
+                    },
+                }
+            )
+    text_parts: list[str] = []
+    if doc_summaries:
+        text_parts.append(
+            "ATTACHED DOCUMENTS:\n" + "\n".join(f"- {s}" for s in doc_summaries)
+        )
+    text_parts.append(user_text)
+    user_blocks.append({"type": "text", "text": "\n\n".join(text_parts)})
+    messages.append({"role": "user", "content": user_blocks})
+
+    tool_calls_trace: list[dict] = []
+    tools_schema = REGISTRY.as_claude_schema()
+
+    final_text = ""
+    for _ in range(max_iters):
+        response = await messages_create_raw(
+            system=_AGENT_SYSTEM_PROMPT,
+            messages=messages,
+            tools=tools_schema,
+            max_tokens=1200,
+        )
+        stop_reason = response.get("stop_reason", "end_turn")
+        content = response.get("content", []) or []
+
+        # Collect text segments emitted this turn.
+        text_chunks = [b.get("text", "") for b in content if b.get("type") == "text"]
+        if text_chunks:
+            final_text = "\n".join(t for t in text_chunks if t).strip()
+
+        tool_uses = [b for b in content if b.get("type") == "tool_use"]
+        if not tool_uses or stop_reason != "tool_use":
+            # Final answer — exit loop.
+            break
+
+        # Append the assistant turn (raw content blocks) so Claude sees
+        # its own tool_use calls in the next iteration.
+        messages.append({"role": "assistant", "content": content})
+
+        # Dispatch each tool, build tool_result blocks for the next user turn.
+        result_blocks: list[dict] = []
+        for tu in tool_uses:
+            tool_name = tu.get("name", "")
+            tool = REGISTRY.get(tool_name)
+            if tool is None:
+                result = {"ok": False, "error": f"unknown tool: {tool_name}"}
+            else:
+                try:
+                    result = await tool.handler(tool_ctx, **(tu.get("input") or {}))
+                except TypeError as e:
+                    result = {"ok": False, "error": f"tool args mismatch: {e}"}
+                except Exception as e:
+                    logger.exception("Conductor: tool %s failed", tool_name)
+                    result = {"ok": False, "error": str(e)}
+            tool_calls_trace.append(
+                {
+                    "tool_use_id": tu.get("id"),
+                    "name": tool_name,
+                    "input": tu.get("input") or {},
+                    "result": result,
+                }
+            )
+            # Anthropic tool_result blocks accept a string content.
+            import json as _json
+            result_blocks.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tu.get("id"),
+                    "content": _json.dumps(result)[:50_000],
+                }
+            )
+
+        messages.append({"role": "user", "content": result_blocks})
+    else:
+        # Loop exhausted without natural exit.
+        if not final_text:
+            final_text = (
+                "(stopped after running the maximum number of tool calls — "
+                "please refine your ask)"
+            )
+
+    if not final_text:
+        final_text = "Done."
+
+    return ConductorAgenticTurn(
+        text=final_text,
+        confidence=0.85,
+        tool_calls=tool_calls_trace,
+    )
+
+
 async def reply(
     user_text: str,
     *,
