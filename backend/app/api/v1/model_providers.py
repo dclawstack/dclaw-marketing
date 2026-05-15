@@ -274,7 +274,12 @@ async def create_provider(
         if not await _is_org_writer(db, user, payload.organization_id):
             raise HTTPException(status_code=403, detail="Not an admin/manager of that org.")
 
-    encrypted = seal(payload.api_key) if payload.api_key else None
+    from app.services.secret_box import SecretBoxNotConfiguredError
+
+    try:
+        encrypted = seal(payload.api_key) if payload.api_key else None
+    except SecretBoxNotConfiguredError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
     base_url = payload.base_url or BASE_URLS.get(payload.provider_type)
 
     provider = ModelProvider(
@@ -348,7 +353,11 @@ async def update_provider(
     if payload.base_url is not None:
         p.base_url = payload.base_url
     if payload.api_key is not None and payload.api_key != "":
-        p.encrypted_api_key = seal(payload.api_key)
+        from app.services.secret_box import SecretBoxNotConfiguredError
+        try:
+            p.encrypted_api_key = seal(payload.api_key)
+        except SecretBoxNotConfiguredError as e:
+            raise HTTPException(status_code=500, detail=str(e)) from e
     if payload.extra_config is not None:
         p.extra_config_json = payload.extra_config
     if payload.is_active is not None:
