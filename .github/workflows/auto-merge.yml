@@ -8,12 +8,15 @@
 # Triggers:
 #   - PR labeled auto-merge / reopened / synchronize / ready_for_review
 #   - pull_request_review submitted (in case an approval unblocks a PR)
-#   - schedule every 15 minutes as a fallback (so a missed event
-#     doesn't strand a PR indefinitely)
+#   - workflow_run completion of `Claude Code Review` — the only
+#     non-instant check we still have. Firing on its completion gives
+#     us near-zero-latency merges instead of waiting for cron.
+#   - schedule every minute as a fallback (so a missed event
+#     doesn't strand a PR indefinitely). 1 minute is the GHA cron
+#     floor; sub-minute polling isn't supported by GitHub Actions.
 #
-# CI moved out-of-band: tests run locally before push. The old
-# workflow_run trigger watching the CI workflow has been removed
-# along with ci.yml — GitHub now does no heavy validation work.
+# CI moved out-of-band: tests run locally before push. GitHub does
+# no heavy validation work.
 #
 # GITHUB_TOKEN with contents: write + pull-requests: write is enough
 # to merge PRs in this same repo. No PAT, no org-level auto-merge
@@ -25,8 +28,11 @@ on:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
   pull_request_review:
     types: [submitted]
+  workflow_run:
+    workflows: ["Claude Code Review"]
+    types: [completed]
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "* * * * *"
 
 permissions:
   contents: write
