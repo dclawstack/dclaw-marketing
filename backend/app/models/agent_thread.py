@@ -116,6 +116,13 @@ class AgentMessage(Base):
     tool_arguments: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     tool_result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # Asset UUIDs the user attached to this message (images, docs, …).
+    # Drives Conductor vision blocks for images and KG-ingest summaries
+    # for docs. JSON list of UUID strings; NULL when none. (S5-CDR-B)
+    attachment_asset_ids: Mapped[list[str] | None] = mapped_column(
+        JSON, nullable=True
+    )
+
     # Reasoning trace, confidence, alternatives — surfaces in /audit-log
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 

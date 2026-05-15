@@ -1,19 +1,33 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Send, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  File as FileIcon,
+  Folder,
+  Image as ImageIcon,
+  Loader2,
+  Paperclip,
+  Send,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 import { DkAvatar, DkButton, DkCard, DkCardContent, DkSkeleton, DkTextarea } from "./index";
 import {
   AgentKind,
   AgentMessage,
   AgentThread,
+  Asset,
   createAgentThread,
+  getAssetDownloadUrl,
   listAgentMessages,
   listAgentThreads,
+  listAssets,
   postAgentMessage,
+  uploadFileToAsset,
 } from "@/lib/api";
 import { useOrg } from "@/contexts/org-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -41,7 +55,7 @@ const DEFAULT_BY_KIND: Record<
   { placeholder: string; emptyTitle: string; emptySubtitle: string }
 > = {
   conductor: {
-    placeholder: "Ask the Conductor anything…",
+    placeholder: "Ask the Conductor anything — or drop files / paste images…",
     emptyTitle: "Conductor is ready.",
     emptySubtitle:
       "Start by typing a goal — the Conductor decomposes it into work for the role agents.",
@@ -82,6 +96,15 @@ const DEFAULT_BY_KIND: Record<
   },
 };
 
+/** Local placeholder for an in-flight upload — has a temp id until the
+ *  server returns the real Asset. */
+interface PendingUpload {
+  tempId: string;
+  file: File;
+  previewUrl?: string;
+  error?: string;
+}
+
 export function DkAgentChat({
   kind,
   placeholder,
@@ -97,7 +120,16 @@ export function DkAgentChat({
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Attachments (S5-CDR-B)
+  const [attached, setAttached] = useState<Asset[]>([]);
+  const [pending, setPending] = useState<PendingUpload[]>([]);
+  const [assetMap, setAssetMap] = useState<Record<string, Asset>>({});
+  const [dragOver, setDragOver] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   const defaults = DEFAULT_BY_KIND[kind];
 
@@ -115,7 +147,12 @@ export function DkAgentChat({
       let t = threads.find((th) => th.kind === kind);
       if (!t) t = await createAgentThread(currentOrg.id, { kind });
       setThread(t);
-      setMessages(await listAgentMessages(currentOrg.id, t.id));
+      const [msgs, assets] = await Promise.all([
+        listAgentMessages(currentOrg.id, t.id),
+        listAssets(currentOrg.id).catch(() => [] as Asset[]),
+      ]);
+      setMessages(msgs);
+      setAssetMap(Object.fromEntries(assets.map((a) => [a.id, a])));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load.");
     } finally {
@@ -131,23 +168,131 @@ export function DkAgentChat({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, pending.length, attached.length]);
 
+  // ---- Upload pipeline -----------------------------------------------------
+  const startUploads = useCallback(
+    async (files: File[]) => {
+      if (!currentOrg || files.length === 0) return;
+      const newPending: PendingUpload[] = files.map((f) => ({
+        tempId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        file: f,
+        previewUrl: f.type.startsWith("image/")
+          ? URL.createObjectURL(f)
+          : undefined,
+      }));
+      setPending((prev) => [...prev, ...newPending]);
+
+      await Promise.all(
+        newPending.map(async (p) => {
+          try {
+            const asset = await uploadFileToAsset(p.file, currentOrg.id);
+            setAssetMap((m) => ({ ...m, [asset.id]: asset }));
+            setAttached((prev) => [...prev, asset]);
+          } catch (err) {
+            setPending((prev) =>
+              prev.map((q) =>
+                q.tempId === p.tempId
+                  ? { ...q, error: err instanceof Error ? err.message : "Upload failed" }
+                  : q,
+              ),
+            );
+            return;
+          }
+          // Successful upload — remove from pending.
+          setPending((prev) => prev.filter((q) => q.tempId !== p.tempId));
+        }),
+      );
+    },
+    [currentOrg],
+  );
+
+  const removeAttached = useCallback((id: string) => {
+    setAttached((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
+  const removePending = useCallback((tempId: string) => {
+    setPending((prev) => {
+      const target = prev.find((p) => p.tempId === tempId);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((p) => p.tempId !== tempId);
+    });
+  }, []);
+
+  // ---- Drag / paste handlers ----------------------------------------------
+  const collectFilesFromDataTransfer = (dt: DataTransfer): File[] => {
+    // Prefer `items` (supports folder traversal in webkit-dropdownEvent)
+    if (dt.items && dt.items.length > 0) {
+      const out: File[] = [];
+      for (let i = 0; i < dt.items.length; i++) {
+        const it = dt.items[i];
+        if (it.kind === "file") {
+          const f = it.getAsFile();
+          if (f) out.push(f);
+        }
+      }
+      if (out.length) return out;
+    }
+    return Array.from(dt.files || []);
+  };
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const files = collectFilesFromDataTransfer(e.dataTransfer);
+      void startUploads(files);
+    },
+    [startUploads],
+  );
+
+  const onPaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const files: File[] = [];
+      for (const item of Array.from(e.clipboardData.items)) {
+        if (item.kind === "file") {
+          const f = item.getAsFile();
+          if (f) files.push(f);
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        void startUploads(files);
+      }
+    },
+    [startUploads],
+  );
+
+  // ---- Send ----------------------------------------------------------------
   async function send(promptOverride?: string) {
     const text = (promptOverride ?? input).trim();
-    if (!text || !currentOrg || !thread) return;
+    if ((!text && attached.length === 0) || !currentOrg || !thread) return;
     setSending(true);
     setError(null);
     try {
-      const next = await postAgentMessage(currentOrg.id, thread.id, text);
+      const ids = attached.map((a) => a.id);
+      const next = await postAgentMessage(
+        currentOrg.id,
+        thread.id,
+        text || "(see attachments)",
+        ids,
+      );
       setMessages((prev) => [...prev, ...next]);
       setInput("");
+      setAttached([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Send failed.");
     } finally {
       setSending(false);
     }
   }
+
+  const placeholderText = placeholder ?? defaults.placeholder;
+  const isUploading = pending.some((p) => !p.error);
+  const allAttachmentsForRender = useMemo(
+    () => ({ attached, pending }),
+    [attached, pending],
+  );
 
   return (
     <div className="flex flex-col gap-3 max-w-3xl">
@@ -160,7 +305,31 @@ export function DkAgentChat({
         </div>
       )}
 
-      <DkCard className={cn("flex flex-col h-[60vh] min-h-[400px]", className)}>
+      <DkCard
+        className={cn(
+          "flex flex-col h-[60vh] min-h-[400px] relative",
+          dragOver && "ring-2 ring-brand ring-offset-2",
+          className,
+        )}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!dragOver) setDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          // Avoid flicker on child elements
+          if (e.currentTarget === e.target) setDragOver(false);
+        }}
+        onDrop={onDrop}
+      >
+        {dragOver && (
+          <div
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[var(--dk-purple-50)]/80 text-brand font-display text-lg font-semibold"
+            aria-hidden="true"
+          >
+            Drop files or folders to attach
+          </div>
+        )}
+
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto p-6 flex flex-col gap-4"
@@ -184,6 +353,7 @@ export function DkAgentChat({
               <MessageBubble
                 key={m.id}
                 message={m}
+                assetMap={assetMap}
                 userName={user?.full_name ?? user?.email ?? "you"}
                 onSuggestionClick={(s) => {
                   if (s.prompt) void send(s.prompt);
@@ -192,12 +362,84 @@ export function DkAgentChat({
             ))
           )}
         </div>
+
+        {/* Attachment strip — visible only when there's something to show */}
+        {(allAttachmentsForRender.attached.length > 0 || pending.length > 0) && (
+          <div className="border-t border-[var(--dk-border)] bg-[var(--dk-bg-tint)] px-3 py-2 flex flex-wrap gap-2">
+            {pending.map((p) => (
+              <PendingChip
+                key={p.tempId}
+                pending={p}
+                onRemove={() => removePending(p.tempId)}
+              />
+            ))}
+            {attached.map((a) => (
+              <AttachmentChip
+                key={a.id}
+                asset={a}
+                onRemove={() => removeAttached(a.id)}
+              />
+            ))}
+          </div>
+        )}
+
         <div className="border-t border-[var(--dk-border)] p-3 flex gap-2 bg-white">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = e.target.files ? Array.from(e.target.files) : [];
+              if (files.length) void startUploads(files);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }}
+          />
+          <input
+            ref={folderInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            // @ts-expect-error — webkitdirectory is a non-standard but
+            // widely supported attribute (Chrome / Edge / Safari).
+            webkitdirectory=""
+            directory=""
+            onChange={(e) => {
+              const files = e.target.files ? Array.from(e.target.files) : [];
+              if (files.length) void startUploads(files);
+              if (folderInputRef.current) folderInputRef.current.value = "";
+            }}
+          />
+
+          <div className="flex flex-col gap-1 self-end">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-md p-2 text-[var(--dk-fg-2)] hover:bg-[var(--dk-gray-50)] hover:text-ink transition-colors"
+              aria-label="Attach files"
+              title="Attach files"
+              disabled={sending}
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => folderInputRef.current?.click()}
+              className="rounded-md p-2 text-[var(--dk-fg-2)] hover:bg-[var(--dk-gray-50)] hover:text-ink transition-colors"
+              aria-label="Attach folder"
+              title="Attach folder"
+              disabled={sending}
+            >
+              <Folder className="h-4 w-4" />
+            </button>
+          </div>
+
           <DkTextarea
             rows={2}
-            placeholder={placeholder ?? defaults.placeholder}
+            placeholder={placeholderText}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onPaste={onPaste}
             disabled={sending || loading}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -209,7 +451,11 @@ export function DkAgentChat({
           />
           <DkButton
             onClick={() => void send()}
-            disabled={!input.trim() || sending}
+            disabled={
+              (!input.trim() && attached.length === 0)
+              || sending
+              || isUploading
+            }
             loading={sending}
             aria-label="Send"
             className="self-end"
@@ -221,24 +467,128 @@ export function DkAgentChat({
       </DkCard>
 
       <p className="text-xs text-[var(--dk-fg-2)] text-center">
-        Press ⌘/Ctrl-Enter to send.
+        Press ⌘/Ctrl-Enter to send · drag-drop, paste, or use the paperclip / folder icons to attach.
       </p>
     </div>
   );
 }
 
+// ---- Attachment chips ------------------------------------------------------
+
+function PendingChip({
+  pending,
+  onRemove,
+}: {
+  pending: PendingUpload;
+  onRemove: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-md border bg-white px-2 py-1 text-xs",
+        pending.error
+          ? "border-[var(--dk-danger)] text-[var(--dk-danger)]"
+          : "border-[var(--dk-border)] text-[var(--dk-fg-2)]",
+      )}
+      title={pending.error ?? `Uploading ${pending.file.name}`}
+    >
+      {pending.error ? (
+        <span aria-hidden="true">⚠</span>
+      ) : pending.previewUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={pending.previewUrl}
+          alt=""
+          className="h-6 w-6 rounded object-cover"
+        />
+      ) : (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      )}
+      <span className="max-w-[14rem] truncate">{pending.file.name}</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-1 text-[var(--dk-fg-2)] hover:text-ink"
+        aria-label="Remove"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+function AttachmentChip({
+  asset,
+  onRemove,
+}: {
+  asset: Asset;
+  onRemove: () => void;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (asset.kind === "image") {
+      void getAssetDownloadUrl(asset.id)
+        .then((r) => {
+          if (!cancelled) setPreviewUrl(r.presigned_get_url);
+        })
+        .catch(() => {
+          /* swallow — chip falls back to icon */
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [asset.id, asset.kind]);
+  return (
+    <div
+      className="flex items-center gap-2 rounded-md border border-[var(--dk-border)] bg-white px-2 py-1 text-xs text-[var(--dk-fg-1)]"
+      title={asset.original_filename ?? asset.id}
+    >
+      {previewUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={previewUrl}
+          alt=""
+          className="h-6 w-6 rounded object-cover"
+        />
+      ) : asset.kind === "image" ? (
+        <ImageIcon className="h-3 w-3" />
+      ) : (
+        <FileIcon className="h-3 w-3" />
+      )}
+      <span className="max-w-[14rem] truncate">
+        {asset.original_filename ?? `${asset.kind} attachment`}
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-1 text-[var(--dk-fg-2)] hover:text-ink"
+        aria-label="Remove"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+// ---- Message bubble --------------------------------------------------------
+
 function MessageBubble({
   message,
   userName,
+  assetMap,
   onSuggestionClick,
 }: {
   message: AgentMessage;
   userName: string;
+  assetMap: Record<string, Asset>;
   onSuggestionClick: (s: Suggestion) => void;
 }) {
   const isUser = message.role === "user";
   const suggestions = (message.metadata_json?.suggestions ??
     []) as Suggestion[];
+  const attachmentIds = message.attachment_asset_ids ?? [];
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
@@ -256,6 +606,18 @@ function MessageBubble({
           isUser ? "items-end" : "items-start"
         }`}
       >
+        {attachmentIds.length > 0 && (
+          <div
+            className={`flex flex-wrap gap-2 ${
+              isUser ? "justify-end" : "justify-start"
+            }`}
+          >
+            {attachmentIds.map((id) => (
+              <MessageAttachment key={id} assetId={id} asset={assetMap[id]} />
+            ))}
+          </div>
+        )}
+
         <DkCard
           className={
             isUser ? "bg-brand border-brand" : "bg-[var(--dk-bg-tint)]"
@@ -295,6 +657,52 @@ function MessageBubble({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function MessageAttachment({
+  assetId,
+  asset,
+}: {
+  assetId: string;
+  asset: Asset | undefined;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (asset?.kind === "image") {
+      void getAssetDownloadUrl(assetId)
+        .then((r) => {
+          if (!cancelled) setPreviewUrl(r.presigned_get_url);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [assetId, asset?.kind]);
+
+  if (asset?.kind === "image" && previewUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={previewUrl}
+        alt={asset.original_filename ?? "image attachment"}
+        className="h-32 w-32 rounded-lg object-cover border border-[var(--dk-border)]"
+      />
+    );
+  }
+  return (
+    <div className="inline-flex items-center gap-2 rounded-md border border-[var(--dk-border)] bg-white px-2 py-1 text-xs text-[var(--dk-fg-1)]">
+      {asset?.kind === "image" ? (
+        <ImageIcon className="h-3 w-3" />
+      ) : (
+        <FileIcon className="h-3 w-3" />
+      )}
+      <span className="max-w-[14rem] truncate">
+        {asset?.original_filename ?? "attachment"}
+      </span>
     </div>
   );
 }
