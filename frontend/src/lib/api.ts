@@ -1247,9 +1247,12 @@ export type StreamEvent =
   | { event: "done"; data: { user_msg_id: string; tool_msg_ids: string[]; agent_msg_id: string; tool_call_count: number } }
   | { event: "error"; data: { error: string } };
 
+export type ResearchMode = "quick" | "light" | "deep";
+
 export interface StreamAgentMessageOptions {
   attachmentAssetIds?: string[];
   thinkingBudgetTokens?: number;
+  researchMode?: ResearchMode;
   signal?: AbortSignal;
   onEvent: (ev: StreamEvent) => void;
 }
@@ -1263,11 +1266,12 @@ export async function streamAgentMessage(
   orgId: string,
   threadId: string,
   content: string,
-  { attachmentAssetIds, thinkingBudgetTokens, signal, onEvent }: StreamAgentMessageOptions,
+  { attachmentAssetIds, thinkingBudgetTokens, researchMode, signal, onEvent }: StreamAgentMessageOptions,
 ): Promise<void> {
   const body: Record<string, unknown> = { content };
   if (attachmentAssetIds && attachmentAssetIds.length) body.attachment_asset_ids = attachmentAssetIds;
   if (thinkingBudgetTokens && thinkingBudgetTokens > 0) body.thinking_budget_tokens = thinkingBudgetTokens;
+  if (researchMode) body.research_mode = researchMode;
 
   const response = await fetch(
     `/api/v1/orgs/${orgId}/agent-threads/${threadId}/messages/stream`,

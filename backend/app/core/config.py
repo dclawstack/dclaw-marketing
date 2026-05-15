@@ -166,6 +166,12 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     openrouter_model: str = "meta-llama/llama-3.1-8b-instruct"
 
+    # Web research providers (S5-CDR-E). When neither is set, web_search
+    # falls back to a deterministic stub that returns 0 results — keeps
+    # tests cheap and offline.
+    tavily_api_key: str = ""
+    brave_search_api_key: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = False
