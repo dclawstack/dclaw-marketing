@@ -232,6 +232,137 @@ def _openrouter_extra_headers() -> dict[str, str]:
     return {"HTTP-Referer": "https://dclaw.io", "X-Title": "DClaw"}
 
 
+# OpenRouter's internal /api/frontend/models endpoint is undocumented
+# but is what their own web UI uses; it returns ~750 models including
+# embeddings/image/video/speech/transcription/rerank that the public
+# /v1/models endpoint omits. If they ever break it, the caller falls
+# back gracefully via the try/except in the dispatcher. (S5 #366)
+_OPENROUTER_FRONTEND_URL = "https://openrouter.ai/api/frontend/models"
+
+
+def _frontend_caps_from_modalities(
+    output_modalities: list[str] | None,
+    input_modalities: list[str] | None,
+    model_id: str,
+) -> list[str]:
+    """Derive Capability strings from /api/frontend/models modality
+    fields. Falls back to the model_id heuristic when modalities are
+    empty/unknown."""
+    out_mods = set(output_modalities or [])
+    in_mods = set(input_modalities or [])
+    caps: list[str] = []
+    if "embeddings" in out_mods:
+        caps.append(Capability.embedding.value)
+    if "image" in out_mods:
+        caps.append(Capability.image_generation.value)
+    if "video" in out_mods:
+        caps.append(Capability.text_to_video.value)
+    if "speech" in out_mods or "audio" in out_mods:
+        caps.append(Capability.text_to_speech.value)
+    if "transcription" in out_mods:
+        caps.append(Capability.audio_transcription.value)
+    if "rerank" in out_mods:
+        caps.append(Capability.reranking.value)
+    if "text" in out_mods:
+        if Capability.text.value not in caps:
+            caps.append(Capability.text.value)
+        if "image" in in_mods:
+            caps.append(Capability.image_understanding.value)
+    if not caps:
+        # Modality field empty — fall back to id-substring heuristic.
+        caps = capabilities_for_model_id(model_id)
+    return caps
+
+
+def _frontend_pricing(endpoint: dict | None) -> dict | None:
+    """Translate /api/frontend/models endpoint.pricing into the same
+    shape as the public-endpoint pricing parser produces."""
+    if not isinstance(endpoint, dict):
+        return None
+    if endpoint.get("is_free"):
+        return {"is_free": True}
+    pr = endpoint.get("pricing")
+    if not isinstance(pr, dict):
+        return None
+    prompt = pr.get("prompt")
+    completion = pr.get("completion")
+
+    def _as_float(v) -> float | None:
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    p_n = _as_float(prompt)
+    c_n = _as_float(completion)
+    if p_n is None and c_n is None:
+        return None
+    if (p_n or 0) == 0 and (c_n or 0) == 0:
+        return {"is_free": True}
+    out: dict = {"currency": "USD"}
+    if prompt is not None:
+        out["prompt"] = prompt
+    if completion is not None:
+        out["completion"] = completion
+    return out
+
+
+def _openrouter_frontend_supplement(
+    skip_ids: set[str],
+) -> list[DiscoveredModel]:
+    """Fetch OpenRouter's internal models endpoint and return ONLY the
+    models not already in `skip_ids`. Each row becomes a
+    DiscoveredModel with capabilities derived from output_modalities.
+
+    Returns an empty list (not None) on any failure so the caller can
+    union without a null check.
+    """
+    data = _get_json(_OPENROUTER_FRONTEND_URL)
+    if not data:
+        return []
+    rows = (
+        data
+        if isinstance(data, list)
+        else data.get("data") or data.get("models") or []
+    )
+    out: list[DiscoveredModel] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        slug = row.get("slug") or row.get("id")
+        if not slug:
+            continue
+        endpoint = row.get("endpoint") if isinstance(row.get("endpoint"), dict) else None
+        # The routable id is the variant slug when present (e.g. `:free`
+        # suffix), falling back to the canonical slug.
+        variant = (endpoint or {}).get("model_variant_slug")
+        mid = variant or slug
+        # Skip models already discovered via the public endpoint.
+        # Match against both the canonical slug AND the variant slug
+        # so deduplication is robust across the two id forms.
+        if mid in skip_ids or slug in skip_ids:
+            continue
+        caps = _frontend_caps_from_modalities(
+            row.get("output_modalities"),
+            row.get("input_modalities"),
+            mid,
+        )
+        out.append(
+            DiscoveredModel(
+                model_id=mid,
+                display_name=(
+                    row.get("name")
+                    or row.get("short_name")
+                    or mid
+                ),
+                capabilities=caps,
+                context_window=row.get("context_length"),
+                pricing=_frontend_pricing(endpoint),
+            )
+        )
+    return out
+
+
 def discover_models_for_provider(p: ModelProvider) -> list[DiscoveredModel]:
     """Top-level dispatcher per provider type."""
     base = _base_url(p)
@@ -277,7 +408,26 @@ def discover_models_for_provider(p: ModelProvider) -> list[DiscoveredModel]:
     if t == ProviderType.huggingface:
         return _openai_compatible_discover(base, key)
     if t == ProviderType.openrouter:
-        return _openai_compatible_discover(base, key, _openrouter_extra_headers())
+        # Public /v1/models returns only chat models (364). Their web UI's
+        # /api/frontend/models endpoint returns ~750 models including
+        # embeddings, image-gen, video, speech, transcription, rerank.
+        # Union the two, prefer the public response when both have a
+        # model (richer schema). Internal endpoint is wrapped in
+        # try/except — if OpenRouter ever changes/removes it, we fall
+        # back to public-only. (S5 #366)
+        public = _openai_compatible_discover(
+            base, key, _openrouter_extra_headers()
+        )
+        public_ids = {m.model_id for m in public}
+        try:
+            supplement = _openrouter_frontend_supplement(public_ids)
+        except Exception:  # noqa: BLE001
+            log.exception(
+                "openrouter frontend supplement failed; falling back "
+                "to public-endpoint-only discovery"
+            )
+            supplement = []
+        return public + supplement
     if t in (
         ProviderType.groq,
         ProviderType.together_ai,
