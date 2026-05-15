@@ -7,11 +7,13 @@
 #
 # Triggers:
 #   - PR labeled auto-merge / reopened / synchronize / ready_for_review
-#   - workflow_run completion of the CI workflow (so we re-check when
-#     a new run finishes green)
 #   - pull_request_review submitted (in case an approval unblocks a PR)
 #   - schedule every 15 minutes as a fallback (so a missed event
 #     doesn't strand a PR indefinitely)
+#
+# CI moved out-of-band: tests run locally before push. The old
+# workflow_run trigger watching the CI workflow has been removed
+# along with ci.yml — GitHub now does no heavy validation work.
 #
 # GITHUB_TOKEN with contents: write + pull-requests: write is enough
 # to merge PRs in this same repo. No PAT, no org-level auto-merge
@@ -23,11 +25,8 @@ on:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
   pull_request_review:
     types: [submitted]
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
@@ -117,10 +116,20 @@ jobs:
               continue
             fi
 
-            # Check that no required check is failing or pending
+            # Check that no required check is failing or pending.
+            #
+            # We deliberately filter the workflow's OWN check out of
+            # the rollup: when this workflow is triggered by a
+            # `pull_request` event, GitHub registers it as a
+            # `poll-and-merge` CheckRun on the PR. The workflow then
+            # queries the rollup, sees its own in-flight check as
+            # not-yet-green, and skips with "not all checks green" —
+            # blocking itself.
             ALL_CHECKS_OK=$(echo "$PR" | jq -r '
               [.statusCheckRollup[]
                 | select(.__typename == "CheckRun" or .__typename == "StatusContext")
+                | select(.name != "poll-and-merge")
+                | select(.workflowName != "Poll and merge labeled PRs")
               ]
               | map(
                   (.conclusion // .state // "UNKNOWN") as $c
