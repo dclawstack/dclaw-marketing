@@ -79,6 +79,15 @@ services:
       # with a freshly generated key — `python -c "from cryptography.
       # fernet import Fernet; print(Fernet.generate_key().decode())"`.
       TENANT_ENCRYPTION_MASTER_KEY: "bqUs7dvwPNfolchbYftyzRJNp60aCVZvkK96G4WwHbs="
+      # OpenAI-compatible escape hatch for the Conductor (#369).
+      # Defaults below point at host-machine Ollama; clear them to fall
+      # back to Anthropic, or set to Groq / OpenRouter / Gemini-compat /
+      # vLLM / LM Studio / etc.
+      OPENAI_COMPAT_BASE_URL: "http://host.docker.internal:11434"
+      OPENAI_COMPAT_API_KEY: ""
+      OPENAI_COMPAT_MODEL: "llama3.2:3b"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8102:8102"
     depends_on:
