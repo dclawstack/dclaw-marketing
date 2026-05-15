@@ -5,6 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
   File as FileIcon,
   Folder,
   Image as ImageIcon,
@@ -12,6 +15,7 @@ import {
   Paperclip,
   Send,
   Sparkles,
+  Wrench,
   X,
 } from "lucide-react";
 
@@ -349,17 +353,21 @@ export function DkAgentChat({
               </p>
             </div>
           ) : (
-            messages.map((m) => (
-              <MessageBubble
-                key={m.id}
-                message={m}
-                assetMap={assetMap}
-                userName={user?.full_name ?? user?.email ?? "you"}
-                onSuggestionClick={(s) => {
-                  if (s.prompt) void send(s.prompt);
-                }}
-              />
-            ))
+            messages.map((m) =>
+              m.role === "tool" ? (
+                <ToolCallCard key={m.id} message={m} />
+              ) : (
+                <MessageBubble
+                  key={m.id}
+                  message={m}
+                  assetMap={assetMap}
+                  userName={user?.full_name ?? user?.email ?? "you"}
+                  onSuggestionClick={(s) => {
+                    if (s.prompt) void send(s.prompt);
+                  }}
+                />
+              ),
+            )
           )}
         </div>
 
@@ -659,6 +667,90 @@ function MessageBubble({
       </div>
     </div>
   );
+}
+
+// ---- Tool-call card -------------------------------------------------------
+
+function ToolCallCard({ message }: { message: AgentMessage }) {
+  const [open, setOpen] = useState(false);
+  const result = (message.tool_result ?? {}) as Record<string, unknown>;
+  const args = (message.tool_arguments ?? {}) as Record<string, unknown>;
+  const ok = result.ok !== false;
+  const action = result.action as string | undefined;
+  const route = result.route as string | undefined;
+  return (
+    <div className="flex gap-3">
+      <div className="shrink-0">
+        <div
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-pill text-white",
+            ok ? "bg-[var(--dk-success,#16a34a)]" : "bg-[var(--dk-danger,#dc2626)]",
+          )}
+          aria-label={ok ? "Tool succeeded" : "Tool failed"}
+        >
+          {ok ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+        </div>
+      </div>
+      <div className="flex-1 max-w-[80%]">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 rounded-md border border-[var(--dk-border)] bg-white px-3 py-2 text-left w-full hover:border-brand transition-colors"
+        >
+          {open ? (
+            <ChevronDown className="h-3 w-3 text-[var(--dk-fg-2)]" />
+          ) : (
+            <ChevronRight className="h-3 w-3 text-[var(--dk-fg-2)]" />
+          )}
+          <Wrench className="h-3 w-3 text-brand" />
+          <span className="font-mono text-xs font-semibold text-ink">
+            {message.tool_name || "(unknown tool)"}
+          </span>
+          <span className="text-xs text-[var(--dk-fg-2)] ml-1 truncate">
+            {ok ? toolResultSummary(result) : `failed: ${result.error ?? "unknown error"}`}
+          </span>
+          {action === "navigate" && route && (
+            <Link
+              href={route}
+              onClick={(e) => e.stopPropagation()}
+              className="ml-auto inline-flex items-center gap-1 rounded-pill border border-brand px-2 py-0.5 text-xs font-semibold text-brand hover:bg-[var(--dk-purple-50)]"
+            >
+              Open {route}
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          )}
+        </button>
+        {open && (
+          <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="rounded-md border border-[var(--dk-border)] bg-[var(--dk-bg-tint)] p-2">
+              <div className="text-xs font-semibold text-[var(--dk-fg-2)] mb-1">Args</div>
+              <pre className="text-xs overflow-x-auto whitespace-pre-wrap break-words font-mono">
+                {JSON.stringify(args, null, 2)}
+              </pre>
+            </div>
+            <div className="rounded-md border border-[var(--dk-border)] bg-[var(--dk-bg-tint)] p-2">
+              <div className="text-xs font-semibold text-[var(--dk-fg-2)] mb-1">Result</div>
+              <pre className="text-xs overflow-x-auto whitespace-pre-wrap break-words font-mono">
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function toolResultSummary(result: Record<string, unknown>): string {
+  if (typeof result.message === "string") return result.message;
+  if (typeof result.count === "number") return `${result.count} item(s)`;
+  if (result.queued_for_approval) return "queued for approval";
+  if (result.queued) return "queued";
+  if (result.action === "navigate" && typeof result.route === "string") {
+    return `navigate → ${result.route}`;
+  }
+  if (result.ok) return "ok";
+  return "";
 }
 
 function MessageAttachment({

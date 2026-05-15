@@ -284,6 +284,7 @@ async def post_message(
         AgentKind.analyst: analyst_agent.reply,
     }
     runner = _ROUTER.get(thread.kind)
+    tool_msgs: list[AgentMessage] = []
     if runner is None:
         # Unknown / not-yet-implemented kind (e.g. inbox agent).
         agent_msg = AgentMessage(
@@ -298,24 +299,63 @@ async def post_message(
         )
     else:
         if thread.kind == AgentKind.conductor:
-            turn = await runner(
+            # Agentic loop: Claude calls into REGISTRY tools, we
+            # persist each tool call as its own role=tool row so the
+            # UI can render tool-call cards inline. (S5-CDR-C)
+            from app.agents.conductor import reply_agentic
+            from app.agents.tools.registry import ToolContext
+
+            tool_ctx = ToolContext(
+                org_id=org_id,
+                user_id=user.id,
+                session=session,
+            )
+            agentic = await reply_agentic(
                 body.content,
                 history=history,
                 images=images or None,
                 doc_summaries=doc_summaries or None,
+                tool_ctx=tool_ctx,
+            )
+            # Persist tool-call rows in dispatch order.
+            for call in agentic.tool_calls:
+                tool_msg = AgentMessage(
+                    thread_id=thread.id,
+                    role=AgentMessageRole.tool,
+                    agent_kind=thread.kind,
+                    content="",
+                    tool_name=call.get("name") or "",
+                    tool_arguments=call.get("input") or {},
+                    tool_result=call.get("result") or {},
+                    metadata_json={
+                        "tool_use_id": call.get("tool_use_id"),
+                    },
+                )
+                session.add(tool_msg)
+                tool_msgs.append(tool_msg)
+            agent_msg = AgentMessage(
+                thread_id=thread.id,
+                role=AgentMessageRole.agent,
+                agent_kind=thread.kind,
+                content=agentic.text,
+                metadata_json={
+                    "confidence": agentic.confidence,
+                    "suggestions": [],
+                    "tool_call_count": len(agentic.tool_calls),
+                },
             )
         else:
             turn = await runner(body.content, history=history)
-        agent_msg = AgentMessage(
-            thread_id=thread.id,
-            role=AgentMessageRole.agent,
-            agent_kind=thread.kind,
-            content=turn.text,
-            metadata_json={
-                "confidence": turn.confidence,
-                "suggestions": turn.suggestions or [],
-            },
-        )
+            agent_msg = AgentMessage(
+                thread_id=thread.id,
+                role=AgentMessageRole.agent,
+                agent_kind=thread.kind,
+                content=turn.text,
+                metadata_json={
+                    "confidence": turn.confidence,
+                    "suggestions": turn.suggestions or [],
+                },
+            )
     session.add(agent_msg)
 
     # Touch updated_at on the thread.
@@ -323,8 +363,11 @@ async def post_message(
     await session.commit()
     await session.refresh(user_msg)
     await session.refresh(agent_msg)
+    for tm in tool_msgs:
+        await session.refresh(tm)
 
     return [
         MessageRead.model_validate(user_msg),
+        *(MessageRead.model_validate(tm) for tm in tool_msgs),
         MessageRead.model_validate(agent_msg),
     ]

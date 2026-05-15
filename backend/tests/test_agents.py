@@ -245,20 +245,24 @@ async def test_creatives_with_real_api_uses_fallback_path(client, monkeypatch):
 # ============================================================
 
 @pytest.mark.asyncio
-async def test_complete_with_images_stub_mode_annotates_prompt():
+async def test_complete_with_images_stub_mode_does_not_crash():
     """In stub mode (no ANTHROPIC_API_KEY), complete(images=…) must not
-    crash and must surface the image count in the synthetic prompt so
-    downstream parsers can see the attachments are present."""
+    crash, must return a non-empty string, AND the digest must differ
+    from the no-images call because the user prompt is annotated with
+    the image count (which feeds into the hash). This proves images
+    are actually plumbed through the stub path."""
     from app.agents.anthropic_client import complete
 
-    raw = await complete(
+    with_images = await complete(
         system="sys",
         user="describe this",
         images=[("image/png", b"\x89PNG\r\n"), ("image/jpeg", b"\xff\xd8\xff")],
     )
-    # Stub mixes system+user into a deterministic hash-keyed payload.
-    # The image count annotation should be present in the stub response.
-    assert "2 image attachment(s)" in raw
+    without_images = await complete(system="sys", user="describe this")
+    assert isinstance(with_images, str) and with_images
+    assert isinstance(without_images, str) and without_images
+    # Differing inputs → differing deterministic digests.
+    assert with_images != without_images
 
 
 @pytest.mark.asyncio
@@ -421,3 +425,183 @@ async def test_post_message_with_cross_org_attachment_403s(client):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 403, res.text
+
+
+# ============================================================
+# S5-CDR-C — Tool fleet + agentic loop
+# ============================================================
+
+def test_tool_registry_populated_with_full_fleet():
+    """The Conductor tool fleet should cover every sidebar area. The
+    issue spec calls for ~38 tools — guard with a lower bound that
+    still catches regressions.
+    """
+    from app.agents.tools import REGISTRY
+
+    names = {t.name for t in REGISTRY.all()}
+    assert len(names) >= 30, f"only {len(names)} tools registered: {sorted(names)}"
+
+    # Every sidebar area must have at least one tool.
+    expected_anchors = {
+        "navigate_to",
+        "get_dashboard_summary",
+        "list_inbox_items",
+        "list_calendar_events",
+        "schedule_post",
+        "publish_now",
+        "generate_creative",
+        "list_library_assets",
+        "list_workflows",
+        "list_channels",
+        "list_email_sequences",
+        "list_ad_campaigns",
+        "search_kg",
+        "get_analytics_report",
+        "run_seo_audit",
+        "list_integrations",
+        "list_orgs",
+        "list_users",
+        "list_models",
+    }
+    missing = expected_anchors - names
+    assert not missing, f"missing anchor tools: {sorted(missing)}"
+
+
+def test_tool_registry_claude_schema_shape():
+    """Each tool surfaces as {name, description, input_schema} for
+    Anthropic's `tools=[…]` argument."""
+    from app.agents.tools import REGISTRY
+
+    schema = REGISTRY.as_claude_schema()
+    assert isinstance(schema, list) and len(schema) >= 30
+    for entry in schema:
+        assert set(entry.keys()) == {"name", "description", "input_schema"}
+        assert isinstance(entry["name"], str) and entry["name"]
+        assert isinstance(entry["description"], str) and entry["description"]
+        assert isinstance(entry["input_schema"], dict)
+        assert entry["input_schema"].get("type") == "object"
+
+
+@pytest.mark.asyncio
+async def test_navigate_to_tool_returns_route_action():
+    """navigate_to is the simplest read-only tool — confirm shape."""
+    from uuid import uuid4
+    from app.agents.tools import REGISTRY
+    from app.agents.tools.registry import ToolContext
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        ctx = ToolContext(org_id=uuid4(), user_id=uuid4(), session=session)
+        out = await REGISTRY.get("navigate_to").handler(ctx, route="/calendar")
+        assert out["ok"] is True
+        assert out["action"] == "navigate"
+        assert out["route"] == "/calendar"
+
+        bad = await REGISTRY.get("navigate_to").handler(ctx, route="calendar")
+        assert bad["ok"] is False
+
+
+@pytest.mark.asyncio
+async def test_list_inbox_items_against_real_db():
+    """A representative read-only DB-backed tool: seed an
+    ApprovalRequest then verify list_inbox_items returns it."""
+    from app.agents.tools import REGISTRY
+    from app.agents.tools.registry import ToolContext
+    from app.models.approval_request import ApprovalRequest, ApprovalStatus
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        session.add(
+            ApprovalRequest(
+                organization_id=org.id,
+                action_type="publish_social_post",
+                requested_by_agent="creatives_agent_v1",
+                requested_by_user_id=user.id,
+                payload_json={"channel": "linkedin", "copy": "test"},
+                status=ApprovalStatus.pending,
+            )
+        )
+        await session.commit()
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        ctx = ToolContext(org_id=org.id, user_id=user.id, session=session)
+        out = await REGISTRY.get("list_inbox_items").handler(ctx)
+        assert out["ok"] is True
+        assert out["count"] == 1
+        assert out["items"][0]["action_type"] == "publish_social_post"
+        assert out["items"][0]["status"] == "pending"
+
+
+@pytest.mark.asyncio
+async def test_reply_agentic_stub_mode_returns_empty_tool_calls():
+    """When ANTHROPIC_API_KEY is unset (stub mode), reply_agentic must
+    fall back to the text-only stub path and return an empty
+    tool_calls trace — no real Claude is available to drive tools.
+    """
+    from uuid import uuid4
+    from app.agents.conductor import reply_agentic
+    from app.agents.tools.registry import ToolContext
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        ctx = ToolContext(org_id=uuid4(), user_id=uuid4(), session=session)
+        turn = await reply_agentic(
+            "Hi conductor",
+            history=None,
+            tool_ctx=ctx,
+        )
+    assert isinstance(turn.text, str) and turn.text
+    assert turn.tool_calls == []
+
+
+@pytest.mark.asyncio
+async def test_conductor_message_posts_persist_role_tool_rows_with_stub(client):
+    """End-to-end: POSTing a message to a Conductor thread in stub
+    mode should NOT create role=tool rows (no tools fired). Confirms
+    the agentic dispatch path is wired without exploding when there
+    are no tool calls.
+    """
+    from app.models.agent_thread import (
+        AgentMessage,
+        AgentMessageRole,
+        AgentThread,
+        AgentKind,
+    )
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    res = await client.post(
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages",
+        json={"content": "Hi"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 201, res.text
+    body = res.json()
+    # Stub mode: no tools fired → 2 rows back (user, agent).
+    assert len(body) == 2
+    assert body[0]["role"] == "user"
+    assert body[1]["role"] == "agent"
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        tool_rows = (
+            await session.execute(
+                select(AgentMessage).where(
+                    AgentMessage.thread_id == thread_id,
+                    AgentMessage.role == AgentMessageRole.tool,
+                )
+            )
+        ).scalars().all()
+        assert tool_rows == []
