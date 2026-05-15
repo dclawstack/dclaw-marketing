@@ -58,7 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Work",
     items: [
-      { label: "Conductor", href: "/agent", icon: Bot },
+      { label: "Conductor", href: "/conductor", icon: Bot },
       { label: "Inbox", href: "/inbox", icon: InboxIcon },
       { label: "Calendar", href: "/calendar", icon: Calendar },
     ],
@@ -77,12 +77,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Channels", href: "/channels", icon: Megaphone },
       { label: "Email", href: "/email", icon: Mail },
       { label: "Ads", href: "/ads", icon: Layers },
-    ],
-  },
-  {
-    label: "Conductor",
-    items: [
-      { label: "Conductor", href: "/conductor", icon: Bot },
     ],
   },
   {
