@@ -387,6 +387,9 @@ class StreamMessageCreate(BaseModel):
     # Claude extended-thinking budget (0/None disables). Caller toggles
     # this from the ModelSettingsPanel.
     thinking_budget_tokens: int | None = Field(default=None, ge=0, le=64_000)
+    # Research mode (S5-CDR-E): quick | light | deep. Controls how
+    # aggressively the agent uses web_search / fetch_url tools.
+    research_mode: str | None = Field(default=None)
 
 
 @router.post("/{thread_id}/messages/stream")
@@ -499,6 +502,7 @@ async def post_message_stream(
                     doc_summaries=doc_summaries or None,
                     tool_ctx=tool_ctx,
                     thinking_budget_tokens=body.thinking_budget_tokens,
+                    research_mode=body.research_mode,
                 ):
                     if ev.get("event") == "done":
                         final_text = ev.get("final_text", "")

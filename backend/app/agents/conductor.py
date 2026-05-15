@@ -277,6 +277,34 @@ _AGENT_SYSTEM_PROMPT = textwrap.dedent(
 ).strip()
 
 
+_RESEARCH_GUIDANCE = {
+    "quick": (
+        "RESEARCH MODE: QUICK. Do NOT call `web_search` or `fetch_url` "
+        "unless the user explicitly asks for fresh web information."
+    ),
+    "light": (
+        "RESEARCH MODE: LIGHT. You may call `web_search` ONCE per turn "
+        "when fresh-web information would meaningfully improve the "
+        "answer. After getting results, write the answer and cite the "
+        "top URLs inline."
+    ),
+    "deep": (
+        "RESEARCH MODE: DEEP. Research thoroughly. Call `web_search` "
+        "and `fetch_url` iteratively as needed to triangulate sources. "
+        "Aim for at least 3 distinct sources for the final answer. "
+        "Cite every claim with its source URL inline."
+    ),
+}
+
+
+def _system_prompt_for_research_mode(mode: str | None) -> str:
+    if not mode or mode == "quick":
+        return _AGENT_SYSTEM_PROMPT + "\n\n" + _RESEARCH_GUIDANCE["quick"]
+    if mode not in _RESEARCH_GUIDANCE:
+        return _AGENT_SYSTEM_PROMPT
+    return _AGENT_SYSTEM_PROMPT + "\n\n" + _RESEARCH_GUIDANCE[mode]
+
+
 @dataclass
 class ConductorAgenticTurn:
     """Result of an agentic Conductor run — final text + the trace of
@@ -297,6 +325,7 @@ async def reply_agentic(
     doc_summaries: list[str] | None = None,
     tool_ctx,  # ToolContext — typed loosely to avoid circular import
     max_iters: int = 6,
+    research_mode: str | None = None,
 ) -> ConductorAgenticTurn:
     """Run the Conductor in agentic tool-use mode.
 
@@ -365,11 +394,14 @@ async def reply_agentic(
 
     tool_calls_trace: list[dict] = []
     tools_schema = REGISTRY.as_claude_schema()
+    if research_mode == "deep" and max_iters < 10:
+        max_iters = 10
+    system_prompt = _system_prompt_for_research_mode(research_mode)
 
     final_text = ""
     for _ in range(max_iters):
         response = await messages_create_raw(
-            system=_AGENT_SYSTEM_PROMPT,
+            system=system_prompt,
             messages=messages,
             tools=tools_schema,
             max_tokens=1200,
@@ -452,6 +484,7 @@ async def reply_agentic_streaming(
     tool_ctx,
     max_iters: int = 6,
     thinking_budget_tokens: int | None = None,
+    research_mode: str | None = None,
 ):
     """Streaming version of `reply_agentic`. Async generator that yields
     SSE-ready event dicts as the agent thinks, calls tools, and writes
@@ -534,6 +567,10 @@ async def reply_agentic_streaming(
     tools_schema = REGISTRY.as_claude_schema()
     final_text_accum: list[str] = []
     thinking_accum: list[str] = []
+    # Deep research wants more iterations than the default for triangulation.
+    if research_mode == "deep" and max_iters < 10:
+        max_iters = 10
+    system_prompt = _system_prompt_for_research_mode(research_mode)
 
     for _ in range(max_iters):
         yield {"event": "agent_msg_start"}
@@ -544,7 +581,7 @@ async def reply_agentic_streaming(
         iter_text: list[str] = []
 
         async for ev in messages_stream_raw(
-            system=_AGENT_SYSTEM_PROMPT,
+            system=system_prompt,
             messages=messages,
             tools=tools_schema,
             max_tokens=1500,

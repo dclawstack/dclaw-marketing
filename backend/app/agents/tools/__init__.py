@@ -20,6 +20,7 @@ from app.agents.tools import (  # noqa: F401  — registration side-effects
     insights as _insights,
     navigation as _navigation,
     overview as _overview,
+    research as _research,
     work as _work,
 )
 

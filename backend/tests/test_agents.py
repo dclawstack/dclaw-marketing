@@ -673,6 +673,98 @@ async def test_reply_agentic_streaming_stub_mode_done_payload():
     assert isinstance(events[-1]["final_text"], str) and events[-1]["final_text"]
 
 
+# ============================================================
+# S5-CDR-E — Web search + research modes
+# ============================================================
+
+def test_research_tools_registered():
+    from app.agents.tools import REGISTRY
+    names = {t.name for t in REGISTRY.all()}
+    assert "web_search" in names
+    assert "fetch_url" in names
+
+
+@pytest.mark.asyncio
+async def test_web_search_no_provider_returns_empty_with_hint():
+    """No TAVILY/BRAVE key → tool returns ok=true, count=0, with a hint."""
+    from uuid import uuid4
+    from app.agents.tools import REGISTRY
+    from app.agents.tools.registry import ToolContext
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        ctx = ToolContext(org_id=uuid4(), user_id=uuid4(), session=session)
+        out = await REGISTRY.get("web_search").handler(ctx, query="hello")
+        assert out["ok"] is True
+        assert out["count"] == 0
+        assert out["results"] == []
+        assert "TAVILY_API_KEY" in out.get("note", "")
+
+
+@pytest.mark.asyncio
+async def test_fetch_url_rejects_non_http():
+    from uuid import uuid4
+    from app.agents.tools import REGISTRY
+    from app.agents.tools.registry import ToolContext
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        ctx = ToolContext(org_id=uuid4(), user_id=uuid4(), session=session)
+        out = await REGISTRY.get("fetch_url").handler(ctx, url="ftp://x")
+        assert out["ok"] is False
+        assert "http" in out["error"]
+
+
+def test_research_mode_system_prompt_variants():
+    """Each research mode appends the expected guidance to the system prompt."""
+    from app.agents.conductor import _system_prompt_for_research_mode
+
+    quick = _system_prompt_for_research_mode("quick")
+    light = _system_prompt_for_research_mode("light")
+    deep = _system_prompt_for_research_mode("deep")
+    none = _system_prompt_for_research_mode(None)
+
+    assert "QUICK" in quick
+    assert "LIGHT" in light
+    assert "DEEP" in deep
+    assert "QUICK" in none  # default == quick
+    assert quick != light
+    assert light != deep
+
+
+@pytest.mark.asyncio
+async def test_stream_endpoint_accepts_research_mode(client):
+    """Passing research_mode through the stream endpoint must work
+    end-to-end in stub mode (no tools actually called)."""
+    from app.models.agent_thread import AgentKind, AgentThread
+
+    user = await _seed_user("alice@example.com", "AlicePwd123!")
+    org = await _seed_org_with(user, OrganizationRole.viewer)
+    token = await _login(client, "alice@example.com", "AlicePwd123!")
+
+    async with AsyncSession(test_engine, expire_on_commit=False) as session:
+        thread = AgentThread(
+            organization_id=org.id,
+            kind=AgentKind.conductor,
+            started_by_user_id=user.id,
+        )
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+        thread_id = thread.id
+
+    async with client.stream(
+        "POST",
+        f"/api/v1/orgs/{org.id}/agent-threads/{thread_id}/messages/stream",
+        json={"content": "research trend", "research_mode": "deep"},
+        headers={"Authorization": f"Bearer {token}"},
+    ) as response:
+        assert response.status_code == 200
+        body = b""
+        async for chunk in response.aiter_bytes():
+            body += chunk
+    raw = body.decode("utf-8")
+    assert "event: done" in raw
+
+
 @pytest.mark.asyncio
 async def test_conductor_message_posts_persist_role_tool_rows_with_stub(client):
     """End-to-end: POSTing a message to a Conductor thread in stub

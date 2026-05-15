@@ -11,9 +11,11 @@ import {
   ChevronRight,
   File as FileIcon,
   Folder,
+  Globe,
   Image as ImageIcon,
   Loader2,
   Paperclip,
+  Search,
   Send,
   Sparkles,
   Square,
@@ -27,6 +29,7 @@ import {
   AgentMessage,
   AgentThread,
   Asset,
+  ResearchMode,
   createAgentThread,
   getAssetDownloadUrl,
   listAgentMessages,
@@ -140,14 +143,16 @@ export function DkAgentChat({
     { id: string; name: string; input: Record<string, unknown>; result?: Record<string, unknown> }[]
   >([]);
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const [researchMode, setResearchMode] = useState<ResearchMode>("quick");
   const abortRef = useRef<AbortController | null>(null);
 
-  // Persist thinking-mode preference per browser (server-side persistence
-  // is a follow-up — see plan). Read once on mount.
+  // Persist thinking-mode + research-mode prefs per browser.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("dclaw:conductor:thinking");
-    if (saved === "1") setThinkingEnabled(true);
+    const t = window.localStorage.getItem("dclaw:conductor:thinking");
+    if (t === "1") setThinkingEnabled(true);
+    const r = window.localStorage.getItem("dclaw:conductor:research");
+    if (r === "light" || r === "deep" || r === "quick") setResearchMode(r);
   }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -156,6 +161,10 @@ export function DkAgentChat({
       thinkingEnabled ? "1" : "0",
     );
   }, [thinkingEnabled]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("dclaw:conductor:research", researchMode);
+  }, [researchMode]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -340,6 +349,7 @@ export function DkAgentChat({
           ? optimisticAttachmentIds
           : undefined,
         thinkingBudgetTokens: thinkingEnabled ? 4_000 : undefined,
+        researchMode,
         signal: controller.signal,
         onEvent: (ev) => {
           switch (ev.event) {
@@ -592,6 +602,11 @@ export function DkAgentChat({
             >
               <Brain className="h-4 w-4" />
             </button>
+            <ResearchModePicker
+              mode={researchMode}
+              onChange={setResearchMode}
+              disabled={sending}
+            />
           </div>
 
           <DkTextarea
@@ -832,6 +847,78 @@ function MessageBubble({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---- Research mode picker (S5-CDR-E) --------------------------------------
+
+function ResearchModePicker({
+  mode,
+  onChange,
+  disabled,
+}: {
+  mode: ResearchMode;
+  onChange: (m: ResearchMode) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const Icon = mode === "deep" ? Search : Globe;
+  const label = mode === "quick" ? "Quick" : mode === "light" ? "Light" : "Deep";
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "rounded-md p-2 transition-colors",
+          mode !== "quick"
+            ? "bg-[var(--dk-purple-50)] text-brand"
+            : "text-[var(--dk-fg-2)] hover:bg-[var(--dk-gray-50)] hover:text-ink",
+        )}
+        aria-label="Research mode"
+        title={`Research mode: ${label}`}
+        disabled={disabled}
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 bottom-full mb-2 w-48 rounded-md border border-[var(--dk-border)] bg-white shadow-lg z-20"
+          role="menu"
+        >
+          {(["quick", "light", "deep"] as ResearchMode[]).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="menuitemradio"
+              aria-checked={mode === m}
+              onClick={() => {
+                onChange(m);
+                setOpen(false);
+              }}
+              className={cn(
+                "w-full text-left px-3 py-2 text-sm hover:bg-[var(--dk-bg-tint)]",
+                mode === m && "bg-[var(--dk-purple-50)] text-brand font-semibold",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                {mode === m ? <Check className="h-3 w-3" /> : <span className="w-3" />}
+                <span>
+                  {m === "quick" && "Quick"}
+                  {m === "light" && "Light research"}
+                  {m === "deep" && "Deep research"}
+                </span>
+              </div>
+              <div className="pl-5 text-xs text-[var(--dk-fg-2)]">
+                {m === "quick" && "No web search unless asked"}
+                {m === "light" && "One web search per turn"}
+                {m === "deep" && "Multi-step, cited sources"}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
