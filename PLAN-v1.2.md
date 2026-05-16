@@ -1,5 +1,8 @@
 # DClaw Marketing — v1.2 Feature Roadmap
 
+> 📘 **REVISED PRD v2.3 available:** See `REVISED-PRD.md` for complete gap analysis, current state, and full feature roadmap.
+
+
 > **For coding agents:** Pick features from this list, implement them fully, and update this doc with a checkmark.
 > **Do NOT change the basic stack.** See `AGENTS.md` for architecture lock and brand-system rules (`frontend/src/styles/brand.css` — light mode only, Poppins, `--dk-*` tokens).
 
