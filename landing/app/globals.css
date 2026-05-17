@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --dk-purple-900: #4A3878;
+  --dk-purple-800: #5C4A8E;
+  --dk-purple-700: #7660A8;
+  --dk-purple-600: #8773B5;
+  --dk-purple-500: #9384BD;
+  --dk-purple-400: #B0A4CE;
+  --dk-purple-300: #C9C0DE;
+  --dk-purple-200: #E2DCEE;
+  --dk-purple-100: #F1EEF8;
+  --dk-purple-50:  #F8F6FB;
+
+  --dk-ink:        #1F1B2E;
+  --dk-fg-1:       #2A2440;
+  --dk-fg-2:       #5A547A;
+  --dk-fg-3:       #8A85A0;
+  --dk-border:     #E5E1F0;
+
+  --dk-bg:         #FFFFFF;
+  --dk-bg-tint:    #FAF8FD;
+
+  --background:    #FFFFFF;
+  --foreground:    var(--dk-ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-dk-purple-50:  var(--dk-purple-50);
+  --color-dk-purple-100: var(--dk-purple-100);
+  --color-dk-purple-200: var(--dk-purple-200);
+  --color-dk-purple-300: var(--dk-purple-300);
+  --color-dk-purple-400: var(--dk-purple-400);
+  --color-dk-purple-500: var(--dk-purple-500);
+  --color-dk-purple-600: var(--dk-purple-600);
+  --color-dk-purple-700: var(--dk-purple-700);
+  --color-dk-purple-800: var(--dk-purple-800);
+  --color-dk-purple-900: var(--dk-purple-900);
+  --color-dk-ink:        var(--dk-ink);
+  --color-dk-fg-1:       var(--dk-fg-1);
+  --color-dk-fg-2:       var(--dk-fg-2);
+  --color-dk-fg-3:       var(--dk-fg-3);
+  --color-dk-border:     var(--dk-border);
+  --color-dk-bg-tint:    var(--dk-bg-tint);
+  --font-sans: var(--font-poppins);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+html, body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-poppins), system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: var(--dk-purple-200); color: var(--dk-ink); }
+
+/* Soft animated grain on hero / CTA */
+.dk-grain {
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,0.16) 0%, transparent 38%),
+    radial-gradient(circle at 82% 12%, rgba(255,255,255,0.10) 0%, transparent 42%),
+    radial-gradient(circle at 35% 92%, rgba(255,255,255,0.10) 0%, transparent 40%);
+}
+
+.dk-fade-in {
+  animation: dkFadeIn 0.6s ease-out both;
+}
+@keyframes dkFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
