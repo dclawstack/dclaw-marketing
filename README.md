@@ -1,16 +1,15 @@
 <div align="center">
 
-<img src="frontend/public/brand/dclaw-icon-purple.svg" width="72" alt="DClaw" />
+<img src="frontend/public/brand/logos/dclaw-icon-purple.svg" width="72" alt="DClaw Marketing" />
 
 # DClaw Marketing
 
 **An agent-driven marketing operating system.**  
 Set the brand once. Ingest your context. The agents run the operation — you supervise.
 
-[![CI](https://github.com/dclawstack/dclaw-marketing/actions/workflows/ci.yml/badge.svg)](https://github.com/dclawstack/dclaw-marketing/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/dclawstack/dclaw-marketing?label=release&color=7660A8)](https://github.com/dclawstack/dclaw-marketing/releases)
-[![Backend image](https://ghcr-badge.egpl.dev/dclawstack/dclaw-marketing-backend/size?label=backend)](https://github.com/dclawstack/dclaw-marketing/pkgs/container/dclaw-marketing-backend)
-[![Frontend image](https://ghcr-badge.egpl.dev/dclawstack/dclaw-marketing-frontend/size?label=frontend)](https://github.com/dclawstack/dclaw-marketing/pkgs/container/dclaw-marketing-frontend)
+[![Tests](https://img.shields.io/badge/tests-local%20gate-7660A8)](CONTRIBUTING.md)
+[![Self-hosted](https://img.shields.io/badge/deploy-Helm%20%2B%20K8s-7660A8)](helm/)
 [![License](https://img.shields.io/badge/license-TBD-lightgrey)](LICENSE)
 
 </div>

@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DClaw Marketing — Project State Report (2026-05-16)</title>
+<style>
+  :root {
+    --dk-purple-900: #4A3878;
+    --dk-purple-800: #5C4A8E;
+    --dk-purple-700: #7660A8;
+    --dk-purple-600: #8773B5;
+    --dk-purple-500: #9384BD;
+    --dk-purple-400: #B0A4CE;
+    --dk-purple-300: #C9C0DE;
+    --dk-purple-200: #E2DCEE;
+    --dk-purple-100: #F1EEF8;
+    --dk-purple-50:  #F8F6FB;
+
+    --dk-ink:        #1F1B2E;
+    --dk-fg-1:       #2A2440;
+    --dk-fg-2:       #5A547A;
+    --dk-fg-3:       #8A85A0;
+    --dk-border:     #E5E1F0;
+    --dk-border-strong: #C9C0DE;
+
+    --dk-success:    #0E7C66;
+    --dk-success-bg: #E6F5F0;
+    --dk-warning:    #B45309;
+    --dk-warning-bg: #FEF3C7;
+    --dk-danger:     #B91C3C;
+    --dk-danger-bg:  #FCE7EE;
+
+    --dk-bg:         #FFFFFF;
+    --dk-bg-tint:    #FAF8FD;
+  }
+
+  @page {
+    size: A4;
+    margin: 22mm 18mm 22mm 18mm;
+    @top-left { content: "DClaw Marketing — Project State Report"; font-family: 'Poppins', system-ui, sans-serif; font-size: 9pt; color: #8A85A0; }
+    @top-right { content: "16 May 2026"; font-family: 'Poppins', system-ui, sans-serif; font-size: 9pt; color: #8A85A0; }
+    @bottom-center { content: "Page " counter(page) " of " counter(pages); font-family: 'Poppins', system-ui, sans-serif; font-size: 9pt; color: #8A85A0; }
+    @bottom-right { content: "v1.0"; font-family: 'Poppins', system-ui, sans-serif; font-size: 9pt; color: #C9C0DE; }
+  }
+  @page :first { margin: 0; @top-left { content: ""; } @top-right { content: ""; } @bottom-center { content: ""; } @bottom-right { content: ""; } }
+  @page back { margin: 0; @top-left { content: ""; } @top-right { content: ""; } @bottom-center { content: ""; } @bottom-right { content: ""; } }
+
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--dk-fg-1); font-size: 10.5pt; line-height: 1.55; background: white; }
+  h1, h2, h3, h4, h5 { font-family: 'Poppins', system-ui, sans-serif; color: var(--dk-ink); font-weight: 700; letter-spacing: -0.01em; margin-top: 0; }
+  h1 { font-size: 28pt; line-height: 1.15; }
+  h2 { font-size: 19pt; line-height: 1.2; margin-top: 18pt; }
+  h3 { font-size: 14pt; line-height: 1.25; margin-top: 14pt; color: var(--dk-purple-700); }
+  h4 { font-size: 11.5pt; line-height: 1.3; margin-top: 10pt; color: var(--dk-fg-1); }
+  p  { margin: 0 0 8pt 0; }
+  strong { font-weight: 600; color: var(--dk-ink); }
+  code, .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 9pt; }
+  a { color: var(--dk-purple-700); text-decoration: none; }
+
+  .page-break { page-break-after: always; }
+  .chapter { page-break-before: always; }
+  .no-break { page-break-inside: avoid; }
+
+  .eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dk-purple-700); background: var(--dk-purple-100); padding: 3pt 8pt; border-radius: 99px; margin-bottom: 6pt; }
+  .lede { font-size: 12pt; color: var(--dk-fg-2); margin: 6pt 0 14pt 0; max-width: 95%; }
+
+  .cover { page: cover; width: 210mm; height: 297mm; padding: 28mm; background: radial-gradient(circle at 90% 10%, var(--dk-purple-500) 0%, var(--dk-purple-700) 32%, var(--dk-purple-900) 80%); color: white; position: relative; overflow: hidden; }
+  .cover::before { content: ""; position: absolute; top: -120mm; right: -80mm; width: 320mm; height: 320mm; background: radial-gradient(circle, rgba(255,255,255,0.16) 0%, transparent 60%); pointer-events: none; }
+  .cover::after { content: ""; position: absolute; bottom: -120mm; left: -50mm; width: 280mm; height: 280mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%); pointer-events: none; }
+  .cover-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover-eyebrow { font-size: 9pt; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.7); font-weight: 500; }
+  .cover-wordmark { display: flex; align-items: center; gap: 14px; }
+  .cover-wordmark .claw { width: 40px; height: 40px; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--dk-purple-700); font-weight: 800; font-size: 22pt; letter-spacing: -0.06em; }
+  .cover-wordmark .name { font-size: 18pt; font-weight: 700; color: white; letter-spacing: -0.01em; }
+  .cover-title { font-size: 44pt; line-height: 1.05; color: white; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8pt; }
+  .cover-subtitle { font-size: 16pt; color: rgba(255,255,255,0.85); font-weight: 400; line-height: 1.35; max-width: 80%; }
+  .cover-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14pt; margin-top: 22pt; }
+  .cover-meta-cell { border-left: 2px solid rgba(255,255,255,0.4); padding-left: 10pt; }
+  .cover-meta-label { font-size: 8pt; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 4pt; }
+  .cover-meta-value { font-size: 11pt; color: white; font-weight: 500; }
+  .cover-badge { display: inline-block; background: white; color: var(--dk-purple-900); padding: 6pt 14pt; border-radius: 99px; font-weight: 600; font-size: 10pt; letter-spacing: 0.04em; }
+  .cover-foot { display: flex; justify-content: space-between; align-items: flex-end; color: rgba(255,255,255,0.7); font-size: 9pt; }
+
+  table.dk { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt 0; font-size: 9.5pt; }
+  table.dk th, table.dk td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid var(--dk-border); vertical-align: top; }
+  table.dk th { background: var(--dk-purple-50); color: var(--dk-purple-900); font-weight: 600; font-size: 8.5pt; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 2px solid var(--dk-purple-300); }
+  table.dk tr:nth-child(even) td { background: var(--dk-bg-tint); }
+  table.dk td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.dk td.center { text-align: center; }
+
+  .card { border: 1px solid var(--dk-border); border-radius: 12px; padding: 12pt 14pt; background: white; margin: 8pt 0; }
+  .card.tint { background: var(--dk-purple-50); border-color: var(--dk-purple-200); }
+  .card h3, .card h4 { margin-top: 0; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10pt; margin: 10pt 0; }
+  .card-grid.col-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.col-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .kpi { border: 1px solid var(--dk-border); border-radius: 12px; padding: 12pt; background: white; }
+  .kpi-label { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dk-fg-2); }
+  .kpi-value { font-size: 26pt; font-weight: 700; color: var(--dk-purple-700); line-height: 1.0; margin: 4pt 0; }
+  .kpi-sub { font-size: 9pt; color: var(--dk-fg-2); }
+
+  .badge { display: inline-block; font-size: 8pt; font-weight: 600; letter-spacing: 0.04em; padding: 2pt 8pt; border-radius: 99px; text-transform: uppercase; }
+  .badge.brand { background: var(--dk-purple-100); color: var(--dk-purple-800); }
+  .badge.ok    { background: var(--dk-success-bg); color: var(--dk-success); }
+  .badge.warn  { background: var(--dk-warning-bg); color: var(--dk-warning); }
+  .badge.bad   { background: var(--dk-danger-bg); color: var(--dk-danger); }
+  .badge.neutral { background: #EEE; color: #555; }
+
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 60px; align-items: center; gap: 10pt; margin: 5pt 0; font-size: 9.5pt; }
+  .bar-track { height: 10pt; background: var(--dk-purple-100); border-radius: 6px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--dk-purple-600), var(--dk-purple-800)); border-radius: 6px; }
+  .bar-fill.warn { background: linear-gradient(90deg, #F59E0B, #B45309); }
+  .bar-fill.bad  { background: linear-gradient(90deg, #EF4444, #B91C3C); }
+  .bar-fill.ok   { background: linear-gradient(90deg, #10B981, #0E7C66); }
+  .bar-pct { text-align: right; font-weight: 600; color: var(--dk-purple-800); }
+
+  .callout { border-left: 4px solid var(--dk-purple-700); background: var(--dk-purple-50); padding: 10pt 14pt; margin: 10pt 0; border-radius: 0 8px 8px 0; }
+  .callout.warn { border-left-color: #B45309; background: var(--dk-warning-bg); }
+  .callout.ok   { border-left-color: #0E7C66; background: var(--dk-success-bg); }
+  .callout.bad  { border-left-color: #B91C3C; background: var(--dk-danger-bg); }
+
+  ul.tight, ol.tight { margin: 4pt 0 10pt 18pt; padding: 0; }
+  ul.tight li, ol.tight li { margin: 2pt 0; }
+
+  .chip { display: inline-block; font-size: 8.5pt; padding: 1pt 7pt; border-radius: 99px; background: var(--dk-purple-100); color: var(--dk-purple-800); margin: 1pt 2pt; font-weight: 500; }
+  .chip.ok { background: var(--dk-success-bg); color: var(--dk-success); }
+  .chip.bad { background: var(--dk-danger-bg); color: var(--dk-danger); }
+  .chip.mono { font-family: 'JetBrains Mono', monospace; font-size: 8pt; }
+
+  hr.dk { border: none; border-top: 1px solid var(--dk-border); margin: 14pt 0; }
+
+  .toc-list { list-style: none; padding: 0; margin: 0; }
+  .toc-list li { display: flex; justify-content: space-between; padding: 6pt 0; border-bottom: 1px dotted var(--dk-border); font-size: 11pt; }
+  .toc-list li .ch { color: var(--dk-purple-700); font-weight: 600; width: 36pt; flex-shrink: 0; }
+  .toc-list li .title { flex: 1; color: var(--dk-fg-1); }
+  .toc-list li .page { color: var(--dk-fg-3); font-variant-numeric: tabular-nums; width: 30pt; text-align: right; }
+
+  .phase-block { border: 1px solid var(--dk-border); border-radius: 12px; padding: 14pt 16pt; margin: 12pt 0; page-break-inside: avoid; }
+  .phase-block h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: baseline; }
+  .phase-block .ph-num { font-size: 26pt; color: var(--dk-purple-300); font-weight: 800; line-height: 1; }
+  .phase-block .ph-title { flex: 1; color: var(--dk-ink); }
+  .phase-block .ph-pct { font-size: 18pt; color: var(--dk-purple-700); font-weight: 700; }
+  .phase-block h4 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dk-purple-700); margin: 8pt 0 4pt 0; }
+
+  .pr-card { border-left: 3px solid var(--dk-purple-400); background: var(--dk-bg-tint); padding: 8pt 12pt; margin: 4pt 0; border-radius: 0 8px 8px 0; font-size: 9.5pt; page-break-inside: avoid; }
+  .pr-card .pr-num { font-weight: 700; color: var(--dk-purple-800); }
+  .pr-card .pr-meta { font-size: 8.5pt; color: var(--dk-fg-3); margin-top: 2pt; }
+
+  svg.chart { display: block; margin: 4pt auto 8pt; }
+
+  .back { page: back; width: 210mm; height: 297mm; background: var(--dk-purple-900); color: white; position: relative; overflow: hidden; padding: 28mm; }
+  .back::before { content: ""; position: absolute; top: -100mm; left: -60mm; width: 280mm; height: 280mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%); }
+  .back-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .back h1 { color: white; font-size: 32pt; max-width: 80%; }
+  .back .meta { color: rgba(255,255,255,0.7); font-size: 9pt; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ COVER ============================================================ -->
+<section class="cover">
+  <div class="cover-content">
+    <header class="cover-wordmark">
+      <div class="claw">D</div>
+      <div class="name">DClaw Marketing</div>
+    </header>
+
+    <div>
+      <div class="cover-eyebrow">Project State Report · Cross-Sprint Snapshot</div>
+      <h1 class="cover-title">A Platform Between Releases.</h1>
+      <p class="cover-subtitle">
+        Two hundred and seventeen merged pull requests. Four tagged releases. A live Sprint 5 Conductor epic.
+        A 41,813-line backend, a 24,823-line frontend, and a roadmap that has quietly become two products.
+        This is where the project actually stands on 16 May 2026.
+      </p>
+
+      <div class="cover-meta">
+        <div class="cover-meta-cell">
+          <div class="cover-meta-label">Snapshot</div>
+          <div class="cover-meta-value">main @ ffcf9f8</div>
+        </div>
+        <div class="cover-meta-cell">
+          <div class="cover-meta-label">Report Date</div>
+          <div class="cover-meta-value">16 May 2026, 14:55 IST</div>
+        </div>
+        <div class="cover-meta-cell">
+          <div class="cover-meta-label">Latest Release</div>
+          <div class="cover-meta-value">v1.1.2 · 15 May 2026</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 22pt;">
+        <span class="cover-badge">SPRINT 5 IN-FLIGHT · CONDUCTOR EPIC MOSTLY MERGED</span>
+      </div>
+    </div>
+
+    <footer class="cover-foot">
+      <div>
+        <div style="color: white; font-weight: 600; font-size: 11pt;">Prepared by</div>
+        <div>Engineering, with Claude Code · Opus 4.7 (1M context)</div>
+      </div>
+      <div style="text-align: right;">
+        <div>Confidential — internal distribution</div>
+        <div style="opacity: 0.8;">v1.0 · 16.05.2026</div>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<!-- ============================================================ IMPRINT ============================================================ -->
+<section class="chapter" style="padding-top: 30mm;">
+  <div class="eyebrow">Imprint</div>
+  <h2>About this report</h2>
+  <p class="lede">
+    This is a cross-sprint <strong>project state report</strong>, not a sprint closeout. It is generated mid-Sprint 5
+    on 16 May 2026, after a status walk-through of the repository, the running stack, the GitHub project board, and the
+    roadmap. It is intended for three audiences: <strong>operators</strong> (TL;DR, Chapter 1), <strong>executives</strong>
+    (Executive Summary, Chapter 4), and <strong>engineers</strong> (Chapters 5 onward, plus the appendices).
+  </p>
+
+  <table class="dk">
+    <tr><th style="width: 30%">Field</th><th>Value</th></tr>
+    <tr><td>Document title</td><td>DClaw Marketing — Project State Report (2026-05-16)</td></tr>
+    <tr><td>Report kind</td><td>Cross-sprint state snapshot (not a sprint closeout)</td></tr>
+    <tr><td>Snapshot ref</td><td><code>main @ ffcf9f8</code> — most recent merge on the trunk at report time</td></tr>
+    <tr><td>Latest tag</td><td><code>v1.1.2</code> — 2026-05-15 — "agents go live"</td></tr>
+    <tr><td>Sprint in flight</td><td>Sprint 5 — Conductor epic + admin/models polish</td></tr>
+    <tr><td>PRs on main since v1.1.2</td><td>20 (S5-CDR-A→G plus admin/models polish + infra fixes)</td></tr>
+    <tr><td>Open PRs</td><td>0</td></tr>
+    <tr><td>Open code issues</td><td>0 (the 5 open issues are marketing collaterals, off-limits to engineering)</td></tr>
+    <tr><td>Stack health</td><td>postgres · redis · minio <span class="badge ok">OK</span> · frontend healthcheck <span class="badge warn">cosmetic</span> · anthropic + resend keys unset in dev <span class="badge neutral">expected</span></td></tr>
+    <tr><td>Document version</td><td>1.0 — frozen at report-generation time</td></tr>
+    <tr><td>Generated</td><td>2026-05-16 via Chrome headless from <code>project-state-2026-05-16.html</code></td></tr>
+    <tr><td>Location</td><td><code>obsidian/reports/</code> in the dclaw-marketing repo</td></tr>
+    <tr><td>Audience</td><td>Operator · Executive sponsor · Engineering</td></tr>
+    <tr><td>Authoring</td><td>Engineering with Claude Code (Opus 4.7, 1M context)</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>How to read this document.</strong> If you have 5 minutes, read Chapter 1 (TL;DR). If you have 20 minutes,
+    add Chapters 3 and 4 (Project Intent and Executive Summary). If you are an engineer making a planning decision,
+    read everything from Chapter 5 onward; the appendices contain the raw inventories of services, models, routes,
+    and frontend pages so they can be referenced without re-running <code>ls</code>.
+  </div>
+
+  <h3>What this report is and is not</h3>
+  <p>
+    This is <strong>not</strong> a sprint completion report. The canonical Sprint 4 closeout (<code>v1.1.2</code>) was
+    issued on 15 May; the Sprint 5 closeout report will be issued when Sprint 5 closes. This report exists because the
+    project is, today, between releases — twenty merges deep into Sprint 5 with no tag yet — and a clean accounting of
+    "where things actually stand" was requested.
+  </p>
+  <p>
+    It is also not a roadmap document. <code>PLAN-v1.2.md</code> is the roadmap; this report measures the project
+    against that plan, but does not propose new features. The "Path forward" chapter at the end is observational, not
+    prescriptive.
+  </p>
+</section>
+
+<!-- ============================================================ TOC ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Contents</div>
+  <h2>Table of Contents</h2>
+  <p class="lede">Twelve chapters and four appendices. Total ≈ 50 pages.</p>
+
+  <ol class="toc-list">
+    <li><span class="ch">1</span><span class="title">TL;DR — the project in three pages</span><span class="page">7</span></li>
+    <li><span class="ch">2</span><span class="title">Recap — Sprints 1 through 4 in five pages</span><span class="page">10</span></li>
+    <li><span class="ch">3</span><span class="title">Project Intent &amp; Target Audience</span><span class="page">15</span></li>
+    <li><span class="ch">4</span><span class="title">Executive Summary</span><span class="page">19</span></li>
+    <li><span class="ch">5</span><span class="title">Where We Are vs. PLAN-v1.2</span><span class="page">23</span></li>
+    <li><span class="ch">6</span><span class="title">Sprint 5 In Flight — Conductor Epic</span><span class="page">27</span></li>
+    <li><span class="ch">7</span><span class="title">Architecture Snapshot</span><span class="page">30</span></li>
+    <li><span class="ch">8</span><span class="title">Theme-by-Theme Capability Status</span><span class="page">33</span></li>
+    <li><span class="ch">9</span><span class="title">Platform Health — Live Diagnostic</span><span class="page">39</span></li>
+    <li><span class="ch">10</span><span class="title">Tests, Quality Gates &amp; CI/CD</span><span class="page">41</span></li>
+    <li><span class="ch">11</span><span class="title">Risks, Tech Debt, Open Decisions</span><span class="page">43</span></li>
+    <li><span class="ch">12</span><span class="title">Path Forward — Observations, Not Prescriptions</span><span class="page">45</span></li>
+    <li><span class="ch">A</span><span class="title">Backend Service Inventory</span><span class="page">47</span></li>
+    <li><span class="ch">B</span><span class="title">Data Model Inventory</span><span class="page">48</span></li>
+    <li><span class="ch">C</span><span class="title">Frontend Route &amp; API Surface</span><span class="page">49</span></li>
+    <li><span class="ch">D</span><span class="title">Glossary &amp; Acronyms</span><span class="page">50</span></li>
+  </ol>
+</section>
+
+<!-- ============================================================ CHAPTER 1 — TL;DR ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 1</div>
+  <h1 style="color: var(--dk-purple-800);">TL;DR</h1>
+  <p class="lede">
+    Sixteen days from <code>v1.0.0</code> to <code>v1.1.2</code>. Twenty Sprint-5 merges sitting on top of that. The
+    Conductor multi-agent epic is mostly landed. The repository is clean, the stack is up, no PRs are pending, no
+    code issues are open. The next natural milestone is a <code>v1.2.0</code> tag.
+  </p>
+
+  <div class="card-grid col-4">
+    <div class="kpi">
+      <div class="kpi-label">PRs Merged (lifetime)</div>
+      <div class="kpi-value">217</div>
+      <div class="kpi-sub">across 5 sprints</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Tagged Releases</div>
+      <div class="kpi-value">4</div>
+      <div class="kpi-sub">v1.0.0 → v1.1.2</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Backend LOC</div>
+      <div class="kpi-value">41.8k</div>
+      <div class="kpi-sub">254 Python files</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Frontend LOC</div>
+      <div class="kpi-value">24.8k</div>
+      <div class="kpi-sub">125 TSX files</div>
+    </div>
+  </div>
+
+  <div class="card-grid col-4">
+    <div class="kpi">
+      <div class="kpi-label">v1 API Routes</div>
+      <div class="kpi-value">56</div>
+      <div class="kpi-sub">175 paths in OpenAPI</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Backend Services</div>
+      <div class="kpi-value">51</div>
+      <div class="kpi-sub">incl. 14 MCP adapters</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Data Models</div>
+      <div class="kpi-value">30</div>
+      <div class="kpi-sub">40 Alembic migrations</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Role Agents</div>
+      <div class="kpi-value">8</div>
+      <div class="kpi-sub">over Model Registry resolver</div>
+    </div>
+  </div>
+
+  <h3>The thirty-second narrative</h3>
+  <p>
+    DClaw Marketing began Sprint 1 as a multi-tenant scaffold. By Sprint 2 it had a feature-complete content
+    pipeline. Sprint 3 hardened it into an operator-ready product (admin model, slugs, sidebar, auto-merge). Sprint 4
+    turned the agent platform from scaffold to runtime: a Model Registry across 26 provider types, role-agents over a
+    resolver chain, generation adapters, AEO, observability. Sprint 5 — the one in flight — is rebuilding
+    <code>/conductor</code> into a real multi-agent orchestration surface with Claude Agent SDK tool use, streaming,
+    research modes, and (as of last week) full decoupling from Anthropic via OpenAI-compatible providers.
+  </p>
+
+  <h3>What works today</h3>
+  <ul class="tight">
+    <li><strong>Foundation</strong> — multi-tenant org/project/campaign hierarchy, 10 RBAC scopes, two-tier admin model, audit, approvals with 4-eye rule, brand kits, knowledge graph, object storage.</li>
+    <li><strong>Content pipeline</strong> — Creatives Agent (text shipped, multimedia adapters scaffolded), repurposing engine, A/B variants, hook + headline lab.</li>
+    <li><strong>Publishing</strong> — calendar, scheduled posts, 13 channel publishers (X, LinkedIn, IG, FB, YouTube, TikTok, Threads, Substack, Bluesky, Reddit, Pinterest, Discord, Mastodon), email sequences (Resend / Postmark / SendGrid), ads publisher (Meta / LinkedIn / Google).</li>
+    <li><strong>Audience &amp; revenue</strong> — Lead 2.0 with enrichment + ID resolution + scoring, two-way CRM sync (HubSpot, Salesforce, Pipedrive, Attio), segment builder, attribution with Sankey view.</li>
+    <li><strong>Agent platform</strong> — 8 role-agents (Conductor, Creatives, SMM, SEO, Paid Media, Analyst, Inbox, Reviewer) over a Model Registry with auto-discovery, capability heuristic, health-check beat, and a user→org→pool→env→stub resolver chain.</li>
+    <li><strong>Operability</strong> — OpenTelemetry + Grafana + Sentry tags, cost ledger per agent run, trace replay endpoint, lean CI (local tests gate; GitHub does only auto-merge).</li>
+  </ul>
+
+  <h3>What is open</h3>
+  <ul class="tight">
+    <li><strong>Conductor epic (Sprint 5).</strong> A through G have all landed in <code>main</code> under the <code>[Unreleased]</code> changelog banner; no tag yet.</li>
+    <li><strong>Pending roadmap items.</strong> Brand-Safe Image Editor (B7), SMS/WhatsApp (C5), Push/In-App (C6), Auto-Optimizer bandit auto-promote (G5). All P2 or later in PLAN-v1.2.</li>
+    <li><strong>Health diagnostics.</strong> One cosmetic frontend healthcheck failure (host port reachable, only the in-container probe fails), one weak default JWT secret, three Pydantic field-shadow warnings. None are user-visible.</li>
+    <li><strong>Marketing collaterals.</strong> Five open issues (#49–#53) for one-pager, slides, demo video, social drafts. Engineering does not touch these.</li>
+  </ul>
+
+  <div class="callout ok no-break">
+    <strong>Headline.</strong> Repository in a healthy "between-tagged-releases" state. Sprint 5 Conductor epic is
+    mostly merged. No outages, no open code PRs, no open dev issues. The natural next milestone is a
+    <code>v1.2.0</code> tag once Sprint 5 wraps the small set of remaining items.
+  </div>
+</section>
+
+<!-- ============================================================ CHAPTER 2 — RECAP ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 2</div>
+  <h1 style="color: var(--dk-purple-800);">Recap — Sprints 1 through 4</h1>
+  <p class="lede">
+    Five sprints. 217 merged pull requests. Each sprint had a distinct shape. This chapter compresses the prior four
+    into roughly four pages so a returning reader can follow the rest of the document without re-reading four sprint
+    reports.
+  </p>
+
+  <h3>Sprint 1 — Foundations (closed 2026-05-12, tagged <code>v1.0.0</code>)</h3>
+  <p>
+    47 PRs. The MVP scaffold. What landed: a multi-tenant <code>User → Organization → Project → Campaign → Asset</code>
+    hierarchy with fastapi-users JWT auth, admin-only user creation, mandatory first-login reset; a Celery + Redis
+    background-worker subsystem with SSE-streamed <code>Job</code> rows; S3-compatible object storage (MinIO in dev,
+    S3/R2 in prod) with presigned uploads; an <code>AuditEvent</code> + <code>ApprovalRequest</code> pair backing a
+    4-eye-rule Approval Inbox; the Brand Kit with versioned palette, fonts, voice sliders, and do/don't-say lists; a
+    Knowledge Graph that ingests URLs, files, Git repos, and ZIPs into pgvector; the Creatives Agent text path; and a
+    Calendar + Scheduler + Repurposing Engine + Variant A/B studio scaffold.
+  </p>
+  <p>
+    At Sprint 1 closeout the platform looked like a working MVP that one operator could drive end-to-end. The 30-page
+    sprint status PDF (also in <code>obsidian/reports/</code>) was the canonical artefact. Sprint 1 was renamed from
+    <code>v0.1.0-mvp</code> to <code>v1.0.0</code> in PR #278 so that release tags align with <code>PLAN-v1.2.md</code>.
+  </p>
+
+  <h3>Sprint 2 — Feature Breadth (closed 2026-05-13, tagged <code>v1.1.0</code>)</h3>
+  <p>
+    112 PRs. The most prolific sprint by raw count. Sprint 2 took the MVP and grew its surface in every direction:
+    eleven new channel publishers, Connection Registry with Fernet-encrypted per-org data keys, an MCP integration hub
+    with 14 concrete adapters (HubSpot, GA4, Stripe, Ahrefs, Webflow, WordPress, Ghost, Slack, Discord, Notion, Google
+    Drive, Salesforce, Mixpanel, PostHog), Lead 2.0 with enrichment + ID resolution + scoring, two-way CRM sync with
+    HubSpot / Salesforce / Pipedrive / Attio, segment builder with AND/OR filter DSL and nightly materializer,
+    first-touch + last-touch + time-decay attribution with a Sankey view, the email + newsletter stack
+    (Resend / Postmark / SendGrid sequences with delay + branch conditions), the Ads Publisher for Meta + LinkedIn +
+    Google Ads (paused-campaign create), and the Webhook Hub (inbound) with <code>Automation</code> rules.
+  </p>
+  <p>
+    Sprint 2 also added the <code>/admin/audit</code> browser, OAuth scaffolds for seven channels, and the BYO MCP
+    marketplace scaffold. By end of Sprint 2 the platform stopped being a content tool and started being a
+    full-stack marketing operating system.
+  </p>
+
+  <h3>Sprint 3 — Operator-Ready Hardening (closed 2026-05-14, tagged <code>v1.1.1</code>)</h3>
+  <p>
+    45 PRs over ~29 hours of wall-clock time. Sprint 3 was a hardening sprint with no new product surfaces. What
+    landed: the two-tier admin model (bootstrap superadmin <code>s-admn-000000</code> plus per-org admins) with
+    centralized guards, last-admin protection, self-demote refusal, audit trail, and in-app notifications on role
+    changes; the universal slug scheme (<code>u-{first4}-{6hex}</code>, <code>o-{first4}-{6hex}</code>, bootstrap
+    hardcoded) with a migration that re-slugs every existing row; a left-sidebar navigation that grouped pages by
+    domain; <code>display_code</code> 6-hex unique handles; an end-to-end auto-merge + auto-close pipeline; the
+    repurposing engine; the hook + headline lab; the F2 content-performance heatmap; signed-JWT embeddable
+    dashboards; the per-org retainer budget model; the H2 blog pipeline for SEO; the per-project Kanban board; and
+    a minimal HTML-body landing-page builder.
+  </p>
+  <p>
+    Sprint 3 also tightened the docs from 31 to 17 files and made the version line align with PLAN-v1.2 by renaming
+    <code>v0.1.0-mvp</code> → <code>v1.0.0</code> and <code>v0.2.0</code> → <code>v1.1.0</code>. Everything in this
+    sprint was about making existing surfaces safe to operate, not adding new product capability.
+  </p>
+
+  <h3>Sprint 4 — Agents Go Live (closed 2026-05-15, tagged <code>v1.1.2</code>)</h3>
+  <p>
+    22 PRs. Sprint 4 turned the scaffolded agent platform into a running system. Five large lanes:
+  </p>
+  <ul class="tight">
+    <li><strong>Model Registry &amp; AI Gateway (S4-M, 11 issues).</strong> <code>ModelProvider</code>, <code>ModelEntry</code>, <code>ModelCallLog</code>, <code>OrgModelAssignment</code>, <code>UserModelPreference</code> tables (migrations <code>20260525_0001-0003</code>); 26 provider types spanning Anthropic, OpenAI, Gemini, Vertex, Azure, Bedrock, Mistral, Cohere, Voyage, HF, OpenRouter, Groq, Together, Fireworks, DeepSeek, Perplexity, SambaNova, Replicate, ElevenLabs, Runway, Suno, Deepgram, Cartesia, fal.ai, Ollama, and <code>openai_compatible</code>; auto-discovery + capability heuristic; health-check beat every five minutes; the <code>model_resolver.py</code> chain (user → org → pool → env → stub); a full <code>/admin/models</code> page; <code>ModelSettingsPanel</code> in the Conductor; <code>useModelGate</code> + <code>ModelGateBanner</code> onboarding gate; and an <code>InlineModelSelector</code> on the Creatives Agent.</li>
+    <li><strong>Agent Runtime (S4-A, 5 issues).</strong> <code>agents/runtime.py</code> with a resolver-aware <code>run_completion()</code> that hits Anthropic or any OpenAI-compatible endpoint; <code>agents/roles.py</code> with curated system prompts for seven role-agents (creatives / smm / seo / paid_media / analyst / inbox / reviewer); a generic runner at <code>POST /agents/role/{name}/run</code>; <code>services/trust_mode.py</code> for autonomy posture lookup (hard_gate / soft_gate / auto); 4-eye approval with <code>approvers_required</code> + <code>approvers_user_ids_json</code>; reasoning-trace replay at <code>GET /agents/runs/{request_id}/trace</code>.</li>
+    <li><strong>Generation + Cost + Lint (S4-B, 3 issues).</strong> <code>services/generation_adapters.py</code> with httpx shells for Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram; <code>services/agent_cost.py</code> per-run CostLedger writer with token→USD rates; <code>services/dont_say.py</code> brand-banned phrase lint.</li>
+    <li><strong>Conductor UI (S4-C, 3 issues).</strong> Full-screen Conductor view, context-aware dock, per-action model picker.</li>
+    <li><strong>Workflow Runner + Templates + Sandbox (S4-D, 4 issues), Brand Setup Studio backend (S4-E, 3 issues), OAuth + TOTP + Auth (S4-F/G, 2 issues), Observability (S4-H/I, 2 issues), Tech Debt (S4-J, 3 issues), AEO scorer (S4-K, 2 issues).</strong></li>
+  </ul>
+  <p>
+    By end of Sprint 4 every agent in the platform was running on real model calls through a real registry, every run
+    was logged with a USD cost, and every role had a curated prompt. The platform stopped being "agents-in-theory"
+    and became "agents-in-production."
+  </p>
+
+  <h3>Inter-sprint hygiene</h3>
+  <p>
+    Between Sprint 4 closeout and the current report date (one day), the platform absorbed several small but
+    important fixes that sit in the changelog under <code>[Unreleased]</code>: the lean-CI cutover (PR #343, #345)
+    that removed <code>.github/workflows/ci.yml</code> in favour of a local test gate and an instant-trigger
+    auto-merge poller, the Bluesky settings declaration fix (#342), and the Sprint 4 status report being redone in
+    the now-canonical three-segment format (#341).
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 3 — INTENT ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 3</div>
+  <h1 style="color: var(--dk-purple-800);">Project Intent &amp; Target Audience</h1>
+  <p class="lede">
+    Who DClaw Marketing is for, what it is supposed to do, and how the project's intent has — or has not — shifted
+    over five sprints.
+  </p>
+
+  <h3>The stated intent</h3>
+  <p>
+    From <code>PLAN-v1.2.md</code>, verbatim: <em>"DClaw Marketing is an end-to-end product-marketing operating
+    system: one place where a small team (or one operator + AI agents) plans campaigns, generates multimedia
+    content, schedules and publishes across every channel, talks to leads, attributes revenue, and learns. The MCP
+    integration hub is the connective tissue — every external surface (social, ads, CRMs, analytics, drive, design,
+    voice) plugs in as an MCP server so agents can read/write through one consistent permissioned layer."</em>
+  </p>
+  <p>
+    The north star, also verbatim: <em>"from a single PRD, this app produces a launch — copy, visuals, video clips,
+    ads, landing pages, an email sequence, a scheduled posting plan, and a closed-loop attribution view — with a
+    human approving every external action."</em>
+  </p>
+
+  <h3>Target audiences</h3>
+  <table class="dk">
+    <tr><th>Audience</th><th>What they need</th><th>Where in DClaw they live</th></tr>
+    <tr><td><strong>The supervised operator</strong></td><td>Run a marketing function alone with the help of agents.</td><td><code>/station</code>, <code>/conductor</code>, <code>/inbox</code></td></tr>
+    <tr><td><strong>The small marketing team</strong></td><td>Specialist roles (Creatives, SMM, SEO, Paid, Analyst) collaborating with agent counterparts.</td><td>Role-scoped views and agent surfaces</td></tr>
+    <tr><td><strong>The org admin</strong></td><td>Create users, assign roles, configure brand kit, wire integrations, watch quotas + cost.</td><td><code>/admin</code> family, <code>/integrations</code>, <code>/brand-insights</code></td></tr>
+    <tr><td><strong>The bootstrap superadmin</strong></td><td>Manage the platform itself: tenant lifecycle, model registry, quotas, audit.</td><td><code>/admin/models</code>, <code>/admin/audit</code>, <code>/admin/users</code></td></tr>
+    <tr><td><strong>The reviewer / approver</strong></td><td>Approve or reject every outbound action; sign off on 4-eye gates.</td><td>Approval Inbox, sign-off endpoint</td></tr>
+    <tr><td><strong>The client</strong></td><td>See what their agency is doing for them; receive PDF / dashboard reports.</td><td><code>/client</code>, share tokens, PDF reports</td></tr>
+  </table>
+
+  <h3>Deployment posture</h3>
+  <p>
+    DClaw Marketing is sold and shipped as a <strong>Helm chart plus container images</strong> that an operator runs
+    on their own Kubernetes cluster. There is no SaaS dependency, no vendor lock-in, no data leaving the customer
+    perimeter. The MCP layer means every external surface is a pluggable adapter with credentials encrypted at rest
+    per-org with a Fernet master key the operator holds out-of-band.
+  </p>
+  <p>
+    Dev runs on Docker Compose (Postgres + Redis + MinIO + backend + frontend), production runs on the Helm chart in
+    <code>helm/</code>. Storage swaps from MinIO to S3 / R2 / Spaces. Observability is OpenTelemetry → Grafana with
+    Sentry tags for exceptions. Background work is Celery + Redis. The frontend is Next.js 14 standalone served
+    behind whatever ingress the customer chooses.
+  </p>
+
+  <h3>Where intent has drifted</h3>
+  <p>
+    Sprint 4's Model Registry + Conductor work has quietly broadened the project's centre of gravity. The bottom
+    half of the codebase — ModelRegistry, agent runtime, cost ledger, approvals, trace replay — is now a
+    general-purpose <strong>agent operations substrate</strong> that happens to also serve the marketing use case.
+    The marketing-specific layers (publishers, CRM sync, attribution, AEO) sit on top of this substrate and could in
+    principle be lifted away.
+  </p>
+  <p>
+    This is a fact about the codebase, not a recommendation. It is captured here because any future planning
+    conversation should know that the platform has, without anyone deciding it explicitly, become two products
+    sharing a runtime: a marketing OS and an agent ops platform. The pivot conversation is documented separately
+    in <code>TEMP-pivot-discussion.md</code>; it is intentionally not summarised in this report.
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 4 — EXECUTIVE SUMMARY ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 4</div>
+  <h1 style="color: var(--dk-purple-800);">Executive Summary</h1>
+  <p class="lede">
+    For non-engineering readers. Where the project is, what it can do, what it is worth, what it costs, and what
+    decisions are owed in the next sixty days.
+  </p>
+
+  <h3>One paragraph</h3>
+  <p>
+    DClaw Marketing is, as of 16 May 2026, a five-sprint-old, four-release-tagged, self-hosted marketing operating
+    system with a live multi-agent runtime, thirteen channel publishers, four CRM integrations, a full Model
+    Registry across twenty-six provider types, and a Conductor multi-agent UI that has just absorbed Claude Agent
+    SDK tool use, streaming, vision, web search, and OpenAI-compatible provider support. The platform is in good
+    operational shape: stack is up, no outages, no open code PRs, no open dev issues, and the codebase is roughly
+    sixty-seven thousand lines spread across two healthy halves (a 42k Python backend and a 25k TypeScript
+    frontend). The next natural milestone is a <code>v1.2.0</code> tag once Sprint 5 closes; the strategic
+    question on the table is whether the platform's centre of gravity remains marketing-OS or whether the agent
+    ops substrate beneath it deserves to be a product in its own right.
+  </p>
+
+  <h3>What the company has, in business terms</h3>
+  <div class="card-grid">
+    <div class="card">
+      <h4>A working product</h4>
+      <p>Tagged <code>v1.1.2</code>, deployable today on any K8s cluster, sold as Helm + container images. Self-hosted, no data egress, MCP-first.</p>
+    </div>
+    <div class="card">
+      <h4>An agent platform</h4>
+      <p>Eight role-agents, a Model Registry across 26 provider types, cost ledger per run, approval workflow with 4-eye rule, full reasoning-trace replay.</p>
+    </div>
+    <div class="card">
+      <h4>A breadth moat</h4>
+      <p>Thirteen channel publishers, four CRM adapters, fourteen MCP integrations, three email providers, three ad networks. Replacing this surface is months of work for a competitor.</p>
+    </div>
+    <div class="card">
+      <h4>A clean codebase</h4>
+      <p>Five sprints in, 67k LOC, 40 migrations, 80 backend tests, zero open code issues, zero pending PRs. Tech debt has been actively retired in the S4-J lane.</p>
+    </div>
+    <div class="card">
+      <h4>A defensible architecture</h4>
+      <p>Multi-tenant from day one. Two-tier admin model. Per-org Fernet-encrypted credentials. Audit and approval baked into the data layer, not bolted on.</p>
+    </div>
+    <div class="card">
+      <h4>A reusable substrate</h4>
+      <p>Model resolver chain, cost ledger, approval inbox, trace replay, and Conductor are not marketing-specific. They are an agent ops platform with a marketing skin.</p>
+    </div>
+  </div>
+
+  <h3>What the company does not yet have</h3>
+  <ul class="tight">
+    <li><strong>Customers on production.</strong> There is no production deployment record in the repository; the project's deployment posture is "ready to ship", not "shipped to a paying tenant."</li>
+    <li><strong>The B7 Brand-Safe Image Editor.</strong> Pending; deferred to Sprint 5+.</li>
+    <li><strong>SMS / WhatsApp (C5) and Push / In-App (C6) channels.</strong> Pending; P2 priority.</li>
+    <li><strong>The Auto-Optimizer bandit (G5).</strong> Variant A/B is shipped; auto-promotion has not started.</li>
+    <li><strong>An executive sales narrative.</strong> The README and PLAN are strong engineering documents; there is no <code>marketing/one-pager.md</code> yet — issue #49 is open.</li>
+  </ul>
+
+  <h3>Headline KPIs</h3>
+  <div class="card-grid col-4">
+    <div class="kpi">
+      <div class="kpi-label">Time to MVP</div>
+      <div class="kpi-value">3 days</div>
+      <div class="kpi-sub">Sprint 1 closed 12 May after start on 9 May</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Releases / Week</div>
+      <div class="kpi-value">≈ 4</div>
+      <div class="kpi-sub">four tags in ~one week of work</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">PRs / Day Avg</div>
+      <div class="kpi-value">≈ 28</div>
+      <div class="kpi-sub">217 PRs over ~8 days</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Open Bugs</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">zero open dev issues at report time</div>
+    </div>
+  </div>
+
+  <h3>The three decisions owed in the next sixty days</h3>
+  <ol class="tight">
+    <li>
+      <strong>Tag <code>v1.2.0</code>.</strong> Sprint 5 has accumulated 20 merges. Either pin the cut-off and tag, or
+      keep extending Sprint 5 — but the <code>[Unreleased]</code> changelog block is large enough that the decision
+      can no longer be deferred.
+    </li>
+    <li>
+      <strong>Marketing collaterals (#49–#53).</strong> The one-pager, slides, demo video, and social drafts are
+      open issues that engineering has been told not to touch. If they are not produced soon, the project's
+      ability to be presented externally lags its actual capability.
+    </li>
+    <li>
+      <strong>Product centre of gravity.</strong> The codebase has quietly become two products. A decision —
+      whether to keep both on one trunk, split them, or pivot — is the most consequential conversation owed in the
+      sixty-day window. The supporting analysis lives in <code>TEMP-pivot-discussion.md</code> and is intentionally
+      not summarised here.
+    </li>
+  </ol>
+
+  <h3>Risk picture, for non-engineers</h3>
+  <table class="dk">
+    <tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr>
+    <tr><td>Crowded competitive field for marketing OS</td><td><span class="badge warn">Medium</span></td><td>The MCP-first / self-hosted positioning is genuinely differentiated; the moat is breadth.</td></tr>
+    <tr><td>Vendor key dependency (Anthropic, OpenAI, ad networks)</td><td><span class="badge ok">Low</span></td><td>Model Registry already supports 26 provider types; OpenAI-compatible decoupling shipped in PR #370.</td></tr>
+    <tr><td>Single-developer sprint cadence</td><td><span class="badge warn">Medium</span></td><td>Continuous-commit discipline + auto-merge pipeline + lean CI keep momentum sustainable in short bursts; long-term needs a second engineer.</td></tr>
+    <tr><td>No production deployment yet</td><td><span class="badge bad">High</span></td><td>Helm chart exists; first paid deployment is the most important next step regardless of which product the platform settles on.</td></tr>
+    <tr><td>Marketing collaterals lag</td><td><span class="badge warn">Medium</span></td><td>Five issues open, intentionally off-limits to engineering. Needs an owner outside engineering.</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ CHAPTER 5 — PLAN vs ACTUAL ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 5</div>
+  <h1 style="color: var(--dk-purple-800);">Where We Are vs. PLAN-v1.2</h1>
+  <p class="lede">
+    The original roadmap had nine themes (A through I — and beyond). Each below shows what was promised, what
+    shipped, and what remains.
+  </p>
+
+  <h3>Theme A — Foundations</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">A · Foundations</span><span class="ph-pct">100%</span></h3>
+    <p>
+      <strong>A1 Multi-tenant + Auth</strong> · <strong>A2 Background worker</strong> · <strong>A3 Object storage</strong> · <strong>A4 Audit + Approvals</strong> — all shipped through v1.0.0 with the v1.1.1 hardening pass (two-tier admin, universal slugs, centralized guards, last-admin protection, audit-event UUID coerce fix).
+    </p>
+    <div class="bar-row">
+      <div>A · Foundations</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div>
+      <div class="bar-pct">100%</div>
+    </div>
+  </div>
+
+  <h3>Theme B — Content Generation Pipeline</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">B · Content Generation Pipeline</span><span class="ph-pct">85%</span></h3>
+    <p>
+      <strong>B1 Brand Kit + Voice</strong> shipped backend; the Brand Setup Studio backend was Sprint 4 P0 (S4-E, 3 issues, all shipped). <strong>B2 Briefs + Campaigns</strong> shipped v1.0.0. <strong>B3 Multimodal Generation</strong> — text path shipped; generation adapters scaffolded in S4-B with httpx shells for Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram, but actual end-to-end image / video / voice production still needs real provider credentials wired in. <strong>B4 Repurposing Engine</strong> shipped SP3-11. <strong>B5 Variant A/B</strong> shipped models + API in v1.1.1; auto-promote bandit (G5) pending. <strong>B6 Hook + Headline Lab</strong> shipped SP3-9. <strong>B7 Brand-Safe Image Editor</strong> pending — P2 / Sprint 5+.
+    </p>
+    <div class="bar-row">
+      <div>B · Content Pipeline</div>
+      <div class="bar-track"><div class="bar-fill" style="width: 85%;"></div></div>
+      <div class="bar-pct">85%</div>
+    </div>
+  </div>
+
+  <h3>Theme C — Scheduling, Publishing &amp; Channels</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">C · Scheduling, Publishing &amp; Channels</span><span class="ph-pct">75%</span></h3>
+    <p>
+      <strong>C1 Calendar + Scheduler</strong> shipped v1.0.0. <strong>C2 Multi-Channel Publisher</strong> — adapters live for thirteen channels: X, LinkedIn, IG, FB, YouTube, TikTok, Threads, Substack, Bluesky, Reddit, Pinterest, Discord, Mastodon. OAuth scaffold shipped v1.1.0; real client credentials per channel still need to be wired tenant-by-tenant — a deployment task, not an engineering one. <strong>C3 Email + Newsletter</strong> shipped v1.1.0 (Resend / Postmark / SendGrid). <strong>C4 Ads Publisher</strong> — Meta + LinkedIn + Google Ads paused-campaign create shipped v1.1.0; UI dashboard is partial. <strong>C5 SMS / WhatsApp</strong> and <strong>C6 Push / In-App</strong> pending — P2.
+    </p>
+    <div class="bar-row">
+      <div>C · Publishing</div>
+      <div class="bar-track"><div class="bar-fill" style="width: 75%;"></div></div>
+      <div class="bar-pct">75%</div>
+    </div>
+  </div>
+
+  <h3>Theme D — MCP Integration Hub</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">D · MCP Integration Hub</span><span class="ph-pct">95%</span></h3>
+    <p>
+      <strong>D1 Connection Registry</strong> shipped v1.1.0 with Fernet-encrypted tokens. <strong>D2 Multimedia + Marketing MCPs</strong> — fourteen adapters shipped (HubSpot, GA4, Stripe, Ahrefs, Webflow, WordPress, Ghost, Slack, Discord, Notion, Google Drive, Salesforce, Mixpanel, PostHog); the generation MCPs (Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram) ship as <code>generation_adapters.py</code> in Sprint 4 — they exist as httpx shells, real wiring still pending. <strong>D3 BYO MCP marketplace</strong> shipped SP3-15. <strong>D4 Webhook Hub (inbound)</strong> shipped v1.1.0 with generic receiver + <code>Automation</code> rules.
+    </p>
+    <div class="bar-row">
+      <div>D · MCP Hub</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div>
+      <div class="bar-pct">95%</div>
+    </div>
+  </div>
+
+  <h3>Theme E — Audience, Lead &amp; CRM</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">E · Audience, Lead &amp; CRM</span><span class="ph-pct">100%</span></h3>
+    <p>
+      <strong>E1 Lead 2.0</strong> shipped v1.1.0. <strong>E2 Enrichment + ID Resolution</strong> shipped SP3-12. <strong>E3 CRM two-way sync</strong> shipped v1.1.0 (HubSpot, Salesforce, Pipedrive, Attio). <strong>E4 Segment builder</strong> shipped v1.1.0 with AND/OR filter DSL and nightly materializer. <strong>E5 Attribution</strong> shipped v1.1.0 (first-touch, last-touch, time-decay, Sankey view).
+    </p>
+    <div class="bar-row">
+      <div>E · Audience &amp; CRM</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div>
+      <div class="bar-pct">100%</div>
+    </div>
+  </div>
+
+  <h3>Theme F — Analytics, Reporting &amp; Sharing</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">F · Analytics, Reporting &amp; Sharing</span><span class="ph-pct">90%</span></h3>
+    <p>
+      <strong>F1 Dashboard drill-down</strong> shipped pre-v1.1.1 (#236). <strong>F2 Content Performance Heatmap</strong> shipped SP3-13. <strong>F3 Share tokens / embeddable dashboards</strong> shipped SP3-19 (signed-JWT). <strong>F4 Client PDF reports</strong> — service exists (<code>client_pdf_report.py</code>); UI dispatch exists. Full white-label theming is partial.
+    </p>
+    <div class="bar-row">
+      <div>F · Analytics</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 90%;"></div></div>
+      <div class="bar-pct">90%</div>
+    </div>
+  </div>
+
+  <h3>Theme G — Goals, Autonomy &amp; Auto-Optimisation</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">G · Goals + Autonomy</span><span class="ph-pct">80%</span></h3>
+    <p>
+      <strong>G1 Goals + Autonomy Posture</strong> shipped v1.0.0. <strong>G2 Trust Mode</strong> shipped S4-A (<code>services/trust_mode.py</code>; hard_gate / soft_gate / auto). <strong>G3 Quotas + Cost Caps</strong> shipped (<code>services/quota.py</code>, <code>cost_caps.py</code>, <code>cost_logger.py</code>, <code>agent_cost.py</code>). <strong>G4 Reasoning-trace replay</strong> shipped S4-A (<code>GET /agents/runs/{request_id}/trace</code>). <strong>G5 Auto-Optimizer (bandit auto-promote)</strong> pending.
+    </p>
+    <div class="bar-row">
+      <div>G · Autonomy</div>
+      <div class="bar-track"><div class="bar-fill" style="width: 80%;"></div></div>
+      <div class="bar-pct">80%</div>
+    </div>
+  </div>
+
+  <h3>Theme H — Conductor &amp; Role Agents</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">H · Conductor &amp; Role Agents</span><span class="ph-pct">90%</span></h3>
+    <p>
+      <strong>H1 Agent Runtime</strong> shipped S4-A. <strong>H2 Role Agents</strong> — seven curated role prompts shipped S4-A (creatives / smm / seo / paid_media / analyst / inbox / reviewer) plus the brand_style and conductor agents. <strong>H3 Conductor UI</strong> shipped through Sprint 5 lanes A–G: unified <code>/conductor</code>, drag-drop + paste + vision, Claude Agent SDK tool-use loop, SSE streaming + extended thinking, web_search + fetch_url + Quick/Light/Deep research modes, markdown + voice + slash commands + copy/regen, OpenAI-compat decoupling. Only the H4 multi-agent dispatch UI polish remains.
+    </p>
+    <div class="bar-row">
+      <div>H · Conductor</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 90%;"></div></div>
+      <div class="bar-pct">90%</div>
+    </div>
+  </div>
+
+  <h3>Theme I — Observability &amp; Ops</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">I · Observability &amp; Ops</span><span class="ph-pct">95%</span></h3>
+    <p>
+      <strong>I1 OpenTelemetry + Grafana + Sentry tags</strong> shipped S4-H/I. <strong>I2 Dependency health</strong> live at <code>/health/dependencies</code>. <strong>I3 Lean CI</strong> shipped post-Sprint 4 (PR #343, #345). <strong>I4 Audit Browser</strong> shipped Sprint 2 / v1.1.0.
+    </p>
+    <div class="bar-row">
+      <div>I · Observability</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div>
+      <div class="bar-pct">95%</div>
+    </div>
+  </div>
+
+  <h3>Theme M — Model Registry &amp; AI Gateway (Sprint 4 epic)</h3>
+  <div class="phase-block">
+    <h3><span class="ph-title">M · Model Registry</span><span class="ph-pct">100%</span></h3>
+    <p>
+      All eleven S4-M issues shipped through PRs #322–#327; the OpenRouter hybrid-discovery extension shipped Sprint 5
+      (#366 / #368). 26 provider types, auto-discovery, capability heuristic, health-check beat, resolver chain,
+      <code>/admin/models</code> page with pricing column and Free-only filter and search.
+    </p>
+    <div class="bar-row">
+      <div>M · Model Registry</div>
+      <div class="bar-track"><div class="bar-fill ok" style="width: 100%;"></div></div>
+      <div class="bar-pct">100%</div>
+    </div>
+  </div>
+
+  <h3>Overall plan completion</h3>
+  <p>
+    Averaged across themes, PLAN-v1.2 is approximately <strong>91% complete</strong>. The pending items are
+    well-known and well-bounded: B7 image editor, C5 SMS, C6 push, G5 bandit, and some polish on F4 white-label.
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 6 — SPRINT 5 IN FLIGHT ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 6</div>
+  <h1 style="color: var(--dk-purple-800);">Sprint 5 In Flight — Conductor Epic</h1>
+  <p class="lede">
+    Sprint 5 has accumulated 20 merges. The Conductor epic (S5-CDR-A → G) is mostly landed; admin/models polish has
+    shipped four PRs; lean-CI hygiene shipped three; the OpenAI-compat decoupling shipped one. No tag yet.
+  </p>
+
+  <h3>The Conductor epic — what landed</h3>
+  <table class="dk">
+    <tr><th>Lane</th><th>PR</th><th>Title</th><th>Status</th></tr>
+    <tr><td>S5-CDR-G</td><td>#354</td><td>docs(plan): pin Sprint 5 Conductor epic in PLAN-v1.2.md</td><td><span class="badge ok">Shipped</span></td></tr>
+    <tr><td>S5-CDR-A</td><td>#355</td><td>unify sidebar + page under /conductor</td><td><span class="badge ok">Shipped</span></td></tr>
+    <tr><td>S5-CDR-B</td><td>#356</td><td>drag-drop / paste / folder upload + Claude vision</td><td><span class="badge ok">Shipped</span></td></tr>
+    <tr><td>S5-CDR-C</td><td>#357</td><td>Claude Agent SDK tool-use loop + maximum tool fleet</td><td><span class="badge ok">Shipped</span></td></tr>
+    <tr><td>S5-CDR-D</td><td>#358</td><td>SSE streaming + extended thinking toggle</td><td><span class="badge ok">Shipped</span></td></tr>
+    <tr><td>S5-CDR-E</td><td>#359</td><td>web_search + fetch_url tools + Quick/Light/Deep research modes</td><td><span class="badge ok">Shipped</span></td></tr>
+    <tr><td>S5-CDR-F</td><td>#361</td><td>polish — markdown, voice, slash, copy/regen, thread ops</td><td><span class="badge ok">Shipped</span></td></tr>
+  </table>
+
+  <h3>Admin / Models polish</h3>
+  <table class="dk">
+    <tr><th>PR</th><th>Title</th></tr>
+    <tr><td>#362</td><td>fix(admin/models): real Fernet key in dev stack + clean error path</td></tr>
+    <tr><td>#364</td><td>feat(admin/models): filter bar + search + drop unused status column</td></tr>
+    <tr><td>#367</td><td>feat(admin/models): pricing column + Free-only filter</td></tr>
+    <tr><td>#368</td><td>feat(discovery): hybrid OpenRouter discovery surfaces embedding + multimedia models</td></tr>
+    <tr><td>#370</td><td>feat(conductor): decouple from Anthropic — OpenAI-compat provider via env vars</td></tr>
+  </table>
+
+  <h3>What remains before a <code>v1.2.0</code> tag</h3>
+  <ul class="tight">
+    <li><strong>Update CHANGELOG.</strong> The <code>[Unreleased]</code> section currently catalogues Sprint 4 closeout follow-ups but not the S5-CDR-A→G work or the admin/models polish. Without a moved entry, the changelog underrepresents what is on main.</li>
+    <li><strong>Decide cut-off.</strong> Either freeze Sprint 5 here (the epic is materially complete) or queue one more lane — probably the multi-agent dispatch UI polish (H4) or the AEO scorer follow-ups.</li>
+    <li><strong>Cut the tag.</strong> Per the release-name-equals-tag rule, the GitHub Release <code>--title</code> must be <code>v1.2.0</code>, with descriptive context in the body.</li>
+    <li><strong>Generate the Sprint 5 status report.</strong> Following the canonical three-segment Sprint 3 / Sprint 4 template.</li>
+  </ul>
+
+  <h3>Why the Conductor epic matters</h3>
+  <p>
+    Before Sprint 5, <code>/conductor</code> was a planning UI on top of role-agent dispatch. After Sprint 5, it is a
+    full agentic chat surface with: real-time SSE streaming, Claude Agent SDK tool calling, vision input, web
+    search, URL fetch, Quick / Light / Deep research modes, markdown rendering, slash commands, copy + regenerate,
+    voice, thread operations, and full decoupling from Anthropic via OpenAI-compatible providers. It is the most
+    significant single user-facing surface the platform has ever shipped.
+  </p>
+  <p>
+    The decoupling in PR #370 is, in retrospect, the largest strategic move in Sprint 5: it means the platform is no
+    longer Anthropic-only, even at the Conductor level. Any OpenAI-compatible endpoint — local Ollama, OpenRouter,
+    Together, Fireworks, Groq, DeepSeek — can drive the Conductor today, gated by <code>OPENAI_COMPAT_BASE_URL /
+    API_KEY / MODEL</code> env vars. That is, in business terms, a "no vendor lock-in" claim the platform can now
+    make honestly.
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 7 — ARCHITECTURE ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 7</div>
+  <h1 style="color: var(--dk-purple-800);">Architecture Snapshot</h1>
+  <p class="lede">
+    The stack at <code>main @ ffcf9f8</code>: two-thirds of a small product, one third infrastructure, organised
+    around a multi-tenant agent runtime.
+  </p>
+
+  <h3>Stack</h3>
+  <table class="dk">
+    <tr><th>Layer</th><th>Choice</th><th>Why</th></tr>
+    <tr><td>Backend</td><td>Python 3.11, FastAPI, SQLAlchemy, Pydantic</td><td>Single-language async-first server with first-class type-checked schemas. 254 Python files; 41,813 LOC.</td></tr>
+    <tr><td>Frontend</td><td>Next.js 14.2 standalone, TypeScript, Tailwind, shadcn/ui remapped to <code>--dk-*</code></td><td>Server-rendered when needed, client-rendered when not. 125 TSX files; 24,823 LOC. Light-mode only per brand lock.</td></tr>
+    <tr><td>Database</td><td>Postgres 16 with <code>pgvector</code></td><td>Relational primary; vector store as a column on the same DB so the KG can be queried with one connection.</td></tr>
+    <tr><td>Cache + Queue</td><td>Redis 7 (cache + Celery broker)</td><td>One service, two roles; the simplest viable choice.</td></tr>
+    <tr><td>Object Store</td><td>MinIO (dev) → S3 / R2 / Spaces (prod)</td><td>S3-compatible everywhere; presigned PUT/GET so the backend never proxies large bytes.</td></tr>
+    <tr><td>Background</td><td>Celery + Redis with SSE-streamed <code>Job</code> rows</td><td>Long-running jobs (generation, scraping, posting) never run in request handlers.</td></tr>
+    <tr><td>Auth</td><td>fastapi-users JWT + TOTP 2FA</td><td>Admin-only user creation, mandatory first-login reset, two-tier admin model.</td></tr>
+    <tr><td>Secrets</td><td>Fernet master key (operator-held, out-of-band) + per-org data key</td><td>Tenant credentials never leave the DB unencrypted.</td></tr>
+    <tr><td>Observability</td><td>OpenTelemetry → Grafana, Sentry tags, Celery dead-letter</td><td>S4-H/I.</td></tr>
+    <tr><td>Deploy</td><td>Helm chart in <code>helm/</code></td><td>Customer-installable on any K8s.</td></tr>
+  </table>
+
+  <h3>Backend topology</h3>
+  <p>
+    Routes (<code>app/api/v1/</code>) consume services (<code>app/services/</code>) which talk to models
+    (<code>app/models/</code>) and emit jobs to the worker (<code>app/worker/</code>). Agents
+    (<code>app/agents/</code>) sit at the top, calling the Model Registry resolver to obtain a <code>ModelEntry</code>
+    and then dispatching the actual call through either <code>anthropic_client.py</code> or
+    <code>openai_compat_client.py</code>. Every call logs to <code>ModelCallLog</code> via fire-and-forget; every
+    run accrues to <code>CostLedger</code>.
+  </p>
+
+  <p>
+    Cross-cutting middleware: quota guards (<code>quota_guard.py</code>, <code>cost_caps.py</code>) sit between the
+    route handler and the service layer; audit hooks (<code>audit.py</code>) write to <code>AuditEvent</code> on
+    every approvable action; the approval queue (<code>approval_request.py</code>) holds the 4-eye state.
+  </p>
+
+  <h3>Frontend topology</h3>
+  <p>
+    Routes live in <code>frontend/src/app/</code> organised by domain. ~30 top-level segments. UI primitives in
+    <code>components/ui/</code> (shadcn-remapped) and brand components in <code>components/dk/</code>. Light mode
+    only, Poppins, <code>--dk-*</code> tokens per <code>frontend/src/styles/brand.css</code>. 43 component files.
+  </p>
+  <p>
+    The frontend talks to the backend via a Next.js rewrite proxy that resolves <code>BACKEND_INTERNAL_URL</code> at
+    build time so the in-container path goes container→container; the browser fetches via
+    <code>NEXT_PUBLIC_API_URL=http://127.0.0.1:8102</code> (IPv4-pinned to dodge a Colima IPv6 fallback issue).
+  </p>
+
+  <h3>Data shape</h3>
+  <p>
+    Thirty SQLAlchemy models grouped by domain: tenancy (User, Organization, Project, Membership), content (Asset,
+    Campaign, ScheduledPost, Variant), brand (BrandKit, BrandKitInsight), pipeline (Job, Ingestion), audit + approval
+    (AuditEvent, ApprovalRequest), social (SocialAccount, Connection), email + ads (Sequence + EmailEvent + ads),
+    audience (Lead, Webhook, SequenceMembership, AnalyticsEvent, Attribution), agent (AgentThread), model (the five
+    Model Registry tables), and ops (Invoice, Job, etc.).
+  </p>
+
+  <h3>Migration health</h3>
+  <p>
+    Forty Alembic migrations from inception through Sprint 4. Migrations are committed as part of the same PR that
+    introduces the model change; the dev stack auto-applies on backend boot. Two migrations were added in Sprint 3
+    (<code>20260513_*</code>) for TOTP columns; four were added in Sprint 4 (<code>20260525_0001</code> through
+    <code>20260525_0004</code>) for the Model Registry and 4-eye approval columns.
+  </p>
+</section>
+
+<!-- ============================================================ CHAPTER 8 — THEME STATUS ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 8</div>
+  <h1 style="color: var(--dk-purple-800);">Theme-by-Theme Capability Status</h1>
+  <p class="lede">
+    A capability-level breakdown of what the platform can actually do, grouped by user-facing surface. Engineers
+    can match this back to Chapter 5's plan-completion bars; non-engineers can read this chapter standalone as a
+    "feature inventory."
+  </p>
+
+  <h3>Foundation capabilities</h3>
+  <table class="dk">
+    <tr><th>Capability</th><th>Status</th><th>Shipped in</th></tr>
+    <tr><td>Multi-tenant Organization → Project → Campaign → Asset hierarchy</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0</td></tr>
+    <tr><td>10 RBAC scopes (Admin, Manager, Creatives, SMM, SEO, Paid, Reviewer, Analyst, Viewer, Client)</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0</td></tr>
+    <tr><td>Two-tier admin model (superadmin + per-org admins)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.1</td></tr>
+    <tr><td>Admin-only user provisioning with temp password + mandatory first-login reset + TOTP 2FA</td><td><span class="badge ok">Shipped</span></td><td>v1.1.1</td></tr>
+    <tr><td>Brand Kit — versioned palette, fonts, voice sliders, do/don't-say, personas</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0</td></tr>
+    <tr><td>Knowledge Graph — URLs, files, Git repos, ZIPs → pgvector semantic search</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Background workers (Celery + Redis, SSE progress streams, DLQ)</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0</td></tr>
+    <tr><td>Object storage (S3-compatible, presigned uploads)</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0</td></tr>
+    <tr><td>Approval Inbox — 4-eye rule, per-action reasoning trace, full audit log</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0 + S4-A 4-eye gate</td></tr>
+    <tr><td>Goals + Autonomy Posture (Autopilot / Soft-gate / Hard-gate per action class)</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0 + S4-A trust_mode</td></tr>
+  </table>
+
+  <h3>Content &amp; publishing capabilities</h3>
+  <table class="dk">
+    <tr><th>Capability</th><th>Status</th><th>Shipped in</th></tr>
+    <tr><td>Creatives Agent — brief in, N variants out (text + image), brand-voice linted</td><td><span class="badge ok">Shipped</span></td><td>v1.0.0 + S4-B don't_say lint</td></tr>
+    <tr><td>SEO Agent — keyword pipeline (Ahrefs MCP), internal-link suggester, ranking-delta tracker</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0 + SP3-17 H2 blog pipeline</td></tr>
+    <tr><td>Analyst Agent — 3σ anomaly detection, Monday-morning narrative reports</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Asset Library (DAM) — filters by kind / source / brand-kit / status, presigned download</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Multi-channel publishing — 13 channels</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>OAuth 2.0 flows — LinkedIn, X (PKCE), Instagram, Reddit, Pinterest (PKCE), Discord, Mastodon</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Email sequences (Resend / Postmark / SendGrid; drip with delay + branch)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Ads publisher (Meta / LinkedIn / Google Ads; draft + submit; human approves launch)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Conductor agent (multi-agent orchestration)</td><td><span class="badge ok">Shipped</span></td><td>Sprint 5 (untagged)</td></tr>
+    <tr><td>Repurposing Engine</td><td><span class="badge ok">Shipped</span></td><td>v1.1.1 (SP3-11)</td></tr>
+    <tr><td>Variant A/B Studio (models + API)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.1 (SP3-10)</td></tr>
+    <tr><td>Auto-promote bandit (G5)</td><td><span class="badge neutral">Pending</span></td><td>—</td></tr>
+    <tr><td>Hook &amp; Headline Lab</td><td><span class="badge ok">Shipped</span></td><td>v1.1.1 (SP3-9)</td></tr>
+    <tr><td>Brand-Safe Image Editor (B7)</td><td><span class="badge neutral">Pending</span></td><td>—</td></tr>
+  </table>
+
+  <h3>MCP integration hub</h3>
+  <p>
+    Fourteen adapters live, organised by category:
+  </p>
+  <table class="dk">
+    <tr><th>Category</th><th>Adapters</th></tr>
+    <tr><td><strong>CRM</strong></td><td>HubSpot · Salesforce · Pipedrive · Attio</td></tr>
+    <tr><td><strong>Analytics</strong></td><td>GA4 · Mixpanel · PostHog</td></tr>
+    <tr><td><strong>Productivity</strong></td><td>Slack · Notion · Google Drive · Discord</td></tr>
+    <tr><td><strong>SEO</strong></td><td>Ahrefs</td></tr>
+    <tr><td><strong>CMS</strong></td><td>Webflow · WordPress · Ghost</td></tr>
+    <tr><td><strong>Payments</strong></td><td>Stripe · QuickBooks Online</td></tr>
+    <tr><td><strong>AI / Generation</strong> (httpx shells, real wiring pending)</td><td>Anthropic Claude · OpenAI · Replicate · Runway · Suno · ElevenLabs · Cartesia · Deepgram · OpenRouter (via Model Registry)</td></tr>
+  </table>
+
+  <h3>Lead, CRM &amp; attribution</h3>
+  <table class="dk">
+    <tr><th>Capability</th><th>Status</th><th>Shipped in</th></tr>
+    <tr><td>Lead 2.0 — identity, enrichment, scoring, lifecycle stage (new → mql → sql → customer)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0 + SP3-12 enrichment</td></tr>
+    <tr><td>CRM two-way sync — HubSpot, Salesforce, Pipedrive, Attio</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Segment builder — AND/OR filter DSL, nightly materializer, ad-platform audience sync</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Attribution — first-touch, last-touch, time-decay; Sankey view</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+  </table>
+
+  <h3>Agent platform &amp; AI gateway</h3>
+  <table class="dk">
+    <tr><th>Capability</th><th>Status</th><th>Shipped in</th></tr>
+    <tr><td>Model Registry across 26 provider types</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-M)</td></tr>
+    <tr><td>Resolver chain (user → org → pool → env → stub)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-M)</td></tr>
+    <tr><td>Auto-discovery + capability heuristic + health-check beat</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-M)</td></tr>
+    <tr><td>Agent runtime with run_completion + ModelCallLog fire-and-forget</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-A)</td></tr>
+    <tr><td>Trust Mode (hard_gate / soft_gate / auto per action)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-A)</td></tr>
+    <tr><td>4-eye approval (approvers_required + sign-off endpoint)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-A)</td></tr>
+    <tr><td>Reasoning-trace replay (GET /agents/runs/{request_id}/trace)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-A)</td></tr>
+    <tr><td>Cost Ledger per run, USD-rated</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-B)</td></tr>
+    <tr><td>Brand-banned phrase lint + refine prompt builder</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-B)</td></tr>
+    <tr><td>OpenAI-compat decoupling for Conductor (any compatible endpoint)</td><td><span class="badge ok">Shipped</span></td><td>Sprint 5 / PR #370</td></tr>
+    <tr><td>Hybrid OpenRouter discovery (embedding + multimedia surfaces)</td><td><span class="badge ok">Shipped</span></td><td>Sprint 5 / PR #368</td></tr>
+  </table>
+
+  <h3>Observability &amp; ops</h3>
+  <table class="dk">
+    <tr><th>Capability</th><th>Status</th><th>Shipped in</th></tr>
+    <tr><td>OpenTelemetry traces</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-H/I)</td></tr>
+    <tr><td>Grafana dashboards</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-H/I)</td></tr>
+    <tr><td>Sentry tags on exceptions</td><td><span class="badge ok">Shipped</span></td><td>v1.1.2 (S4-H/I)</td></tr>
+    <tr><td>Dependency health endpoint (/health/dependencies)</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Per-org retainer + monthly budget</td><td><span class="badge ok">Shipped</span></td><td>v1.1.1 (SP3-22)</td></tr>
+    <tr><td>QuotaCounter with sliding window + circuit breaker</td><td><span class="badge ok">Shipped</span></td><td>v1.1.0</td></tr>
+    <tr><td>Lean CI (local test gate + GitHub auto-merge only)</td><td><span class="badge ok">Shipped</span></td><td>Post-Sprint 4 / PR #343, #345</td></tr>
+  </table>
+
+  <h3>SMM / Paid Media stations</h3>
+  <p>
+    Both role-agents are defined (<code>agents/smm.py</code>, <code>agents/paid_media.py</code>) with curated
+    system prompts. The dedicated SMM / Paid Media frontend stations remain partial — they exist as role-scoped
+    surfaces but not as full-bore vertical workspaces yet. This is captured as a 🔜 v1.2 item in the README.
+  </p>
+
+  <h3>Aggregate readiness</h3>
+  <div class="bar-row"><div>Production-readiness</div><div class="bar-track"><div class="bar-fill" style="width: 88%;"></div></div><div class="bar-pct">88%</div></div>
+  <div class="bar-row"><div>Feature coverage vs PLAN-v1.2</div><div class="bar-track"><div class="bar-fill" style="width: 91%;"></div></div><div class="bar-pct">91%</div></div>
+  <div class="bar-row"><div>Operability coverage</div><div class="bar-track"><div class="bar-fill ok" style="width: 95%;"></div></div><div class="bar-pct">95%</div></div>
+  <div class="bar-row"><div>Test coverage (depth)</div><div class="bar-track"><div class="bar-fill warn" style="width: 60%;"></div></div><div class="bar-pct">60%</div></div>
+  <div class="bar-row"><div>Marketing collaterals readiness</div><div class="bar-track"><div class="bar-fill bad" style="width: 10%;"></div></div><div class="bar-pct">10%</div></div>
+</section>
+
+<!-- ============================================================ CHAPTER 9 — HEALTH ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 9</div>
+  <h1 style="color: var(--dk-purple-800);">Platform Health — Live Diagnostic</h1>
+  <p class="lede">
+    A live walk through the running stack at report time. The headline is "no outages." The body of the chapter
+    catalogues four cosmetic findings that should be fixed before <code>v1.2.0</code>.
+  </p>
+
+  <h3>Container topology</h3>
+  <table class="dk">
+    <tr><th>Container</th><th>Image</th><th>Ports</th><th>Status</th></tr>
+    <tr><td><code>dclaw-marketing-backend-1</code></td><td><code>dclaw-marketing-backend</code></td><td>8102 → 8102</td><td><span class="badge ok">healthy</span></td></tr>
+    <tr><td><code>dclaw-marketing-frontend-1</code></td><td><code>dclaw-marketing-frontend</code></td><td>3015 → 3015</td><td><span class="badge warn">unhealthy (cosmetic)</span></td></tr>
+    <tr><td><code>dclaw-marketing-postgres-1</code></td><td><code>pgvector/pgvector:pg16</code></td><td>5433 → 5432</td><td><span class="badge ok">healthy</span></td></tr>
+    <tr><td><code>dclaw-marketing-redis-1</code></td><td><code>redis:7-alpine</code></td><td>6380 → 6379</td><td><span class="badge ok">healthy</span></td></tr>
+    <tr><td><code>dclaw-marketing-minio-1</code></td><td><code>minio/minio:latest</code></td><td>9010 → 9000, 9011 → 9001</td><td><span class="badge ok">healthy</span></td></tr>
+  </table>
+
+  <h3>Live endpoint probes</h3>
+  <table class="dk">
+    <tr><th>Endpoint</th><th>Result</th></tr>
+    <tr><td><code>GET http://localhost:8102/health/</code></td><td><code>{"status":"ok"}</code> · 200</td></tr>
+    <tr><td><code>GET http://localhost:8102/health/dependencies</code></td><td><code>all_ok: false</code> — postgres / redis / minio OK; anthropic + resend keys unset</td></tr>
+    <tr><td><code>GET http://localhost:8102/docs</code></td><td>200 (FastAPI Swagger UI)</td></tr>
+    <tr><td><code>GET http://localhost:3015/</code></td><td>200 (frontend reachable from host)</td></tr>
+    <tr><td><code>GET http://localhost:8102/openapi.json</code></td><td>200; 175 paths declared</td></tr>
+  </table>
+
+  <h3>Issue 1 — Frontend healthcheck failing (cosmetic)</h3>
+  <div class="callout warn">
+    <p>
+      <strong>Symptom.</strong> <code>docker compose ps</code> reports <code>dclaw-marketing-frontend-1</code> as
+      <code>unhealthy</code> despite the host port responding 200.
+    </p>
+    <p>
+      <strong>Cause.</strong> The Next.js standalone <code>server.js</code> binds to the container's eth0 IP
+      (<code>172.18.0.7:3015</code>) rather than <code>0.0.0.0</code>. The Dockerfile's healthcheck —
+      <code>wget -q --spider http://localhost:3015/</code> — runs inside the container and resolves
+      <code>localhost</code> to <code>127.0.0.1</code>, which is not where the server is listening. Connection
+      refused.
+    </p>
+    <p>
+      <strong>Fix.</strong> Add <code>ENV HOSTNAME=0.0.0.0</code> in the runner stage of
+      <code>frontend/Dockerfile</code> (one line, before the <code>CMD</code>). This forces Next.js standalone to
+      bind to all interfaces and lets the healthcheck pass without any application change.
+    </p>
+  </div>
+
+  <h3>Issue 2 — JWT default secret is 31 bytes (dev-only)</h3>
+  <div class="callout warn">
+    <p>
+      <strong>Symptom.</strong> Backend boot emits <code>InsecureKeyLengthWarning: The HMAC key is 31 bytes long,
+      which is below the minimum recommended length of 32 bytes for SHA256.</code>
+    </p>
+    <p>
+      <strong>Cause.</strong> The default value of <code>jwt_secret</code> in <code>backend/app/core/config.py:21</code>
+      is the literal string <code>"change-me-jwt-secret-set-in-env"</code> — thirty-one characters. In dev, that
+      default is what gets used.
+    </p>
+    <p>
+      <strong>Fix.</strong> Bump the default to a ≥32-byte string, or — better — refuse to start in production
+      when the default is in use. Combined with the <code>secret_key = "change-me-in-production"</code> default at
+      <code>config.py:26</code>, a single "fail-fast on default secrets" assertion at startup would close both
+      sharp edges in one line.
+    </p>
+  </div>
+
+  <h3>Issue 3 — Pydantic field-shadow warnings (cosmetic, noisy)</h3>
+  <div class="callout warn">
+    <p>
+      <strong>Symptom.</strong> Three startup warnings: <code>UserWarning: Field name "copy" in
+      "ScheduledPostCreate" / "ScheduledPostUpdate" / "ScheduledPostRead" shadows an attribute in parent
+      "BaseModel".</code>
+    </p>
+    <p>
+      <strong>Cause.</strong> The three Pydantic schemas in <code>backend/app/api/v1/scheduled_posts.py</code>
+      declare a field literally named <code>copy</code> (as in "ad copy"), which shadows
+      <code>BaseModel.copy()</code>.
+    </p>
+    <p>
+      <strong>Fix.</strong> Rename the field to <code>body</code> (or <code>post_copy</code>) with a Pydantic
+      <code>Field(..., alias="copy")</code> so the JSON shape doesn't break. ~6 lines, no migration.
+    </p>
+  </div>
+
+  <h3>Issue 4 — Anthropic + Resend keys unset (expected in dev)</h3>
+  <div class="callout">
+    <p>
+      <strong>Symptom.</strong> <code>/health/dependencies</code> returns <code>all_ok: false</code> with detail
+      <code>"anthropic_api_key unset"</code> and <code>"resend_api_key unset"</code>.
+    </p>
+    <p>
+      <strong>Cause.</strong> Neither key is provisioned in the dev <code>.env</code>.
+    </p>
+    <p>
+      <strong>Fix.</strong> Documented and intentional. The dependency health endpoint correctly reports the dev
+      stack is missing these. Production deployments set both via secret management. No change needed.
+    </p>
+  </div>
+
+  <h3>Summary</h3>
+  <div class="callout ok">
+    <strong>Net.</strong> One cosmetic healthcheck failure, one weak default JWT secret, three Pydantic
+    field-shadow warnings, two expected unset keys. No outage; no user-visible defect. All four cosmetic findings
+    are sub-30-minute fixes and would fit cleanly into a single "infra polish" PR before the <code>v1.2.0</code>
+    cut.
+  </div>
+</section>
+
+<!-- ============================================================ CHAPTER 10 — TESTS + GATES ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 10</div>
+  <h1 style="color: var(--dk-purple-800);">Tests, Quality Gates &amp; CI/CD</h1>
+  <p class="lede">
+    What runs, what gates, what remains a gap. The platform recently moved from cloud CI to a local-gate model;
+    this chapter documents the new shape.
+  </p>
+
+  <h3>Test inventory</h3>
+  <table class="dk">
+    <tr><th>Surface</th><th>Count</th><th>Runner</th></tr>
+    <tr><td>Backend tests</td><td>80 <code>test_*.py</code> files</td><td><code>docker compose exec backend pytest</code></td></tr>
+    <tr><td>Frontend tests</td><td>1 Playwright <code>*.spec.ts</code> smoke file</td><td><code>npx playwright test</code></td></tr>
+    <tr><td>Alembic migrations</td><td>40 files</td><td>auto-applied on backend boot</td></tr>
+    <tr><td>Type checks</td><td>TypeScript strict mode + Pydantic v2 strict validation</td><td><code>npm run build</code> + Pydantic at startup</td></tr>
+  </table>
+
+  <h3>CI/CD shape (post-Sprint 4)</h3>
+  <p>
+    The platform recently moved (PR #343, #345) from a cloud CI model to a <strong>local-gate model</strong>:
+  </p>
+  <ul class="tight">
+    <li><strong>Local pre-push gate.</strong> <code>docker compose exec backend pytest -q</code> and
+    <code>docker compose exec frontend npm run build</code> are run by the developer before <code>git push</code>;
+    pass/fail is noted in the commit body.</li>
+    <li><strong>GitHub does only auto-merge.</strong> A poller workflow watches PRs labelled <code>auto-merge</code>;
+    when the <code>claude-review</code> check returns and the rollup is clean, it squash-merges.</li>
+    <li><strong>Instant trigger.</strong> The poller fires on <code>workflow_run: ["Claude Code Review"]</code> so
+    the gap between review-completion and merge is ~10 seconds for docs-only PRs and ~1 minute for code PRs.</li>
+    <li><strong>Cron fallback.</strong> Tightened to every 1 minute (GitHub Actions floor) to catch missed
+    triggers.</li>
+  </ul>
+
+  <h3>Net latency comparison</h3>
+  <table class="dk">
+    <tr><th>PR type</th><th>Old (cloud CI)</th><th>New (local gate)</th></tr>
+    <tr><td>Docs-only</td><td>5–7 minutes</td><td>~10 seconds</td></tr>
+    <tr><td>Code</td><td>5–7 minutes</td><td>~2–3 minutes (claude-review bounded)</td></tr>
+  </table>
+
+  <h3>Gaps</h3>
+  <ul class="tight">
+    <li><strong>No enforcement of the local gate.</strong> A <code>.git/hooks/pre-push</code> would close the loop;
+    today the gate is "developer discipline".</li>
+    <li><strong>Frontend test coverage is thin.</strong> One Playwright smoke spec. <code>frontend/tests/</code> is
+    largely empty.</li>
+    <li><strong>No load tests.</strong> The platform has not been measured under sustained agent-run load.</li>
+    <li><strong>No security review automation.</strong> Manual <code>/security-review</code> available on demand.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ CHAPTER 11 — RISKS ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 11</div>
+  <h1 style="color: var(--dk-purple-800);">Risks, Tech Debt, Open Decisions</h1>
+  <p class="lede">
+    Risk is what could go wrong. Tech debt is what is already a little bit wrong. Open decisions are what is
+    waiting for someone to choose. The platform is unusual in that the debt is small but the decisions are large.
+  </p>
+
+  <h3>Technical risks</h3>
+  <table class="dk">
+    <tr><th>Risk</th><th>Severity</th><th>Note</th></tr>
+    <tr><td>Frontend healthcheck false-positive masking real failures</td><td><span class="badge warn">Low</span></td><td>Fixable in one line; see Chapter 9.</td></tr>
+    <tr><td>Default JWT secret under 32 bytes in dev</td><td><span class="badge warn">Low</span></td><td>Dev-only; fail-fast in prod would close.</td></tr>
+    <tr><td>One Playwright smoke spec across 30 frontend routes</td><td><span class="badge warn">Medium</span></td><td>The platform is one regression away from a Sprint-3-style scramble.</td></tr>
+    <tr><td>Background-job DLQ depth is not surfaced in UI</td><td><span class="badge warn">Low</span></td><td>DLQ exists; observer is not wired.</td></tr>
+    <tr><td>Per-tenant OAuth client credentials are operational, not engineering</td><td><span class="badge neutral">Operational</span></td><td>Each customer must wire their own X / LinkedIn / IG keys.</td></tr>
+    <tr><td>Anthropic client present in <code>agents/anthropic_client.py</code> may be partial dead code post-PR-#370</td><td><span class="badge warn">Low</span></td><td>Grep before deleting; possibly still used by non-Conductor agents.</td></tr>
+  </table>
+
+  <h3>Tech debt — actively retired</h3>
+  <p>
+    Sprint 4's S4-J lane explicitly retired tech debt: router consolidation, audit pruner, webhook keys hardening,
+    Playwright smoke scaffold. Sprint 5 has not added new debt; the additions are all forward-feature code.
+  </p>
+
+  <h3>Tech debt — outstanding</h3>
+  <ul class="tight">
+    <li><strong>51 services / 30 models</strong> is a large service surface. Worth a one-pass audit only if cross-service duplication is observed during Sprint 6 — not a green-field refactor.</li>
+    <li><strong>Marketing-vs-substrate split.</strong> Roughly 40% of the backend (publishers, CRM sync, attribution, AEO) is marketing-specific; the other 60% is an agent ops substrate. There is no architectural seam between them today.</li>
+    <li><strong>Empty <code>frontend/tests/</code> directory.</strong> Should be backfilled with smoke specs per major route group.</li>
+    <li><strong>No <code>pre-push</code> hook to enforce the local test gate.</strong></li>
+  </ul>
+
+  <h3>Open decisions</h3>
+  <ol class="tight">
+    <li>
+      <strong>Tag <code>v1.2.0</code> — when?</strong> Sprint 5 has accumulated 20 merges. The Conductor epic is
+      substantively done. Either freeze and tag, or add one more lane.
+    </li>
+    <li>
+      <strong>What to put in Sprint 6.</strong> The remaining roadmap items (B7 image editor, C5 SMS, C6 push,
+      G5 bandit) are P2; none is on the critical path of the next narrative beat (multi-agent dispatch, observability
+      surfacing, or production deployment).
+    </li>
+    <li>
+      <strong>Product centre of gravity.</strong> Marketing OS vs. agent ops platform vs. both. See the separate
+      <code>TEMP-pivot-discussion.md</code> for the supporting analysis. This decision blocks Sprint 6 scope; it
+      should be resolved before Sprint 5 closes.
+    </li>
+    <li>
+      <strong>Marketing collaterals.</strong> Five issues open since 11–13 May. If they remain off-limits to
+      engineering, an owner outside engineering needs to be named.
+    </li>
+    <li>
+      <strong>First paid deployment.</strong> The Helm chart exists; nothing in the repository indicates a
+      production tenancy. Onboarding the first real tenant — even at zero cost — is the highest-leverage
+      step toward all of the above.
+    </li>
+  </ol>
+</section>
+
+<!-- ============================================================ CHAPTER 12 — PATH FORWARD ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Chapter 12</div>
+  <h1 style="color: var(--dk-purple-800);">Path Forward — Observations, Not Prescriptions</h1>
+  <p class="lede">
+    This chapter is observational. It does not recommend a roadmap; PLAN-v1.2 does that. It catalogues the moves
+    that, given the current state, would have outsized impact for low effort.
+  </p>
+
+  <h3>The smallest move that closes the most loops</h3>
+  <p>
+    A single <strong>"infra polish + v1.2.0 cut"</strong> PR would close Chapters 9, 10, and 11 simultaneously. It
+    would:
+  </p>
+  <ol class="tight">
+    <li>Set <code>ENV HOSTNAME=0.0.0.0</code> in <code>frontend/Dockerfile</code> → green healthcheck.</li>
+    <li>Bump the <code>jwt_secret</code> default and add a startup fail-fast for default secrets in production.</li>
+    <li>Rename the <code>copy</code> field on the <code>ScheduledPost*</code> schemas → silence three Pydantic warnings.</li>
+    <li>Add a <code>.git/hooks/pre-push</code> stub that runs the local test gate.</li>
+    <li>Move the <code>[Unreleased]</code> changelog block under <code>## [1.2.0]</code>.</li>
+    <li>Cut the <code>v1.2.0</code> release with title <code>v1.2.0</code> per the release-name-equals-tag rule.</li>
+    <li>Generate the Sprint 5 status report using the canonical three-segment template.</li>
+  </ol>
+  <p>
+    Total estimated effort: ~2 hours. Output: a clean, tagged, hygienic v1.2.0 with a written status report.
+  </p>
+
+  <h3>The next single biggest user-visible win</h3>
+  <p>
+    Surfacing the Model Registry's <code>ModelCallLog</code> metrics — already logged per-call with USD costs — as
+    a 7-day cost-by-model chart on <code>/admin/models</code>. The data is there; the visualization is missing.
+    This turns the registry from "configured" to "instrumented" and gives the operator a believable answer to "what
+    is this platform spending."
+  </p>
+
+  <h3>The next single biggest engineering win</h3>
+  <p>
+    Wiring <code>GET /agents/runs/{request_id}/trace</code> into the Inbox / approval view. The endpoint exists;
+    the frontend consumer does not. With it, a reviewer can see exactly what a role-agent thought, what tools it
+    called, in what order, before deciding to approve. The 4-eye rule becomes a real review, not a checkbox.
+  </p>
+
+  <h3>The next single biggest commercial win</h3>
+  <p>
+    Closing marketing issues #49 (one-pager), #50 (slides), and #52 (demo video recording). Without these, the
+    platform's capability outpaces its presentability. Engineering does not own these; an owner outside engineering
+    needs to be assigned.
+  </p>
+
+  <h3>The strategic question</h3>
+  <p>
+    The one decision worth taking seriously — and the one most likely to be deferred — is whether the platform
+    should remain a marketing OS or whether the underlying agent ops substrate is the product. The repository now
+    has enough of an answer to make that conversation productive; the parked analysis is in
+    <code>TEMP-pivot-discussion.md</code>. Whatever the outcome, the question should not stay open into Sprint 6.
+  </p>
+
+  <h3>What is explicitly not recommended</h3>
+  <ul class="tight">
+    <li><strong>A green-field refactor of the service layer.</strong> The 51 services are functional; refactoring them today is busywork.</li>
+    <li><strong>Adding new providers to the Model Registry.</strong> 26 provider types are already declared. The bottleneck is not provider count; it is real wiring.</li>
+    <li><strong>Adding new MCP adapters before the existing 14 have a deployed customer using them.</strong> Surface-area without a tenant is shelfware.</li>
+    <li><strong>A second Conductor pass before the first one ships in <code>v1.2.0</code>.</strong> S5-CDR-F polish is the right stopping point.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Closing observation.</strong> The project is in better shape than its open-issue count suggests. Five
+    sprints, four releases, two-thirds of a real product, and a substrate that quietly outgrew its original frame.
+    The next move is small and obvious; the move after that is large and strategic.
+  </div>
+</section>
+
+<!-- ============================================================ APPENDIX A — SERVICES ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix A</div>
+  <h1 style="color: var(--dk-purple-800);">Backend Service Inventory</h1>
+  <p class="lede">
+    Forty-three Python services + eight subdirectories (ads, billing, crm, mcp, newsletter, publishers, seo,
+    webhooks).
+  </p>
+  <table class="dk">
+    <tr><th>Service</th><th>Role</th></tr>
+    <tr><td><code>aeo_scorer.py</code></td><td>Answer Engine Optimisation scoring + batch + fix suggestions (S4-K)</td></tr>
+    <tr><td><code>agent_cost.py</code></td><td>Per-run CostLedger writer; token → USD rate table</td></tr>
+    <tr><td><code>anomaly.py</code></td><td>3σ anomaly detection for Analyst Agent</td></tr>
+    <tr><td><code>asset_gen.py</code></td><td>Asset generation dispatcher</td></tr>
+    <tr><td><code>audit.py</code></td><td>AuditEvent writer + helpers</td></tr>
+    <tr><td><code>brand_bandit.py</code></td><td>Brand A/B bandit logic (G5 partial)</td></tr>
+    <tr><td><code>brand_pdf_extract.py</code></td><td>Extract brand assets from uploaded PDFs</td></tr>
+    <tr><td><code>client_pdf_report.py</code></td><td>Client-facing PDF report renderer</td></tr>
+    <tr><td><code>cost_caps.py</code></td><td>Pre-run cost-cap evaluator</td></tr>
+    <tr><td><code>cost_logger.py</code></td><td>Cost-log writer for retainer reconciliation</td></tr>
+    <tr><td><code>dont_say.py</code></td><td>Brand-banned phrase lint + refine-prompt builder (S4-B)</td></tr>
+    <tr><td><code>email_events.py</code></td><td>Email event ingestion + tracking</td></tr>
+    <tr><td><code>email_send.py</code></td><td>Send pipeline (Resend / Postmark / SendGrid)</td></tr>
+    <tr><td><code>embeddings.py</code></td><td>pgvector embedding helper</td></tr>
+    <tr><td><code>enrichment.py</code></td><td>Lead enrichment + ID resolution (SP3-12)</td></tr>
+    <tr><td><code>generation_adapters.py</code></td><td>httpx shells for Replicate / Runway / Suno / ElevenLabs / Cartesia / Deepgram (S4-B)</td></tr>
+    <tr><td><code>hooks.py</code></td><td>Hook + Headline Lab logic (SP3-9)</td></tr>
+    <tr><td><code>image_gen.py</code></td><td>Image generation dispatcher</td></tr>
+    <tr><td><code>ingestion.py</code></td><td>Knowledge Graph ingestion pipeline</td></tr>
+    <tr><td><code>lead_scoring.py</code></td><td>Lead scoring rules + lifecycle stage</td></tr>
+    <tr><td><code>mcp_client.py</code></td><td>MCP transport + protocol</td></tr>
+    <tr><td><code>mcp_registry.py</code></td><td>MCP adapter registry</td></tr>
+    <tr><td><code>model_call_logger.py</code></td><td>ModelCallLog writer (fire-and-forget)</td></tr>
+    <tr><td><code>model_discovery.py</code></td><td>Auto-discover provider catalogues (S4-M3)</td></tr>
+    <tr><td><code>model_registry.py</code></td><td>Provider + entry CRUD + sync</td></tr>
+    <tr><td><code>model_resolver.py</code></td><td>user → org → pool → env → stub resolution chain</td></tr>
+    <tr><td><code>oauth.py</code></td><td>OAuth flow handlers</td></tr>
+    <tr><td><code>quota.py</code></td><td>QuotaCounter with sliding-window + circuit-breaker</td></tr>
+    <tr><td><code>quota_guard.py</code></td><td>Per-action quota gate</td></tr>
+    <tr><td><code>repurpose.py</code></td><td>Repurposing Engine (SP3-11)</td></tr>
+    <tr><td><code>sandbox.py</code></td><td>Workflow sandbox executor</td></tr>
+    <tr><td><code>scheduling.py</code></td><td>Scheduler engine for ScheduledPost</td></tr>
+    <tr><td><code>secret_box.py</code></td><td>Fernet encrypt/decrypt with per-org data keys</td></tr>
+    <tr><td><code>seo_pipeline.py</code></td><td>SEO H2 blog pipeline (SP3-17)</td></tr>
+    <tr><td><code>storage.py</code></td><td>S3-compatible presigned PUT/GET</td></tr>
+    <tr><td><code>totp.py</code></td><td>TOTP enrollment + verification</td></tr>
+    <tr><td><code>trust_mode.py</code></td><td>Autonomy posture lookup (hard_gate / soft_gate / auto) (S4-A)</td></tr>
+    <tr><td><code>webhook_keys.py</code></td><td>Webhook signing keys (S4-J)</td></tr>
+    <tr><td><code>workflow_runner.py</code></td><td>Workflow execution engine</td></tr>
+    <tr><td><code>workflow_sandbox.py</code></td><td>Sandboxed workflow step runner</td></tr>
+    <tr><td><code>workflow_templates.py</code></td><td>Curated workflow templates</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ APPENDIX B — MODELS ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix B</div>
+  <h1 style="color: var(--dk-purple-800);">Data Model Inventory</h1>
+  <p class="lede">
+    Thirty SQLAlchemy model files, 40 Alembic migrations. Grouped by domain below.
+  </p>
+
+  <h3>Tenancy</h3>
+  <ul class="tight">
+    <li><code>user.py</code> · <code>organization.py</code> · <code>project.py</code> · <code>base.py</code> (common columns + slug helpers)</li>
+  </ul>
+
+  <h3>Brand &amp; Content</h3>
+  <ul class="tight">
+    <li><code>brand_kit.py</code> · <code>brand_kit_insight.py</code> · <code>campaign.py</code> · <code>asset.py</code> · <code>variant.py</code></li>
+  </ul>
+
+  <h3>Pipeline &amp; Workflow</h3>
+  <ul class="tight">
+    <li><code>job.py</code> · <code>ingestion.py</code> · <code>agent_thread.py</code></li>
+  </ul>
+
+  <h3>Audit, Approval &amp; Governance</h3>
+  <ul class="tight">
+    <li><code>audit_event.py</code> · <code>approval_request.py</code> · <code>ops.py</code></li>
+  </ul>
+
+  <h3>Social, Integrations &amp; Channels</h3>
+  <ul class="tight">
+    <li><code>social_account.py</code> · <code>connection.py</code> · <code>scheduled_post.py</code> · <code>webhook.py</code></li>
+  </ul>
+
+  <h3>Email, Ads &amp; Sequences</h3>
+  <ul class="tight">
+    <li><code>email_ads.py</code> · <code>email_event.py</code> · <code>sequence_membership.py</code></li>
+  </ul>
+
+  <h3>Audience &amp; Attribution</h3>
+  <ul class="tight">
+    <li><code>lead.py</code> · <code>analytics_event.py</code> · <code>attribution.py</code></li>
+  </ul>
+
+  <h3>Model Registry (S4-M)</h3>
+  <ul class="tight">
+    <li><code>model_registry.py</code> (<code>ModelProvider</code> + <code>ModelEntry</code>)</li>
+    <li><code>model_call_log.py</code></li>
+    <li><code>model_assignment.py</code> (<code>OrgModelAssignment</code> + <code>UserModelPreference</code>)</li>
+  </ul>
+
+  <h3>Commerce</h3>
+  <ul class="tight">
+    <li><code>invoice.py</code></li>
+  </ul>
+
+  <h3>Migration tag-points</h3>
+  <ul class="tight">
+    <li>Sprint 1: foundational schema</li>
+    <li>Sprint 2: connection / lead / attribution / webhook / sequence growth</li>
+    <li>Sprint 3 (<code>20260513_*</code>): TOTP columns, slug re-keying, landing_pages_json, kanban_json</li>
+    <li>Sprint 4 (<code>20260525_0001-0004</code>): Model Registry tables, 4-eye approval columns</li>
+  </ul>
+</section>
+
+<!-- ============================================================ APPENDIX C — FRONTEND ROUTES ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix C</div>
+  <h1 style="color: var(--dk-purple-800);">Frontend Route &amp; API Surface</h1>
+
+  <h3>Top-level frontend routes (≈ 30 segments)</h3>
+  <p>
+    Domain-grouped under <code>frontend/src/app/</code>:
+  </p>
+  <p>
+    <span class="chip mono">/(auth)</span>
+    <span class="chip mono">/admin</span>
+    <span class="chip mono">/admin/models</span>
+    <span class="chip mono">/admin/audit</span>
+    <span class="chip mono">/admin/users</span>
+    <span class="chip mono">/agents</span>
+    <span class="chip mono">/analytics</span>
+    <span class="chip mono">/analytics/attribution</span>
+    <span class="chip mono">/analytics/heatmap</span>
+    <span class="chip mono">/ads</span>
+    <span class="chip mono">/brand-insights</span>
+    <span class="chip mono">/calendar</span>
+    <span class="chip mono">/campaigns</span>
+    <span class="chip mono">/channels</span>
+    <span class="chip mono">/client</span>
+    <span class="chip mono">/conductor</span>
+    <span class="chip mono">/email</span>
+    <span class="chip mono">/hooks</span>
+    <span class="chip mono">/inbox</span>
+    <span class="chip mono">/integrations</span>
+    <span class="chip mono">/invoices</span>
+    <span class="chip mono">/knowledge</span>
+    <span class="chip mono">/knowledge/sources</span>
+    <span class="chip mono">/leads</span>
+    <span class="chip mono">/library</span>
+    <span class="chip mono">/orgs</span>
+    <span class="chip mono">/playbooks</span>
+    <span class="chip mono">/projects</span>
+    <span class="chip mono">/repurpose</span>
+    <span class="chip mono">/segments</span>
+    <span class="chip mono">/settings</span>
+    <span class="chip mono">/share/[token]</span>
+    <span class="chip mono">/time</span>
+    <span class="chip mono">/workflows</span>
+  </p>
+
+  <h3>Backend v1 API surface (56 router files; 175 OpenAPI paths)</h3>
+  <p>
+    Major namespaces: <code>/api/v1/admin/*</code>, <code>/api/v1/orgs/*</code>, <code>/api/v1/projects/*</code>,
+    <code>/api/v1/campaigns/*</code>, <code>/api/v1/agents/*</code>, <code>/api/v1/models/*</code>,
+    <code>/api/v1/approvals/*</code>, <code>/api/v1/scheduled_posts/*</code>, <code>/api/v1/leads/*</code>,
+    <code>/api/v1/connections/*</code>, <code>/api/v1/email/*</code>, <code>/api/v1/ads/*</code>,
+    <code>/api/v1/conductor/*</code>, <code>/api/v1/kg/*</code>, <code>/api/v1/oauth/*</code>,
+    <code>/api/v1/webhooks/*</code>, <code>/api/v1/audit_events/*</code>, <code>/api/v1/share_tokens/*</code>,
+    <code>/api/v1/aeo/*</code>, <code>/api/v1/seo/*</code>, plus the <code>/health</code> family.
+  </p>
+
+  <h3>Components</h3>
+  <ul class="tight">
+    <li><strong>43 TSX component files</strong> total in <code>frontend/src/components/</code></li>
+    <li>UI primitives in <code>components/ui/</code> (shadcn-remapped, <code>--dk-*</code> tokens)</li>
+    <li>Brand-specific in <code>components/dk/</code> (Poppins, purple palette, light-mode only)</li>
+  </ul>
+</section>
+
+<!-- ============================================================ APPENDIX D — GLOSSARY ============================================================ -->
+<section class="chapter">
+  <div class="eyebrow">Appendix D</div>
+  <h1 style="color: var(--dk-purple-800);">Glossary &amp; Acronyms</h1>
+  <table class="dk">
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>AEO</td><td>Answer Engine Optimisation — scoring content for visibility in LLM-driven answer engines (S4-K).</td></tr>
+    <tr><td>Approval Inbox</td><td>The supervised queue where every outbound agent action waits for human consent. Backed by <code>ApprovalRequest</code>; subject to the 4-eye rule on sensitive classes.</td></tr>
+    <tr><td>BrandKit</td><td>Versioned per-org brand identity: palette, fonts, voice, personas. Injected into every agent prompt.</td></tr>
+    <tr><td>BrandKitInsight</td><td>KG write-back artefact: short, atomic brand observations learned from prior runs and re-injected into the Creatives Agent system prompt.</td></tr>
+    <tr><td>Bootstrap superadmin</td><td>Single hardcoded account (<code>admin@dclaw.io</code>, slug <code>s-admn-000000</code>) that is re-asserted on every backend startup and cannot be deleted.</td></tr>
+    <tr><td>Conductor</td><td>The multi-agent orchestration agent + UI that coordinates role-agents (Creatives, SEO, Analyst, etc.).</td></tr>
+    <tr><td>CostLedger</td><td>Per-run table of agent-action cost in USD, written by <code>agent_cost.py</code> from ModelCallLog token counts.</td></tr>
+    <tr><td>Don't-say lint</td><td><code>services/dont_say.py</code> brand-banned-phrase check + refine prompt builder.</td></tr>
+    <tr><td>Fernet master key</td><td>Operator-held symmetric key used to encrypt SocialAccount tokens and other secrets at rest. Out-of-band.</td></tr>
+    <tr><td>4-eye rule</td><td>Approval policy where sensitive actions require two distinct approvers; enforced via <code>approvers_required</code> + <code>approvers_user_ids_json</code> on <code>ApprovalRequest</code>.</td></tr>
+    <tr><td>KG</td><td>Knowledge Graph — the semantic-search-indexed corpus of ingested documents, scoped by org.</td></tr>
+    <tr><td>Lean CI</td><td>Post-Sprint-4 CI model: pytest + npm build run locally before push; GitHub does only auto-merge of labelled PRs.</td></tr>
+    <tr><td>MCP</td><td>Model Context Protocol — the unified per-integration adapter spec. 14 concrete adapters + BYO marketplace.</td></tr>
+    <tr><td>Model Registry</td><td>The S4-M epic: provider/entry/call-log/assignment/preference tables across 26 provider types with auto-discovery, capability heuristic, health-check beat, and the resolver chain.</td></tr>
+    <tr><td>ModelEntry</td><td>One row per discovered (or manually added) model under a ModelProvider. Carries pricing, capability, context window, and feature flags.</td></tr>
+    <tr><td>ModelCallLog</td><td>Append-only audit log of every model call: token counts, latency, cost, request_id (joinable to <code>AgentThread</code>).</td></tr>
+    <tr><td>OpenAI-compat</td><td>Provider type accepting any OpenAI-compatible endpoint (Ollama, OpenRouter, Together, Fireworks, Groq, DeepSeek). Drives the Conductor as of PR #370.</td></tr>
+    <tr><td>PLAN-v1.2</td><td>The roadmap document (<code>PLAN-v1.2.md</code>); the stakeholder reads this. The version line was renamed in Sprint 3 to align release tags with this document.</td></tr>
+    <tr><td>QuotaCounter</td><td>Sliding-window quota enforcement with a circuit-breaker; protects against runaway agent runs.</td></tr>
+    <tr><td>Reasoning-trace replay</td><td><code>GET /agents/runs/{request_id}/trace</code>: chronological ModelCallLog rows for one agent run.</td></tr>
+    <tr><td>Resolver chain</td><td><code>model_resolver.py</code>'s precedence: user preference → org assignment → pool default → env override → stub fallback.</td></tr>
+    <tr><td>Slug</td><td>Human-readable identifier: users <code>u-{first4}-{6hex}</code>, orgs <code>o-{first4}-{6hex}</code>, bootstrap <code>s-admn-000000</code>.</td></tr>
+    <tr><td>Station</td><td>The supervised UI a human operator runs DClaw from. Approval Inbox lives here.</td></tr>
+    <tr><td>Trust mode</td><td>Per-action autonomy posture: <code>hard_gate</code> (always wait for approval), <code>soft_gate</code> (auto-execute, ask only on risk signals), <code>auto</code> (no gate, just audit).</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ BACK PAGE ============================================================ -->
+<section class="back">
+  <div class="back-content">
+    <div>
+      <div class="cover-wordmark" style="color: white;">
+        <div class="claw">D</div>
+        <div class="name">DClaw Marketing</div>
+      </div>
+    </div>
+    <div>
+      <h1>Five sprints in.<br>Four releases out.<br>One decision owed before <span style="color: var(--dk-purple-200);">v1.2.0</span>.</h1>
+    </div>
+    <div class="meta">
+      <div>DClaw Marketing — Project State Report (2026-05-16)</div>
+      <div>16 May 2026 · v1.0 · prepared by Engineering with Claude Code (Opus 4.7)</div>
+      <div>Generated from <code>obsidian/reports/project-state-2026-05-16.html</code></div>
+      <div>Confidential — internal distribution</div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

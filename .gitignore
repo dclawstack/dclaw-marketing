@@ -12,4 +12,11 @@
 # Obsidian
 .obsidian/workspace*.json
 .obsidian/cache
+obsidian/scratch/
 .claude/
+
+# Graphify outputs (knowledge graph dumps)
+graphify-out/
+
+# Local-only scratch / discussion notes
+TEMP-*.md
