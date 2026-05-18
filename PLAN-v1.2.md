@@ -972,7 +972,7 @@ Providers are grouped into four tiers by their integration method.
 | #352 | **S5-CDR-F** | Polish: voice input, prompt library, slash-command palette, copy/regen/edit, thread rename/pin/delete, markdown + code-block syntax highlighting, suggested-prompts empty state. | P2 | code |
 | #353 | **S5-CDR-G** | This plan-doc update. | P2 | docs |
 
-### Sprint 5 — exit criteria for `v1.2.1`
+### Sprint 5 — exit criteria
 
 - Left sidebar has **one** Conductor entry, under "Work", routing to `/conductor`. The widget (`agent-dock`) is intact and unchanged.
 - The unified `/conductor` page renders chat (primary) + decomposition/results panel (collapsible) + visible `ModelSettingsPanel`.
