@@ -12,8 +12,16 @@ import { useAuth } from "@/contexts/auth-context";
  */
 const AUTH_PATHS = new Set(["/login", "/first-login", "/forgot-password"]);
 
+// Public, non-gated routes. "/" is the marketing landing page — anyone
+// can view it whether signed in or not.
+const PUBLIC_PATHS = new Set(["/"]);
+
 function isAuthPath(pathname: string): boolean {
   return AUTH_PATHS.has(pathname);
+}
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.has(pathname);
 }
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -24,11 +32,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
+    // Public landing renders for everyone — no redirect either way.
+    if (isPublicPath(pathname)) return;
+
     if (isAuthPath(pathname)) {
       // On auth pages: if user is already signed in and doesn't need
       // a reset, send them to the dashboard.
       if (user && !user.password_reset_required && pathname !== "/first-login") {
-        router.replace("/");
+        router.replace("/dashboard");
       }
       return;
     }
@@ -42,6 +53,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace("/first-login");
     }
   }, [loading, user, pathname, router]);
+
+  if (isPublicPath(pathname)) {
+    // Public landing renders unconditionally for anon + signed-in users,
+    // even before auth bootstrap finishes (no gating, no loading flash).
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (

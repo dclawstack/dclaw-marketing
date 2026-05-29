@@ -1,38 +1,34 @@
 replicaCount: 1
-
 image:
   backend:
-    repository: ghcr.io/dclawstack/dclaw-marketing-backend
-    tag: latest
-    pullPolicy: IfNotPresent
+    repository: dclaw-marketing-backend
+    tag: local-1779987386
+    pullPolicy: Never
   frontend:
-    repository: ghcr.io/dclawstack/dclaw-marketing-frontend
-    tag: latest
-    pullPolicy: IfNotPresent
-
+    repository: dclaw-marketing-frontend
+    tag: local-1779987386
+    pullPolicy: Never
 service:
   backend:
     type: ClusterIP
     port: 8102
   frontend:
-    type: ClusterIP
+    type: NodePort
     port: 3015
-
+    nodePort: 30064
 ingress:
   enabled: false
-  className: ""
-  annotations: {}
-  hosts: []
-  tls: []
-
-resources: {}
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 80
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
+secret:
+  data:
+    DATABASE_URL: "postgresql+asyncpg://postgres:postgres@dclaw-shared-postgres:5432/dclaw_marketing"
+    APP_ENV: "production"
+    SECRET_KEY: "dev-secret-change-me"
+    OLLAMA_URL: "http://ollama:11434"
+    OPENROUTER_API_KEY: ""
+    NEXT_PUBLIC_API_URL: ""
+    ENABLE_DEMO_MODE: "true"
+resources:
+  requests: { cpu: 10m, memory: 128Mi }
+  limits:   { cpu: 300m, memory: 384Mi }
+strategy:
+  type: Recreate

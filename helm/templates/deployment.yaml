@@ -7,6 +7,8 @@ metadata:
     component: backend
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: {{ include "dclaw-app.name" . }}
@@ -22,20 +24,20 @@ spec:
           image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
           imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
           ports:
-            - containerPort: 8000
+            - containerPort: 8102
           envFrom:
             - secretRef:
                 name: {{ include "dclaw-app.fullname" . }}-secrets
           livenessProbe:
             httpGet:
               path: /health/
-              port: 8000
+              port: 8102
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /health/
-              port: 8000
+              port: 8102
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
@@ -51,6 +53,8 @@ metadata:
     component: frontend
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: {{ include "dclaw-app.name" . }}
@@ -66,6 +70,6 @@ spec:
           image: "{{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}"
           imagePullPolicy: {{ .Values.image.frontend.pullPolicy }}
           ports:
-            - containerPort: 3000
+            - containerPort: 3015
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

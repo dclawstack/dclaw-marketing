@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (u.password_reset_required) {
         router.push("/first-login");
       } else {
-        router.push("/");
+        router.push("/dashboard");
       }
       return u;
     },

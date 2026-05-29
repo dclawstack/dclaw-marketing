@@ -33,7 +33,7 @@ export default function FirstLoginPage() {
 
   useEffect(() => {
     if (user && !user.password_reset_required) {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [user, router]);
 
@@ -58,7 +58,7 @@ export default function FirstLoginPage() {
     try {
       await changePassword(currentPassword, newPassword);
       refresh();
-      router.replace("/");
+      router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Password change failed.");
     } finally {

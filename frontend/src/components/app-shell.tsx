@@ -33,6 +33,9 @@ import { cn } from "@/lib/utils";
 
 const AUTH_PATHS = new Set(["/login", "/first-login", "/forgot-password"]);
 
+// Routes that render their own full-page chrome (no global header/sidebar).
+const BARE_PATHS = new Set(["/"]);
+
 interface NavItem {
   label: string;
   href: string;
@@ -52,7 +55,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
     items: [
-      { label: "Dashboard", href: "/", icon: LayoutDashboard },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     ],
   },
   {
@@ -135,6 +138,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAdmin =
     !!user?.is_superuser ||
     (adminStatus?.admin_org_ids?.length ?? 0) > 0;
+
+  if (BARE_PATHS.has(pathname)) {
+    // Public landing page provides its own nav + footer.
+    return <>{children}</>;
+  }
 
   if (AUTH_PATHS.has(pathname)) {
     return (
