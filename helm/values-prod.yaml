@@ -1,0 +1,25 @@
+# Cloud / production overrides. Use with:
+#   helm install dclaw-marketing ./helm -n <ns> -f values-prod.yaml
+image:
+  backend:
+    repository: ghcr.io/dclawstack/dclaw-marketing-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: ghcr.io/dclawstack/dclaw-marketing-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+service:
+  frontend:
+    type: ClusterIP
+    port: 3015
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: marketing.dclawstack.io
+  tls:
+    - secretName: dclaw-marketing-tls
+      hosts:
+        - marketing.dclawstack.io

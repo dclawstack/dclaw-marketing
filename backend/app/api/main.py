@@ -210,6 +210,11 @@ app.include_router(campaigns_router, prefix="/api/v1/campaigns", tags=["campaign
 app.include_router(leads_router, prefix="/api/v1/leads", tags=["leads"])
 app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["analytics"])
 
+# Demo seed/reset for the public landing page (removable — see demo.py).
+from app.api.v1 import demo as demo_api  # noqa: E402
+
+app.include_router(demo_api.router, prefix="/api/v1")
+
 
 @app.get("/api/v1/dashboard", tags=["dashboard"])
 async def get_dashboard(

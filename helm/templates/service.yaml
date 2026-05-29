@@ -29,6 +29,7 @@ spec:
   ports:
     - port: {{ .Values.service.frontend.port }}
       targetPort: 3069
+      nodePort: {{ .Values.service.frontend.nodePort }}
       protocol: TCP
       name: http
   selector:

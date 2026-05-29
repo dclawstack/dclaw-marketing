@@ -7,6 +7,8 @@ metadata:
     component: backend
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: {{ include "dclaw-app.name" . }}
@@ -51,6 +53,8 @@ metadata:
     component: frontend
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: {{ include "dclaw-app.name" . }}
