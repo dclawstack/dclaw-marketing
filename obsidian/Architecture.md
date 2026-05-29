@@ -3,13 +3,13 @@
 ## System diagram
 
 ```
-Browser ─►  Next.js 14 (frontend, :3015)         [left-sidebar nav · brand tokens · admin]
+Browser ─►  Next.js 14 (frontend, :3069)         [left-sidebar nav · brand tokens · admin]
                 │
                 │ /api/* rewrite proxy
-                │   container: BACKEND_INTERNAL_URL=http://backend:8102
+                │   container: BACKEND_INTERNAL_URL=http://backend:8156
                 │   local dev: NEXT_PUBLIC_API_URL
                 ▼
-            FastAPI 1.1.1 (backend, :8102)        [48 routers · 567 tests]
+            FastAPI 1.1.1 (backend, :8156)        [48 routers · 567 tests]
                 │
    ┌────────────┼────────────┬─────────────┬──────────────┬───────────────┐
    ▼            ▼            ▼             ▼              ▼               ▼

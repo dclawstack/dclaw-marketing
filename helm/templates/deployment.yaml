@@ -22,20 +22,20 @@ spec:
           image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
           imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
           ports:
-            - containerPort: 8000
+            - containerPort: 8156
           envFrom:
             - secretRef:
                 name: {{ include "dclaw-app.fullname" . }}-secrets
           livenessProbe:
             httpGet:
               path: /health/
-              port: 8000
+              port: 8156
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /health/
-              port: 8000
+              port: 8156
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
@@ -66,6 +66,6 @@ spec:
           image: "{{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}"
           imagePullPolicy: {{ .Values.image.frontend.pullPolicy }}
           ports:
-            - containerPort: 3000
+            - containerPort: 3069
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

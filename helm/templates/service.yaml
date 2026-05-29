@@ -9,7 +9,7 @@ spec:
   type: {{ .Values.service.backend.type }}
   ports:
     - port: {{ .Values.service.backend.port }}
-      targetPort: 8000
+      targetPort: 8156
       protocol: TCP
       name: http
   selector:
@@ -28,7 +28,7 @@ spec:
   type: {{ .Values.service.frontend.type }}
   ports:
     - port: {{ .Values.service.frontend.port }}
-      targetPort: 3000
+      targetPort: 3069
       protocol: TCP
       name: http
   selector:
