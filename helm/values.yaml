@@ -11,10 +11,10 @@ image:
 service:
   backend:
     type: ClusterIP
-    port: 8102
+    port: 8156
   frontend:
     type: NodePort
-    port: 3015
+    port: 3069
     nodePort: 30064
 ingress:
   enabled: false

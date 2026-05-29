@@ -95,12 +95,12 @@ The platform ships as a **Helm chart + container images** you install on your ow
                            Browser
                               │
                     ┌─────────▼──────────┐
-                    │   Next.js 14       │  :3015
+                    │   Next.js 14       │  :3069
                     │   (App Router)     │
                     └─────────┬──────────┘
                               │  JWT bearer
                     ┌─────────▼──────────┐
-                    │   FastAPI          │  :8102
+                    │   FastAPI          │  :8156
                     │   (async Python)   │
                     └──┬──┬──┬───────────┘
                        │  │  │
@@ -150,7 +150,7 @@ docker compose up -d
 #            backend · celery-worker · celery-beat · frontend
 
 # 4. Open
-open http://localhost:3015
+open http://localhost:3069
 ```
 
 **Default credentials:** `admin@dclaw.io` / `ChangeMeOnFirstLogin!`  
@@ -199,7 +199,7 @@ Full chart shape, TLS modes, secrets management, and multi-tenant isolation: [do
 | [PLAN-v1.2.md](PLAN-v1.2.md) | Full feature roadmap: themes A–Q, v2.0 vision, tech choices (Appendix A), phase breakdown (Appendix B) |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System topology, auth flow, API surface, agent runtime, Helm chart shape |
 | [docs/USER-GUIDE.md](docs/USER-GUIDE.md) | Operator walkthrough — brand setup → ingest → generate → approve → publish |
-| [docs/api/README.md](docs/api/README.md) | API reference index — live Swagger at `:8102/docs`, ReDoc at `:8102/redoc` |
+| [docs/api/README.md](docs/api/README.md) | API reference index — live Swagger at `:8156/docs`, ReDoc at `:8156/redoc` |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |
 | [scripts/RESTORE_RUNBOOK.md](scripts/RESTORE_RUNBOOK.md) | Disaster recovery — Postgres, MinIO, and credential restore |
 

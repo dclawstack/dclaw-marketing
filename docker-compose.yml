@@ -1,22 +1,11 @@
 version: "3.9"
 
+# Postgres is NOT defined here — all DClaw apps share the one local Postgres in
+# ../dclaw-local-db (started by ../dclaw-up.sh), using database dclaw_marketing.
+# Redis + MinIO remain app-local (only Marketing uses them). Services that need
+# the shared DB (backend, celery-worker, celery-beat) join the external
+# "dclaw-net" network to reach it at host "dclaw-postgres".
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dclaw_marketing
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dclaw_marketing"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
@@ -66,7 +55,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_marketing
+      DATABASE_URL: postgresql+asyncpg://dclaw:dclaw@dclaw-postgres:5432/dclaw_marketing
       REDIS_URL: redis://redis:6379/0
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: minioadmin
@@ -89,16 +78,17 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "8102:8102"
+      - "8156:8156"
+    networks:
+      - default
+      - dclaw-net
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8102/health/')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8156/health/')"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -109,13 +99,14 @@ services:
       dockerfile: Dockerfile
     command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_marketing
+      DATABASE_URL: postgresql+asyncpg://dclaw:dclaw@dclaw-postgres:5432/dclaw_marketing
       REDIS_URL: redis://redis:6379/0
       APP_ENV: production
       TENANT_ENCRYPTION_MASTER_KEY: "bqUs7dvwPNfolchbYftyzRJNp60aCVZvkK96G4WwHbs="
+    networks:
+      - default
+      - dclaw-net
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -130,13 +121,14 @@ services:
       dockerfile: Dockerfile
     command: ["celery", "-A", "app.worker.celery_app", "beat", "--loglevel=info"]
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_marketing
+      DATABASE_URL: postgresql+asyncpg://dclaw:dclaw@dclaw-postgres:5432/dclaw_marketing
       REDIS_URL: redis://redis:6379/0
       APP_ENV: production
       TENANT_ENCRYPTION_MASTER_KEY: "bqUs7dvwPNfolchbYftyzRJNp60aCVZvkK96G4WwHbs="
+    networks:
+      - default
+      - dclaw-net
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
 
@@ -149,25 +141,28 @@ services:
         # Colima forwards ports via an SSH tunnel that listens on IPv4 only,
         # and Chromium-based fetch() on macOS may resolve `localhost` to ::1
         # first and fail with "Failed to fetch" without falling back to v4.
-        NEXT_PUBLIC_API_URL: http://127.0.0.1:8102
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:8156
         # Server-side proxy target (Next.js rewrites). Baked at build
         # time because rewrites() is evaluated when the bundle is
         # produced, not at server boot. Inside the docker network, the
         # backend resolves via the service name.
-        BACKEND_INTERNAL_URL: http://backend:8102
+        BACKEND_INTERNAL_URL: http://backend:8156
     environment:
-      PORT: 3015
+      PORT: 3069
     ports:
-      - "3015:3015"
+      - "3069:3069"
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3015/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3069/"]
       interval: 30s
       timeout: 5s
       retries: 3
 
 volumes:
-  postgres_data:
   redis_data:
   minio_data:
+
+networks:
+  dclaw-net:
+    external: true

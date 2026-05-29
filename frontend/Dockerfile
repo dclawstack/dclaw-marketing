@@ -19,15 +19,15 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3015
+ENV PORT=3069
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-EXPOSE 3015
+EXPOSE 3069
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget -q --spider http://localhost:3015/ || exit 1
+    CMD wget -q --spider http://localhost:3069/ || exit 1
 
 CMD ["node", "server.js"]

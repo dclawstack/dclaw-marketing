@@ -1,0 +1,48 @@
+{
+  "app_id": "marketing",
+  "name": "DClaw Marketing",
+  "app_name": "DClaw Marketing",
+  "category": "Marketing",
+  "tagline": "Agent-driven marketing operating system",
+  "description": "Set your brand once; a fleet of AI agents (Creatives, SEO, Analyst, Conductor) generates, schedules, publishes, and analyzes content across 13+ channels — every outbound action gated by a human approval inbox. Open-source. AI-first.",
+  "color": "#EC4899",
+  "icon": "megaphone",
+  "version": "1.1.1",
+  "entrypoint": "http://localhost:3069",
+  "api_base": "http://localhost:8156/api/v1",
+  "permissions": [],
+  "requires_auth": true,
+  "billing_plan": "free",
+  "ports": {
+    "backend": 8156,
+    "frontend": 3069
+  },
+  "database": "dclaw_marketing",
+  "routes": {
+    "health": "/health/",
+    "api": "/api/v1",
+    "frontend": "/"
+  },
+  "nav": [
+    { "label": "Dashboard", "path": "/", "icon": "layout-dashboard" },
+    { "label": "Campaigns", "path": "/campaigns", "icon": "rocket" },
+    { "label": "Calendar", "path": "/calendar", "icon": "calendar" },
+    { "label": "Approval Inbox", "path": "/inbox", "icon": "inbox" },
+    { "label": "Library", "path": "/library", "icon": "folder" },
+    { "label": "Knowledge", "path": "/knowledge", "icon": "book-open" },
+    { "label": "Analytics", "path": "/analytics", "icon": "bar-chart-3" }
+  ],
+  "features": [
+    "brand-kit",
+    "knowledge-graph",
+    "approval-inbox",
+    "multi-channel-publishing",
+    "ai-agents",
+    "leads-attribution",
+    "mcp-integrations"
+  ],
+  "status": "active",
+  "maturity": "tier1",
+  "repo": "https://github.com/dclawstack/dclaw-marketing",
+  "_note": "Ports 8156/3069 are a PROVISIONAL next-free assignment — not yet registered in dclaw-platform/PORT_REGISTRY.md (marketing was dropped from that registry). Register before hub deploy."
+}

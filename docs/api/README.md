@@ -4,9 +4,9 @@ Interactive API documentation is built into the FastAPI backend.
 
 ## Live (when the stack is running)
 
-- **Swagger UI** — http://localhost:8102/docs
-- **ReDoc** — http://localhost:8102/redoc
-- **OpenAPI JSON** — http://localhost:8102/openapi.json
+- **Swagger UI** — http://localhost:8156/docs
+- **ReDoc** — http://localhost:8156/redoc
+- **OpenAPI JSON** — http://localhost:8156/openapi.json
 
 ## Static export
 

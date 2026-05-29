@@ -10,12 +10,12 @@ Engineering deep-dive into how DClaw Marketing v0.1 is built. Pairs with [PLAN-v
                        ┌──────────────────────────────┐
                        │  Browser                      │
                        │  Next.js 14 (App Router)      │
-                       │  :3015                        │
+                       │  :3069                        │
                        └─────────────┬─────────────────┘
                                      │ HTTPS + JWT Bearer
                                      ▼
             ┌────────────────────────────────────────────────────┐
-            │  FastAPI (backend) :8102                            │
+            │  FastAPI (backend) :8156                            │
             │  ─────────────────────────────────────              │
             │  Auth (FastAPI-Users JWT)                           │
             │  REST: /me /admin /orgs /projects /assets           │

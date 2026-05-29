@@ -9,7 +9,7 @@ How to use DClaw Marketing end-to-end. Covers the v0.1 demo flow:
 
 ## 1. First login
 
-After `docker compose up -d`, navigate to **http://localhost:3015**. You'll be redirected to `/login`.
+After `docker compose up -d`, navigate to **http://localhost:3069**. You'll be redirected to `/login`.
 
 Default bootstrap credentials (configurable in `.env`):
 
@@ -41,7 +41,7 @@ Click **Admin** in the nav → `/admin/users`. From here you can:
 In the v0.1 UI, Orgs are created via the API. To create one:
 
 ```bash
-curl -X POST http://localhost:8102/api/v1/orgs \
+curl -X POST http://localhost:8156/api/v1/orgs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $JWT" \
   -d '{"slug": "acme", "name": "Acme Inc"}'
@@ -58,7 +58,7 @@ An in-UI org-creator page is on the v0.2 roadmap.
 Brand Kits live per-Org and are versioned (editing creates a new active revision; old versions are preserved).
 
 ```bash
-curl -X POST http://localhost:8102/api/v1/orgs/$ORG_ID/brand-kits \
+curl -X POST http://localhost:8156/api/v1/orgs/$ORG_ID/brand-kits \
   -H "Authorization: Bearer $JWT" \
   -H "Content-Type: application/json" \
   -d '{
@@ -93,7 +93,7 @@ Anything you want the agent to know about — product brief, brand book, top-per
 
 ```bash
 # Get a presigned URL
-curl -X POST http://localhost:8102/api/v1/assets/upload \
+curl -X POST http://localhost:8156/api/v1/assets/upload \
   -H "Authorization: Bearer $JWT" \
   -H "Content-Type: application/json" \
   -d '{
@@ -110,14 +110,14 @@ curl -X PUT "$PRESIGNED_URL" \
   --data-binary @brief.md
 
 # Confirm the upload completed
-curl -X POST http://localhost:8102/api/v1/assets/$ASSET_ID/confirm \
+curl -X POST http://localhost:8156/api/v1/assets/$ASSET_ID/confirm \
   -H "Authorization: Bearer $JWT"
 ```
 
 **Step 2 — trigger ingestion** (fires a Celery task that parses → chunks → embeds):
 
 ```bash
-curl -X POST http://localhost:8102/api/v1/ingest/files \
+curl -X POST http://localhost:8156/api/v1/ingest/files \
   -H "Authorization: Bearer $JWT" \
   -H "Content-Type: application/json" \
   -d '{
@@ -132,11 +132,11 @@ curl -X POST http://localhost:8102/api/v1/ingest/files \
 
 ```bash
 # Poll status
-curl http://localhost:8102/api/v1/ingest/$SOURCE_ID \
+curl http://localhost:8156/api/v1/ingest/$SOURCE_ID \
   -H "Authorization: Bearer $JWT"
 
 # OR live-stream via Server-Sent Events:
-curl -N http://localhost:8102/api/v1/jobs/$JOB_ID/stream \
+curl -N http://localhost:8156/api/v1/jobs/$JOB_ID/stream \
   -H "Authorization: Bearer $JWT"
 ```
 
@@ -214,7 +214,7 @@ An audit UI is on the v0.2 roadmap.
 ## 3-minute demo walkthrough
 
 1. `docker compose up -d` (wait ~30s for healthchecks)
-2. Open `http://localhost:3015` → log in as `admin@dclaw.io` / `ChangeMeOnFirstLogin!`
+2. Open `http://localhost:3069` → log in as `admin@dclaw.io` / `ChangeMeOnFirstLogin!`
 3. Set new password → land on dashboard
 4. Create Org + Brand Kit via API (or use a seeded one — coming in v0.2)
 5. Upload `brief.md` + ingest → KG populated
