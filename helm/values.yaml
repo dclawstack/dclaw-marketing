@@ -26,7 +26,6 @@ secret:
     OLLAMA_URL: "http://ollama:11434"
     OPENROUTER_API_KEY: ""
     NEXT_PUBLIC_API_URL: ""
-    ENABLE_DEMO_MODE: "true"
 resources:
   requests: { cpu: 10m, memory: 128Mi }
   limits:   { cpu: 300m, memory: 384Mi }
