@@ -97,6 +97,10 @@ function NavBar() {
   );
 }
 
+// Where the "Launch app" button points. Defaults to the local dev app;
+// set NEXT_PUBLIC_APP_URL to the deployed app URL to swap it without a code change.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3015";
+
 function Hero() {
   return (
     <section
@@ -123,10 +127,16 @@ function Hero() {
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <a
-              href="#cta"
+              href={APP_URL}
               className="inline-flex items-center gap-2 rounded-full bg-white text-[var(--dk-purple-900)] px-6 py-3 font-semibold hover:bg-[var(--dk-purple-50)] transition shadow-lg"
             >
-              Book a demo <ArrowRight className="w-4 h-4" />
+              Launch app <ArrowRight className="w-4 h-4" />
+            </a>
+            <a
+              href="#cta"
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/30 backdrop-blur-sm text-white px-6 py-3 font-semibold hover:bg-white/20 transition"
+            >
+              Book a demo <ChevronRight className="w-4 h-4" />
             </a>
             <a
               href="#features"
