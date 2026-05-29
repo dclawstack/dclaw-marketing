@@ -99,7 +99,7 @@ function NavBar() {
 
 // Where the "Launch app" button points. Defaults to the local dev app;
 // set NEXT_PUBLIC_APP_URL to the deployed app URL to swap it without a code change.
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3015";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3069";
 
 function Hero() {
   return (
