@@ -182,15 +182,6 @@ class Settings(BaseSettings):
     openai_compat_api_key: str = ""
     openai_compat_model: str = ""
 
-    # Demo mode (landing-page seed/reset). When true, the /api/v1/demo/*
-    # endpoints can wipe-then-seed a self-contained demo dataset and a
-    # loginable demo user. Off by default — production deploys leave it
-    # off and the seed/reset endpoints return 403.
-    enable_demo_mode: bool = False
-    demo_user_email: str = "demo@dclawstack.io"
-    demo_user_password: str = "demo-marketing-2025"
-    demo_user_name: str = "Demo Marketer"
-
     class Config:
         env_file = ".env"
         case_sensitive = False
